@@ -1,0 +1,288 @@
+@startuml cocina_frontend
+
+title Frontend Cocina — Clases propias y compartidas
+
+skinparam linetype ortho
+skinparam classAttributeIconSize 0
+skinparam class {
+  FontName Arial
+  BorderColor #534AB7
+}
+
+skinparam entity {
+  FontName Arial
+  BorderColor #534AB7
+}
+
+legend top right
+  |= Color          |= Contexto                        |
+  |<#D5F5E3> Verde  | Exclusivo Cocina                 |
+  |<#FAD7A0> Naranja| Compartido con Ventas            |
+  |<#AED6F1> Azul   | Compartido con Compras/Inventario|
+  |<#FFFDE7> Amarillo| Pendiente — falta en esquema    |
+  |<#F0F0F0> Gris   | Soporte / Infraestructura        |
+endlegend
+
+' ═══════════════════════════════════════════════════════
+'  EXCLUSIVO COCINA
+' ═══════════════════════════════════════════════════════
+
+entity recetas #D5F5E3 {
+  * id : bigserial <<PK>>
+  --
+  * version : integer
+  * costo_total : double
+  * activa : boolean
+  notas : varchar(500)
+  creado_en : timestamp
+  * plato_id : bigint <<FK>>
+}
+
+entity receta_ingredientes #D5F5E3 {
+  * id : bigserial <<PK>>
+  --
+  * cantidad : double
+  * costo_ingrediente : double
+  * unidad_medida : varchar(30)
+  * receta_id : bigint <<FK>>
+  * insumo_id : bigint <<FK>>
+}
+
+' ── Pendientes en esquema ───────────────────────────────
+
+entity mermas #FFFDE7 {
+  * id : bigserial <<PK>>
+  --
+  * fecha : date
+  * tipo_merma : varchar(60)
+  * cantidad : double
+  * motivo : varchar(255)
+  costo_estimado : double
+  creado_en : timestamp
+  * insumo_id : bigint <<FK>>
+  lote_id : bigint <<FK>>
+  * registrado_por_id : bigint <<FK>>
+}
+
+note right of mermas
+  <b>PENDIENTE</b>: falta en esquema actual.
+  tipo_merma: CADUCIDAD | PREPARACION
+  | ACCIDENTE | OTRO
+end note
+
+' ═══════════════════════════════════════════════════════
+'  COMPARTIDO CON VENTAS
+' ═══════════════════════════════════════════════════════
+
+entity platos #FAD7A0 {
+  * id : bigserial <<PK>>
+  --
+  * codigo : varchar(30)
+  * nombre : varchar(150)
+  descripcion : varchar(500)
+  * precio_venta : double
+  * costo_estimado : double
+  tipo : varchar(40)
+  * activo : boolean
+  creado_en : timestamp
+  actualizado_en : timestamp
+}
+
+entity categorias_plato #FAD7A0 {
+  * id : bigserial <<PK>>
+  --
+  * nombre : varchar(100)
+  descripcion : varchar(255)
+  * activo : boolean
+  sucursal_id : bigint <<FK>>
+}
+
+entity plato_categorias #FAD7A0 {
+  * plato_id : bigint <<FK>>
+  * categoria_id : bigint <<FK>>
+}
+
+entity pedidos #FAD7A0 {
+  * id : bigserial <<PK>>
+  --
+  * estado : varchar(255)
+  * total : double
+  observaciones : varchar(255)
+  creado_en : timestamp
+  actualizado_en : timestamp
+  sucursal_id : bigint <<FK>>
+  cliente_id : bigint <<FK>>
+  pensionado_id : bigint <<FK>>
+  empleado_cajero_id : bigint <<FK>>
+}
+
+entity detalles_pedido #FAD7A0 {
+  * id : bigserial <<PK>>
+  --
+  * cantidad : integer
+  * precio_unitario : double
+  observaciones : varchar(255)
+  * pedido_id : bigint <<FK>>
+  * plato_id : bigint <<FK>>
+}
+
+' ═══════════════════════════════════════════════════════
+'  COMPARTIDO CON COMPRAS / INVENTARIO
+' ═══════════════════════════════════════════════════════
+
+entity insumos #AED6F1 {
+  * id : bigserial <<PK>>
+  --
+  * codigo : varchar(30)
+  * nombre : varchar(150)
+  * unidad_medida : varchar(30)
+  * precio_unitario : double
+  * stock_actual : double
+  * stock_minimo : double
+  * perecedero : boolean
+  * activo : boolean
+  creado_en : timestamp
+  actualizado_en : timestamp
+  categoria_id : bigint <<FK>>
+}
+
+entity categorias_insumo #AED6F1 {
+  * id : bigserial <<PK>>
+  --
+  * nombre : varchar(100)
+  descripcion : varchar(255)
+  * activo : boolean
+}
+
+entity lotes_insumo #AED6F1 {
+  * id : bigserial <<PK>>
+  --
+  * numero_lote : varchar(50)
+  * cantidad_inicial : double
+  * cantidad_disponible : double
+  * precio_unitario : double
+  fecha_ingreso : date
+  fecha_vencimiento : date
+  * activo : boolean
+  creado_en : timestamp
+  * insumo_id : bigint <<FK>>
+  proveedor_id : bigint <<FK>>
+}
+
+entity proveedores #AED6F1 {
+  * id : bigserial <<PK>>
+  --
+  * nombre : varchar(150)
+  * nit : varchar(30)
+  contacto : varchar(100)
+  correo : varchar(150)
+  telefono : varchar(20)
+  direccion : varchar(200)
+  * activo : boolean
+  creado_en : timestamp
+  actualizado_en : timestamp
+}
+
+entity movimientos_inventario #AED6F1 {
+  * id : bigserial <<PK>>
+  --
+  * tipo : varchar(255)
+  * cantidad : double
+  motivo : varchar(255)
+  stock_anterior : double
+  stock_posterior : double
+  creado_en : timestamp
+  * insumo_id : bigint <<FK>>
+  lote_id : bigint <<FK>>
+  usuario_id : bigint <<FK>>
+}
+
+' ── Kardex: vista derivada ──────────────────────────────
+entity kardex_insumo #FFFDE7 {
+  insumo_id : bigint <<FK>>
+  --
+  fecha : date
+  descripcion : varchar(255)
+  tipo_movimiento : varchar(60)
+  cantidad_entrada : double
+  cantidad_salida : double
+  saldo : double
+  lote_id : bigint <<FK>>
+}
+
+note bottom of kardex_insumo
+  <b>PENDIENTE</b>: vista/reporte derivado
+  de movimientos_inventario + lotes_insumo.
+  No requiere tabla propia.
+end note
+
+' ═══════════════════════════════════════════════════════
+'  SOPORTE / INFRAESTRUCTURA
+' ═══════════════════════════════════════════════════════
+
+entity usuarios #F0F0F0 {
+  * id : bigserial <<PK>>
+  --
+  * username : varchar(80)
+  * activo : boolean
+  * rol_id : bigint <<FK>>
+}
+
+entity sucursales #F0F0F0 {
+  * id : bigserial <<PK>>
+  --
+  * nombre : varchar(100)
+  * activo : boolean
+}
+
+entity alertas_sistema #F0F0F0 {
+  * id : bigserial <<PK>>
+  --
+  * tipo : varchar(255)
+  * mensaje : varchar(255)
+  * leida : boolean
+  leida_en : timestamp
+  creado_en : timestamp
+  entidad_referencia_id : bigint
+  entidad_referencia_nombre : varchar(80)
+  leida_por_id : bigint <<FK>>
+}
+
+' ═══════════════════════════════════════════════════════
+'  RELACIONES
+' ═══════════════════════════════════════════════════════
+
+' Menú y recetas
+platos ||--o{ recetas                : "tiene versión"
+recetas ||--o{ receta_ingredientes   : "incluye"
+insumos ||--o{ receta_ingredientes   : "es ingrediente"
+platos ||--o{ plato_categorias       : "clasifica"
+categorias_plato ||--o{ plato_categorias : "agrupa"
+sucursales ||--o{ categorias_plato   : "define"
+
+' Pedidos (vista cocina — estado orden)
+pedidos ||--o{ detalles_pedido       : "contiene"
+platos ||--o{ detalles_pedido        : "incluido en"
+sucursales ||--o{ pedidos            : "genera"
+
+' Inventario y compras
+categorias_insumo ||--o{ insumos     : "clasifica"
+insumos ||--o{ lotes_insumo          : "tiene lote"
+proveedores ||--o{ lotes_insumo      : "provee"
+insumos ||--o{ movimientos_inventario : "afecta"
+lotes_insumo ||--o{ movimientos_inventario : "en lote"
+usuarios ||--o{ movimientos_inventario : "registra"
+
+' Kardex derivado
+movimientos_inventario ||--o{ kardex_insumo : "alimenta"
+lotes_insumo ||--o{ kardex_insumo    : "referencia"
+
+' Mermas
+insumos ||--o{ mermas                : "registra pérdida"
+lotes_insumo ||--o{ mermas          : "del lote"
+usuarios ||--o{ mermas               : "registrado por"
+
+' Alertas (stock bajo, vencimientos)
+usuarios ||--o{ alertas_sistema      : "lee"
+
+@enduml

@@ -1,0 +1,24 @@
+# Backend (Maven / Java)
+restaurante/target/
+restaurante/bin/
+restaurante/backend.log
+restaurante/.classpath
+restaurante/.project
+restaurante/.settings/
+*.class
+
+# Backend: no subir credenciales reales
+restaurante/src/main/resources/application-local.properties
+restaurante/src/main/resources/application-secrets.properties
+
+# Frontend (Angular / Node)
+Fronten/*/node_modules/
+Fronten/*/.angular/
+Fronten/*/dist/
+Fronten/*/npm-debug.log*
+
+# IDE / OS
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db

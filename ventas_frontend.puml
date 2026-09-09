@@ -1,0 +1,272 @@
+@startuml ventas_frontend
+
+title Frontend Ventas — Clases propias y compartidas
+
+skinparam linetype ortho
+skinparam classAttributeIconSize 0
+skinparam class {
+  FontName Arial
+  BorderColor #534AB7
+}
+
+skinparam entity {
+  FontName Arial
+  BorderColor #534AB7
+}
+
+legend top right
+  |= Color          |= Contexto                        |
+  |<#E8DAEF> Morado | Exclusivo Ventas                 |
+  |<#FAD7A0> Naranja| Compartido con Cocina            |
+  |<#F0F0F0> Gris   | Soporte / Infraestructura        |
+endlegend
+
+' ═══════════════════════════════════════════════════════
+'  EXCLUSIVO VENTAS
+' ═══════════════════════════════════════════════════════
+
+entity ventas #E8DAEF {
+  * id : bigserial <<PK>>
+  --
+  * forma_pago : varchar(255)
+  * monto_recibido : double
+  * total_cobrado : double
+  * vuelto : double
+  * anulada : boolean
+  anulada_en : timestamp
+  motivo_anulacion : varchar(255)
+  creado_en : timestamp
+  * pedido_id : bigint <<FK>>
+  usuario_cajero_id : bigint <<FK>>
+  usuario_anulacion_id : bigint <<FK>>
+}
+
+entity clientes #E8DAEF {
+  * id : bigserial <<PK>>
+  --
+  * nombre : varchar(150)
+  correo : varchar(150)
+  telefono : varchar(20)
+  * estado : varchar(255)
+  * fecha_registro : date
+  ultima_compra : date
+  canal_recuperacion : varchar(255)
+  creado_en : timestamp
+  actualizado_en : timestamp
+  sucursal_id : bigint <<FK>>
+}
+
+entity pensionados #E8DAEF {
+  * id : bigserial <<PK>>
+  --
+  * nombre : varchar(150)
+  * apellido : varchar(150)
+  * cedula : varchar(20)
+  correo : varchar(150)
+  telefono : varchar(20)
+  * estado : varchar(255)
+  * saldo_pendiente : double
+  * fecha_inscripcion : date
+  fecha_baja : date
+  creado_en : timestamp
+  actualizado_en : timestamp
+  tipo_almuerzo_id : bigint <<FK>>
+}
+
+entity tipos_almuerzo #E8DAEF {
+  * id : bigserial <<PK>>
+  --
+  * nombre : varchar(100)
+  descripcion : varchar(255)
+  dias_disponibles : varchar(100)
+  * precio_mensual : double
+  * activo : boolean
+  receta_base_id : bigint <<FK>>
+}
+
+entity asistencias_pensionado #E8DAEF {
+  * id : bigserial <<PK>>
+  --
+  * fecha : date
+  * asistio : boolean
+  creado_en : timestamp
+  * pensionado_id : bigint <<FK>>
+  registrado_por_id : bigint <<FK>>
+}
+
+entity cobros_mensuales #E8DAEF {
+  * id : bigserial <<PK>>
+  --
+  * mes : integer
+  * anio : integer
+  * dias_asistidos : integer
+  * monto_base : double
+  * monto_pagado : double
+  * saldo_anterior : double
+  * saldo_restante : double
+  * total_cobrado : double
+  * pagado : boolean
+  fecha_pago : date
+  forma_pago : varchar(255)
+  creado_en : timestamp
+  * pensionado_id : bigint <<FK>>
+  registrado_por_id : bigint <<FK>>
+}
+
+' ═══════════════════════════════════════════════════════
+'  COMPARTIDO CON COCINA
+' ═══════════════════════════════════════════════════════
+
+entity platos #FAD7A0 {
+  * id : bigserial <<PK>>
+  --
+  * codigo : varchar(30)
+  * nombre : varchar(150)
+  descripcion : varchar(500)
+  * precio_venta : double
+  * costo_estimado : double
+  tipo : varchar(40)
+  * activo : boolean
+  creado_en : timestamp
+  actualizado_en : timestamp
+}
+
+entity categorias_plato #FAD7A0 {
+  * id : bigserial <<PK>>
+  --
+  * nombre : varchar(100)
+  descripcion : varchar(255)
+  * activo : boolean
+  sucursal_id : bigint <<FK>>
+}
+
+entity plato_categorias #FAD7A0 {
+  * plato_id : bigint <<FK>>
+  * categoria_id : bigint <<FK>>
+}
+
+entity pedidos #FAD7A0 {
+  * id : bigserial <<PK>>
+  --
+  * estado : varchar(255)
+  * total : double
+  observaciones : varchar(255)
+  creado_en : timestamp
+  actualizado_en : timestamp
+  sucursal_id : bigint <<FK>>
+  cliente_id : bigint <<FK>>
+  pensionado_id : bigint <<FK>>
+  empleado_cajero_id : bigint <<FK>>
+}
+
+entity detalles_pedido #FAD7A0 {
+  * id : bigserial <<PK>>
+  --
+  * cantidad : integer
+  * precio_unitario : double
+  observaciones : varchar(255)
+  * pedido_id : bigint <<FK>>
+  * plato_id : bigint <<FK>>
+}
+
+' ═══════════════════════════════════════════════════════
+'  SOPORTE / INFRAESTRUCTURA
+' ═══════════════════════════════════════════════════════
+
+entity roles #F0F0F0 {
+  * id : bigserial <<PK>>
+  --
+  * nombre : varchar(80)
+  descripcion : varchar(255)
+  * activo : boolean
+}
+
+entity usuarios #F0F0F0 {
+  * id : bigserial <<PK>>
+  --
+  * username : varchar(80)
+  * activo : boolean
+  * intentos_fallidos : integer
+  creado_en : timestamp
+  * rol_id : bigint <<FK>>
+  empleado_id : bigint <<FK>>
+  cliente_id : bigint <<FK>>
+  pensionado_id : bigint <<FK>>
+}
+
+entity empleados #F0F0F0 {
+  * id : bigserial <<PK>>
+  --
+  * nombre : varchar(100)
+  * apellido : varchar(100)
+  * ci : varchar(20)
+  * cargo : varchar(80)
+  * turno : varchar(255)
+  * estado : varchar(255)
+  * fecha_ingreso : date
+  sucursal_id : bigint <<FK>>
+}
+
+entity sucursales #F0F0F0 {
+  * id : bigserial <<PK>>
+  --
+  * nombre : varchar(100)
+  direccion : varchar(200)
+  telefono : varchar(20)
+  * activo : boolean
+}
+
+entity alertas_sistema #F0F0F0 {
+  * id : bigserial <<PK>>
+  --
+  * tipo : varchar(255)
+  * mensaje : varchar(255)
+  * leida : boolean
+  leida_en : timestamp
+  creado_en : timestamp
+  entidad_referencia_id : bigint
+  entidad_referencia_nombre : varchar(80)
+  leida_por_id : bigint <<FK>>
+}
+
+' ═══════════════════════════════════════════════════════
+'  RELACIONES
+' ═══════════════════════════════════════════════════════
+
+' Acceso y personas
+roles ||--o{ usuarios                     : "asigna"
+usuarios }o--|| empleados                : "es empleado"
+usuarios }o--|| clientes                 : "es cliente"
+usuarios }o--|| pensionados              : "es pensionado"
+
+' Sucursal
+sucursales ||--o{ empleados              : "pertenece"
+sucursales ||--o{ clientes               : "registra"
+sucursales ||--o{ pedidos               : "genera"
+sucursales ||--o{ categorias_plato      : "define"
+
+' Menu (compartido con Cocina)
+platos ||--o{ plato_categorias           : "clasifica"
+categorias_plato ||--o{ plato_categorias : "agrupa"
+
+' Pensionados
+pensionados }o--|| tipos_almuerzo        : "contrata"
+pensionados ||--o{ asistencias_pensionado : "registra"
+pensionados ||--o{ cobros_mensuales      : "genera"
+usuarios ||--o{ asistencias_pensionado   : "registrado por"
+usuarios ||--o{ cobros_mensuales         : "registrado por"
+
+' Flujo de pedido a venta
+clientes ||--o{ pedidos                  : "realiza"
+pensionados ||--o{ pedidos               : "realiza"
+empleados ||--o{ pedidos                : "atiende (cajero)"
+pedidos ||--o{ detalles_pedido          : "contiene"
+platos ||--o{ detalles_pedido           : "incluido en"
+pedidos ||--|| ventas                   : "factura"
+usuarios ||--o{ ventas                   : "cobra"
+usuarios ||--o{ ventas                   : "anula"
+
+' Alertas
+usuarios ||--o{ alertas_sistema          : "lee"
+
+@enduml

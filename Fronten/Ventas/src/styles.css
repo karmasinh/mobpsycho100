@@ -1,0 +1,829 @@
+/* ============================================================
+   SISTEMA DE TEMAS — MÓDULO VENTAS (RESPONSIVO)
+   ============================================================ */
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Nunito:wght@300;400;500;600;700&family=Fira+Code:wght@400;500&family=Playfair+Display:wght@400;600;700;800&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ============================================================
+   TEMA 1: LILA
+   ============================================================ */
+:root,
+.theme-lila {
+  --color-primary:    124 58 237;
+  --color-secondary:  109 40 217;
+  --color-accent:     196 181 253;
+  --color-surface:    250 249 255;
+  --color-surface-2:  245 243 255;
+  --color-on-surface: 30 14 60;
+  --color-on-primary: 255 255 255;
+  --color-border:     221 214 254;
+  --color-danger:     220 38 38;
+  --color-warning:    217 119 6;
+  --color-success:    22 163 74;
+  --color-info:       37 99 235;
+  --sidebar-width:    270px;
+  --radius:           0.875rem;
+  --topbar-height:    64px;
+  --bottomnav-height: 0px;
+  /* Sidebar: púrpura oscuro */
+  --sb-bg:        22 11 52;
+  --sb-bg-hover:  35 18 75;
+  --sb-text:      245 243 255;
+  --sb-accent:    167 139 250;
+  --sb-border:    55 38 100;
+}
+
+/* ============================================================
+   TEMA 2: CELESTE
+   ============================================================ */
+.theme-celeste {
+  --color-primary:    14 165 233;
+  --color-secondary:  2 132 199;
+  --color-accent:     125 211 252;
+  --color-surface:    248 252 255;
+  --color-surface-2:  240 249 255;
+  --color-on-surface: 7 30 50;
+  --color-on-primary: 255 255 255;
+  --color-border:     186 230 253;
+  --color-danger:     220 38 38;
+  --color-warning:    217 119 6;
+  --color-success:    22 163 74;
+  --color-info:       14 165 233;
+  /* Sidebar: azul marino oscuro */
+  --sb-bg:        7 28 50;
+  --sb-bg-hover:  12 45 80;
+  --sb-text:      240 249 255;
+  --sb-accent:    56 189 248;
+  --sb-border:    18 55 90;
+}
+
+/* ============================================================
+   TEMA 3: NOCHE
+   ============================================================ */
+.theme-noche {
+  --color-primary:    139 92 246;
+  --color-secondary:  124 58 237;
+  --color-accent:     196 181 253;
+  --color-surface:    5 5 10;
+  --color-surface-2:  13 12 22;
+  --color-on-surface: 245 243 255;
+  --color-on-primary: 255 255 255;
+  --color-border:     44 38 74;
+  --color-danger:     248 113 113;
+  --color-warning:    251 191 36;
+  --color-success:    74 222 128;
+  --color-info:       125 211 252;
+  /* Sidebar: negro profundo */
+  --sb-bg:        5 5 10;
+  --sb-bg-hover:  15 13 28;
+  --sb-text:      245 243 255;
+  --sb-accent:    167 139 250;
+  --sb-border:    38 32 65;
+}
+
+/* ============================================================
+   TEMA LA ENTRERRIANA — Verde, Dorado y Crema
+   ============================================================ */
+.theme-entrerriana {
+  --color-primary:    196 154 90;   /* Dorado  #C49A5A */
+  --color-secondary:  139 94 52;    /* Marrón  #8B5E34 */
+  --color-accent:     212 175 112;  /* Dorado claro */
+  --color-surface:    245 242 235;  /* Crema   #F5F2EB */
+  --color-surface-2:  231 225 214;  /* Beige   #E7E1D6 */
+  --color-on-surface: 31 42 33;     /* Verde oscuro #1F2A21 */
+  --color-on-primary: 255 255 255;
+  --color-border:     209 198 178;
+  --color-danger:     185 28 28;
+  --color-warning:    180 83 9;
+  --color-success:    21 128 61;
+  --color-info:       29 78 216;
+  --sidebar-width:    270px;
+  --radius:           0.875rem;
+  --topbar-height:    64px;
+  --bottomnav-height: 0px;
+  /* Sidebar: verde oscuro #1F2A21 */
+  --sb-bg:        31 42 33;
+  --sb-bg-hover:  46 61 47;
+  --sb-text:      245 242 235;
+  --sb-accent:    196 154 90;
+  --sb-border:    55 71 56;
+}
+
+/* ============================================================
+   TEMA 4: ROSA
+   ============================================================ */
+.theme-rosa {
+  --color-primary:    236 72 153;
+  --color-secondary:  219 39 119;
+  --color-accent:     249 168 212;
+  --color-surface:    255 250 253;
+  --color-surface-2:  253 242 248;
+  --color-on-surface: 60 5 30;
+  --color-on-primary: 255 255 255;
+  --color-border:     251 207 232;
+  --color-danger:     220 38 38;
+  --color-warning:    217 119 6;
+  --color-success:    22 163 74;
+  --color-info:       14 165 233;
+  /* Sidebar: rosado oscuro */
+  --sb-bg:        40 8 22;
+  --sb-bg-hover:  60 14 34;
+  --sb-text:      255 241 245;
+  --sb-accent:    249 168 212;
+  --sb-border:    78 22 45;
+}
+
+/* ============================================================
+   BASE
+   ============================================================ */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+html {
+  font-size: 16px;
+  scroll-behavior: smooth;
+  width: 100%;
+  height: 100%;
+}
+
+body {
+  font-family: 'Nunito', sans-serif;
+  background-color: rgb(var(--color-surface));
+  color: rgb(var(--color-on-surface));
+  min-height: 100vh;
+  width: 100%;
+  -webkit-font-smoothing: antialiased;
+  overflow-x: hidden;
+}
+
+::-webkit-scrollbar { width: 4px; height: 4px; }
+::-webkit-scrollbar-track { background: rgb(var(--color-surface-2)); }
+::-webkit-scrollbar-thumb { background: rgb(var(--color-border)); border-radius: 999px; }
+::-webkit-scrollbar-thumb:hover { background: rgb(var(--color-primary)/0.5); }
+
+/* ============================================================
+   LAYOUT DESKTOP (>=1024px)
+   Sidebar fijo a la izquierda, main ocupa el resto
+   ============================================================ */
+.app-shell {
+  display: grid;
+  /* minmax(0,1fr) en vez de 1fr evita que el contenido se desborde */
+  grid-template-columns: var(--sidebar-width) minmax(0, 1fr);
+  min-height: 100vh;
+  width: 100%;
+}
+
+.app-sidebar {
+  display: flex;
+  flex-direction: column;
+  /* Ancho explícito para que el grid lo respete */
+  width: var(--sidebar-width);
+  height: 100vh;
+  position: sticky;
+  top: 0;
+  overflow-y: auto;
+  background: rgb(var(--color-surface-2));
+  border-right: 1px solid rgb(var(--color-border));
+  z-index: 40;
+  flex-shrink: 0;
+  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.app-main {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  /* min-width:0 es CLAVE para que el flex/grid child no se expanda más allá */
+  min-width: 0;
+  width: 100%;
+  overflow: hidden;
+}
+
+.app-topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 1.5rem;
+  height: var(--topbar-height);
+  flex-shrink: 0;
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  background: rgb(var(--color-surface) / 0.92);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border-bottom: 1px solid rgb(var(--color-border));
+}
+
+.main-content {
+  flex: 1;
+  padding: 1.75rem;
+  overflow-y: auto;
+}
+
+/* ============================================================
+   OVERLAY para el drawer (tablet/mobile)
+   ============================================================ */
+.sidebar-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgb(0 0 0 / 0.45);
+  z-index: 49;
+  backdrop-filter: blur(2px);
+  -webkit-backdrop-filter: blur(2px);
+}
+
+.sidebar-overlay.visible {
+  display: block;
+}
+
+/* ============================================================
+   BOTÓN HAMBURGUESA — oculto en desktop, visible en tablet/mobile
+   ============================================================ */
+.btn-menu-toggle {
+  display: none;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 0.75rem;
+  background: rgb(var(--color-surface-2));
+  border: 1px solid rgb(var(--color-border));
+  color: rgb(var(--color-on-surface) / 0.7);
+  cursor: pointer;
+  transition: all 0.15s;
+  flex-shrink: 0;
+}
+
+.btn-menu-toggle:hover {
+  background: rgb(var(--color-primary) / 0.1);
+  color: rgb(var(--color-primary));
+}
+
+/* Bottom nav oculta por defecto */
+.bottom-nav { display: none; }
+
+/* ============================================================
+   TABLET  768px – 1023px
+   El sidebar sale del flujo normal → se vuelve fixed drawer
+   El main pasa a ocupar el 100% del ancho
+   ============================================================ */
+@media (max-width: 1023px) {
+  :root { --sidebar-width: 260px; }
+
+  /* Una sola columna: el main lo llena todo */
+  .app-shell {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  /* Sidebar fuera del flujo (fixed), escondido a la izquierda */
+  .app-sidebar {
+    position: fixed;
+    left: 0;
+    top: 0;
+    height: 100%;
+    /* width fijo independiente del grid */
+    width: var(--sidebar-width);
+    transform: translateX(-100%);
+    box-shadow: 6px 0 32px rgb(0 0 0 / 0.2);
+    z-index: 50;
+    /* No participa del grid, así que el main toma todo el ancho */
+  }
+
+  .app-sidebar.open {
+    transform: translateX(0);
+  }
+
+  /* El main debe ocupar todo el ancho de la pantalla */
+  .app-main {
+    width: 100%;
+    /* Anula cualquier restricción de columna */
+    grid-column: 1 / -1;
+  }
+
+  .btn-menu-toggle {
+    display: flex !important;
+  }
+
+  .main-content {
+    padding: 1.25rem;
+  }
+}
+
+/* ============================================================
+   MOBILE  < 768px
+   Bottom nav, topbar compacta, safe area para iPhone
+   ============================================================ */
+@media (max-width: 767px) {
+  :root {
+    --topbar-height:    56px;
+    --bottomnav-height: 64px;
+  }
+
+  .app-topbar {
+    padding: 0 1rem;
+    height: var(--topbar-height);
+  }
+
+  .app-sidebar {
+    width: 85%;
+    max-width: 300px;
+  }
+
+  .bottom-nav {
+    display: flex;
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: var(--bottomnav-height);
+    background: rgb(var(--color-surface-2));
+    border-top: 1px solid rgb(var(--color-border));
+    z-index: 40;
+    padding: 4px 6px;
+    padding-bottom: max(env(safe-area-inset-bottom, 0px), 4px);
+    gap: 2px;
+  }
+
+  .bottom-nav-item {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 2px;
+    padding: 6px 4px;
+    border-radius: 0.75rem;
+    font-size: 10px;
+    font-weight: 700;
+    color: rgb(var(--color-on-surface) / 0.4);
+    cursor: pointer;
+    transition: all 0.15s;
+    text-decoration: none;
+  }
+
+  .bottom-nav-item .bottom-nav-icon {
+    font-size: 20px;
+    line-height: 1;
+  }
+
+  .bottom-nav-item.active {
+    color: rgb(var(--color-primary));
+    background: rgb(var(--color-primary) / 0.1);
+  }
+
+  .main-content {
+    padding: 1rem;
+    padding-bottom: calc(var(--bottomnav-height) + 1rem);
+  }
+}
+
+/* ============================================================
+   GRILLAS DE CONTENIDO
+   ============================================================ */
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 1rem;
+}
+@media (max-width: 1280px) {
+  .stats-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@media (max-width: 480px) {
+  .stats-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0.75rem; }
+}
+
+.cards-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 1rem;
+}
+@media (max-width: 480px) {
+  .cards-grid { grid-template-columns: 1fr; }
+}
+
+.table-wrapper {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  border-radius: var(--radius);
+  border: 1px solid rgb(var(--color-border));
+}
+
+/* ============================================================
+   LOGIN RESPONSIVO
+   ============================================================ */
+.login-wrapper {
+  min-height: 100vh;
+  display: flex;
+}
+
+.login-panel-deco {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  width: 45%;
+  padding: 3rem;
+  position: relative;
+  overflow: hidden;
+  background: rgb(var(--color-primary));
+  color: rgb(var(--color-on-primary));
+}
+
+.login-panel-form {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 2.5rem 1.5rem;
+  overflow-y: auto;
+}
+
+@media (max-width: 900px) {
+  .login-panel-deco { display: none; }
+}
+@media (max-width: 480px) {
+  .login-panel-form { padding: 2rem 1rem; justify-content: flex-start; padding-top: 3rem; }
+}
+
+/* ============================================================
+   COMPONENTES
+   ============================================================ */
+@layer components {
+
+  .btn {
+    @apply inline-flex items-center gap-2 px-4 py-2 rounded-[var(--radius)]
+           font-semibold text-sm transition-all duration-200
+           focus:outline-none focus:ring-2 focus:ring-primary/40
+           disabled:opacity-50 disabled:cursor-not-allowed;
+  }
+  .btn-primary  { @apply btn bg-primary text-on-primary hover:brightness-110 active:scale-95; }
+  .btn-secondary{ @apply btn bg-surface-2 text-on-surface border border-border hover:border-primary/50 active:scale-95; }
+  .btn-danger   { @apply btn bg-danger text-white hover:brightness-110 active:scale-95; }
+  .btn-ghost    { @apply btn text-on-surface hover:bg-surface-2 active:scale-95; }
+  .btn-success  { @apply btn text-white active:scale-95; background: rgb(var(--color-success)); }
+  .btn-icon     { @apply btn p-2 rounded-xl; }
+
+  .card       { @apply bg-surface-2 border border-border rounded-2xl p-5 transition-all duration-200; }
+  .card-hover { @apply card hover:border-primary/30 cursor-pointer; }
+
+  .input {
+    @apply w-full bg-surface border border-border rounded-[var(--radius)]
+           px-3.5 py-2.5 text-sm text-on-surface placeholder-on-surface/40
+           focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary/50
+           transition-all duration-150;
+  }
+  .input-label { @apply block text-xs font-semibold text-on-surface/50 mb-1.5 uppercase tracking-wider; }
+
+  .badge        { @apply inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold; }
+  .badge-success{ @apply badge bg-success/10 text-success; }
+  .badge-warning{ @apply badge bg-warning/10 text-warning; }
+  .badge-danger { @apply badge bg-danger/10 text-danger; }
+  .badge-info   { @apply badge bg-info/10 text-info; }
+  .badge-neutral{ @apply badge bg-border/60 text-on-surface/60; }
+
+  .nav-item {
+    @apply flex items-center gap-3 px-4 py-2.5 rounded-[var(--radius)]
+           text-sm font-semibold text-on-surface/50 cursor-pointer
+           transition-all duration-150 hover:text-on-surface hover:bg-surface/80;
+  }
+  .nav-item.active {
+    @apply text-primary;
+    background: rgb(var(--color-primary) / 0.1);
+  }
+
+  .skeleton { @apply rounded-xl animate-pulse bg-border/40; }
+
+  .stat-card  { @apply card flex flex-col gap-2; }
+  .stat-value { @apply font-bold text-2xl; color: rgb(var(--color-on-surface)); }
+  .stat-label { @apply text-xs font-semibold uppercase tracking-wider; color: rgb(var(--color-on-surface) / 0.45); }
+  .stat-trend-up   { @apply text-xs text-success font-semibold; }
+  .stat-trend-down { @apply text-xs text-danger font-semibold; }
+
+  /* ── Tablas ─────────────────────────────────────────────── */
+  .table-wrapper {
+    @apply w-full overflow-x-auto rounded-2xl;
+    border: 1px solid rgb(var(--color-border));
+  }
+
+  table {
+    @apply w-full text-sm;
+    color: rgb(var(--color-on-surface));
+    border-collapse: collapse;
+  }
+
+  thead tr {
+    background: rgb(var(--color-surface-2));
+    border-bottom: 1px solid rgb(var(--color-border));
+  }
+
+  thead th {
+    @apply px-4 py-3 text-left text-xs font-semibold uppercase tracking-widest;
+    color: rgb(var(--color-on-surface) / 0.45);
+    white-space: nowrap;
+  }
+
+  tbody tr {
+    border-bottom: 1px solid rgb(var(--color-border) / 0.5);
+    transition: background 0.1s;
+  }
+
+  tbody tr:hover {
+    background: rgb(var(--color-primary) / 0.04);
+  }
+
+  tbody tr:last-child {
+    border-bottom: none;
+  }
+
+  tbody td {
+    @apply px-4 py-3;
+  }
+}
+
+/* ============================================================
+   TIPOGRAFÍA RESPONSIVA
+   ============================================================ */
+@media (max-width: 767px) {
+  .stat-value { font-size: 1.4rem !important; }
+}
+
+/* ============================================================
+   SAFE AREA — iPhone notch / home indicator
+   ============================================================ */
+@supports (padding: env(safe-area-inset-top)) {
+  .app-topbar {
+    padding-top: env(safe-area-inset-top, 0);
+    height: calc(var(--topbar-height) + env(safe-area-inset-top, 0));
+  }
+}
+
+/* ============================================================
+   TRANSICIÓN SUAVE DE TEMAS
+   ============================================================ */
+*, *::before, *::after {
+  transition-property: background-color, border-color, color, box-shadow;
+  transition-duration: 200ms;
+  transition-timing-function: ease;
+}
+.animate-pulse, [class*="animate-"] { transition: none !important; }
+
+/* ============================================================
+   SIDEBAR DINÁMICO — cambia con el tema elegido
+   ============================================================ */
+.ent-sidebar {
+  background: rgb(var(--sb-bg)) !important;
+  border-right: 1px solid rgb(var(--sb-border)) !important;
+}
+.ent-sidebar .nav-item {
+  color: rgb(var(--sb-text) / 0.5) !important;
+}
+.ent-sidebar .nav-item:hover {
+  background: rgb(var(--sb-bg-hover)) !important;
+  color: rgb(var(--sb-text) / 0.92) !important;
+}
+.ent-sidebar .nav-item.active {
+  background: rgb(var(--sb-accent) / 0.18) !important;
+  color: rgb(var(--sb-accent)) !important;
+}
+.ent-sidebar .nav-item.active::before { display: none; }
+
+/* Botón toggle de temas */
+.ent-theme-toggle {
+  width: 100%; display: flex; align-items: center; justify-content: space-between;
+  padding: 0.5rem 0.75rem; border-radius: 0.625rem;
+  border: 1px solid rgb(var(--sb-border)); background: transparent;
+  cursor: pointer; font-size: 0.78rem; font-weight: 600;
+  color: rgb(var(--sb-text) / 0.7); transition: all 0.15s;
+}
+.ent-theme-toggle:hover,
+.ent-theme-toggle.open {
+  background: rgb(var(--sb-bg-hover));
+  color: rgb(var(--sb-text));
+  border-color: rgb(var(--sb-accent) / 0.4);
+}
+/* Lista de opciones de tema */
+.ent-theme-option {
+  width: 100%; display: flex; align-items: center; gap: 0.625rem;
+  padding: 0.45rem 0.625rem; border-radius: 0.5rem; border: none;
+  background: transparent; cursor: pointer; font-size: 0.78rem; font-weight: 500;
+  color: rgb(var(--sb-text) / 0.6); transition: all 0.12s; text-align: left;
+}
+.ent-theme-option:hover {
+  background: rgb(var(--sb-bg-hover));
+  color: rgb(var(--sb-text) / 0.95);
+}
+.ent-theme-option.active {
+  background: rgb(var(--sb-accent) / 0.15);
+  color: rgb(var(--sb-accent));
+  font-weight: 700;
+}
+.ent-theme-option .ent-check {
+  margin-left: auto; font-size: 0.7rem; opacity: 0.8;
+}
+
+/* ============================================================
+   LOGIN "LA ENTRERRIANA" — nuevo diseño
+   ============================================================ */
+.ent-login {
+  min-height: 100vh;
+  display: flex;
+}
+
+/* Panel izquierdo — siempre oscuro (identidad de marca) */
+.ent-panel-left {
+  display: none;
+  width: 50%;
+  position: relative;
+  overflow: hidden;
+  background:
+    radial-gradient(ellipse at 25% 85%, rgba(196,154,90,0.18) 0%, transparent 50%),
+    radial-gradient(ellipse at 75% 15%, rgba(139,94,52,0.12) 0%, transparent 50%),
+    linear-gradient(155deg, #1F2A21 0%, #2E3D2F 30%, #1c1810 65%, #0e0b08 100%);
+}
+@media (min-width: 768px) { .ent-panel-left { display: block; } }
+
+.ent-panel-left-texture {
+  position: absolute; inset: 0; pointer-events: none;
+  background-image: radial-gradient(circle at 1px 1px, rgba(255,255,255,0.04) 1px, transparent 0);
+  background-size: 26px 26px;
+}
+.ent-panel-left-glow {
+  position: absolute; inset: 0; pointer-events: none;
+  background: radial-gradient(ellipse at 40% 60%, rgba(196,154,90,0.09) 0%, transparent 50%);
+}
+.ent-panel-left-content {
+  position: relative; z-index: 5;
+  height: 100%; display: flex; flex-direction: column;
+  justify-content: space-between; padding: 3.5rem; color: #F5F2EB;
+}
+.ent-bienvenido {
+  font-size: 0.68rem; font-weight: 700; letter-spacing: 0.35em;
+  color: #C49A5A; margin-bottom: 0.5rem; text-transform: uppercase;
+}
+.ent-nombre-restaurante {
+  font-family: 'Playfair Display', Georgia, serif;
+  font-size: clamp(2rem, 4vw, 3.5rem); font-weight: 800;
+  color: #F5F2EB; line-height: 1.05; letter-spacing: 0.04em; margin-bottom: 1rem;
+}
+.ent-ornament-line {
+  width: 50px; height: 1.5px; margin: 0.75rem 0;
+  background: linear-gradient(to right, transparent, #C49A5A 40%, #C49A5A 60%, transparent);
+}
+.ent-tagline {
+  font-size: 0.875rem; font-style: italic; color: rgba(245,242,235,0.65);
+}
+.ent-features-grid { display: flex; flex-direction: column; gap: 0.625rem; }
+.ent-feature-item {
+  display: flex; align-items: center; gap: 0.875rem;
+  padding: 0.75rem 1rem; border-radius: 0.75rem;
+  background: rgba(245,242,235,0.06); border: 1px solid rgba(196,154,90,0.18);
+}
+.ent-feature-icon  { font-size: 1.1rem; flex-shrink: 0; }
+.ent-feature-label {
+  font-size: 0.68rem; font-weight: 700; letter-spacing: 0.12em;
+  color: rgba(245,242,235,0.8); text-transform: uppercase;
+}
+
+/* Panel derecho — formulario */
+.ent-panel-right {
+  flex: 1; display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  padding: 2.5rem 1.25rem; overflow-y: auto;
+  background: rgb(var(--color-surface));
+}
+@media (max-width: 480px) {
+  .ent-panel-right { justify-content: flex-start; padding-top: 2.5rem; }
+}
+
+/* Logo */
+.ent-logo-area { text-align: center; margin-bottom: 1.25rem; }
+.ent-logo-svg  { width: 68px; height: 68px; color: rgb(var(--color-on-surface)); margin-bottom: 0.625rem; }
+.theme-entrerriana .ent-logo-svg { color: #1F2A21; }
+.ent-logo-nombre {
+  font-size: 0.78rem; font-weight: 800; letter-spacing: 0.28em;
+  color: rgb(var(--color-on-surface));
+}
+.ent-logo-sub {
+  font-size: 0.62rem; font-weight: 600; letter-spacing: 0.18em;
+  color: rgb(var(--color-primary));
+}
+
+/* Formulario */
+.ent-form-container { width: 100%; max-width: 360px; }
+.ent-form-title {
+  font-size: 1.5rem; font-weight: 700; text-align: center;
+  color: rgb(var(--color-on-surface)); margin-bottom: 0.25rem;
+}
+.ent-form-ornament {
+  width: 36px; height: 1.5px; background: rgb(var(--color-primary));
+  margin: 0.5rem auto 0.75rem;
+}
+.ent-form-subtitle {
+  font-size: 0.78rem; text-align: center; line-height: 1.6;
+  color: rgb(var(--color-on-surface) / 0.5); margin-bottom: 1.25rem;
+}
+
+/* Campos */
+.ent-field { margin-bottom: 0.875rem; }
+.ent-input-wrapper { position: relative; display: flex; align-items: center; }
+.ent-input-icon {
+  position: absolute; left: 0.875rem; width: 1rem; height: 1rem;
+  color: rgb(var(--color-on-surface) / 0.35); pointer-events: none;
+}
+.ent-input {
+  width: 100%; padding: 0.75rem 0.875rem 0.75rem 2.5rem;
+  background: rgb(var(--color-surface-2)); border: 1px solid rgb(var(--color-border));
+  border-radius: 0.625rem; font-size: 0.875rem; color: rgb(var(--color-on-surface));
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+.ent-input::placeholder { color: rgb(var(--color-on-surface) / 0.35); }
+.ent-input:focus {
+  outline: none; border-color: rgb(var(--color-primary) / 0.6);
+  box-shadow: 0 0 0 3px rgb(var(--color-primary) / 0.1);
+}
+.ent-eye-btn {
+  position: absolute; right: 0.75rem; padding: 0.25rem;
+  background: none; border: none; cursor: pointer;
+  color: rgb(var(--color-on-surface) / 0.4);
+  display: flex; align-items: center; justify-content: center;
+  border-radius: 0.375rem; transition: color 0.15s;
+}
+.ent-eye-btn:hover { color: rgb(var(--color-on-surface) / 0.7); }
+
+.ent-error {
+  padding: 0.625rem 0.875rem; margin-bottom: 0.75rem;
+  background: rgb(var(--color-danger) / 0.08); border: 1px solid rgb(var(--color-danger) / 0.25);
+  border-radius: 0.5rem; font-size: 0.8rem; color: rgb(var(--color-danger));
+  display: flex; align-items: center; gap: 0.5rem;
+}
+.ent-alert-blocked {
+  display: flex; align-items: flex-start; gap: 0.75rem;
+  padding: 0.875rem; margin-bottom: 1rem;
+  background: rgb(var(--color-danger) / 0.08); border: 1px solid rgb(var(--color-danger) / 0.25);
+  border-radius: 0.75rem; font-size: 0.8rem;
+}
+.ent-alert-title { font-weight: 600; color: rgb(var(--color-danger)); }
+.ent-alert-sub   { color: rgb(var(--color-on-surface) / 0.5); font-size: 0.75rem; margin-top: 0.125rem; }
+
+/* Botón submit */
+.ent-submit-btn {
+  width: 100%; display: flex; align-items: center; justify-content: center;
+  padding: 0.875rem; margin-top: 0.5rem; font-size: 0.9rem; font-weight: 600;
+  border-radius: 0.625rem; border: none; cursor: pointer;
+  transition: filter 0.2s, opacity 0.2s;
+  background: rgb(var(--color-primary)); color: rgb(var(--color-on-primary));
+}
+.theme-entrerriana .ent-submit-btn { background: #1F2A21; color: #F5F2EB; }
+.ent-submit-btn:hover:not(:disabled)  { filter: brightness(1.08); }
+.ent-submit-btn:active:not(:disabled) { filter: brightness(0.95); }
+.ent-submit-btn:disabled              { opacity: 0.6; cursor: not-allowed; }
+
+.ent-spinner {
+  display: inline-block; width: 1rem; height: 1rem; margin-right: 0.5rem;
+  border-radius: 50%; border: 2px solid rgba(255,255,255,0.3); border-top-color: white;
+  animation: ent-spin 0.7s linear infinite;
+}
+@keyframes ent-spin { to { transform: rotate(360deg); } }
+
+/* Divider decorativo */
+.ent-divider-decor { display: flex; align-items: center; gap: 0.75rem; margin: 1.1rem 0; }
+.ent-divider-line  { flex: 1; height: 1px; background: rgb(var(--color-border)); }
+.ent-divider-icon  { color: rgb(var(--color-primary)); font-size: 0.7rem; }
+
+.ent-quote { text-align: center; font-size: 0.78rem; font-style: italic; margin-bottom: 1.1rem; color: rgb(var(--color-on-surface) / 0.4); }
+
+/* Selector de temas */
+.ent-themes-section { margin-bottom: 0.75rem; }
+.ent-themes-label   {
+  font-size: 0.62rem; font-weight: 700; text-transform: uppercase;
+  letter-spacing: 0.15em; text-align: center; margin-bottom: 0.5rem;
+  color: rgb(var(--color-on-surface) / 0.35);
+}
+.ent-themes-grid { display: flex; flex-wrap: wrap; gap: 0.375rem; justify-content: center; }
+.ent-theme-btn {
+  display: flex; flex-direction: column; align-items: center; gap: 0.2rem;
+  padding: 0.45rem 0.6rem; border-radius: 0.6rem;
+  border: 1px solid rgb(var(--color-border)); background: transparent;
+  cursor: pointer; font-size: 0.62rem; font-weight: 600;
+  color: rgb(var(--color-on-surface) / 0.45); transition: all 0.15s;
+}
+.ent-theme-btn:hover        { border-color: rgb(var(--color-primary) / 0.45); }
+.ent-theme-btn.ent-theme-active {
+  background: rgb(var(--color-primary) / 0.1);
+  border-color: rgb(var(--color-primary) / 0.5);
+  color: rgb(var(--color-primary));
+}
+.ent-theme-btn span:first-child { font-size: 1rem; }
+
+/* Link para cambiar sistema */
+.ent-switch-link {
+  display: flex; align-items: center; justify-content: center; gap: 0.375rem;
+  font-size: 0.75rem; font-weight: 600; text-decoration: none;
+  color: rgb(var(--color-primary)); padding: 0.5rem;
+  border-radius: 0.5rem; transition: background 0.15s;
+}
+.ent-switch-link:hover { background: rgb(var(--color-primary) / 0.08); }

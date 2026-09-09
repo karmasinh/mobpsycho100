@@ -1,0 +1,777 @@
+/* ============================================================
+   SISTEMA DE TEMAS — MÓDULO COCINA v2
+   ============================================================ */
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;1,9..40,400&family=JetBrains+Mono:wght@400;500&family=Playfair+Display:wght@400;600;700;800&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ============================================================
+   TEMA 1: FUEGO (dark industrial — carbón y llama naranja)
+   ============================================================ */
+:root,
+.theme-fuego {
+  --color-primary:    234 88 12;      /* naranja fuego */
+  --color-secondary:  194 65 12;
+  --color-accent:     251 191 36;     /* ámbar llama */
+  --color-accent-soft: 251 191 36;
+  --color-surface:    13 12 11;
+  --color-surface-2:  22 20 18;
+  --color-surface-3:  32 29 26;
+  --color-on-surface: 254 243 199;
+  --color-on-primary: 255 255 255;
+  --color-border:     45 40 35;
+  --color-border-soft: 38 34 30;
+  --color-danger:     239 68 68;
+  --color-warning:    245 158 11;
+  --color-success:    34 197 94;
+  --color-info:       56 189 248;
+  --color-muted:      120 113 108;
+  --sidebar-width:    260px;
+  --radius:           0.625rem;
+  --radius-lg:        1rem;
+  /* Sidebar: carbón oscuro con fuego */
+  --sb-bg:        18 9 4;
+  --sb-bg-hover:  32 16 8;
+  --sb-text:      254 243 199;
+  --sb-accent:    251 191 36;
+  --sb-border:    52 30 14;
+}
+
+/* ============================================================
+   TEMA 2: NOCTURNO (deep blue midnight — elegante y frío)
+   ============================================================ */
+.theme-nocturno {
+  --color-primary:    99 102 241;     /* indigo vivo */
+  --color-secondary:  79 70 229;
+  --color-accent:     167 139 250;    /* lavanda suave */
+  --color-accent-soft: 196 181 253;
+  --color-surface:    8 9 18;
+  --color-surface-2:  14 16 30;
+  --color-surface-3:  22 25 45;
+  --color-on-surface: 224 231 255;
+  --color-on-primary: 255 255 255;
+  --color-border:     35 38 65;
+  --color-border-soft: 28 31 55;
+  --color-danger:     239 68 68;
+  --color-warning:    245 158 11;
+  --color-success:    52 211 153;
+  --color-info:       125 211 252;
+  --color-muted:      100 116 139;
+  /* Sidebar: midnight azul */
+  --sb-bg:        8 9 18;
+  --sb-bg-hover:  16 18 36;
+  --sb-text:      224 231 255;
+  --sb-accent:    167 139 250;
+  --sb-border:    35 38 65;
+}
+
+/* ============================================================
+   TEMA 3: AURORA (pasteles sobre oscuro — moderno y fresco)
+   ============================================================ */
+.theme-aurora {
+  --color-primary:    52 211 153;     /* esmeralda pastel */
+  --color-secondary:  16 185 129;
+  --color-accent:     167 243 208;    /* menta clara */
+  --color-accent-soft: 209 250 229;
+  --color-surface:    10 15 14;
+  --color-surface-2:  16 24 22;
+  --color-surface-3:  24 36 33;
+  --color-on-surface: 209 250 229;
+  --color-on-primary: 10 15 14;
+  --color-border:     30 50 44;
+  --color-border-soft: 22 38 34;
+  --color-danger:     252 129 129;
+  --color-warning:    252 211 77;
+  --color-success:    110 231 183;
+  --color-info:       125 211 252;
+  --color-muted:      75 110 99;
+  /* Sidebar: verde esmeralda oscuro */
+  --sb-bg:        8 14 12;
+  --sb-bg-hover:  14 24 20;
+  --sb-text:      209 250 229;
+  --sb-accent:    52 211 153;
+  --sb-border:    25 45 38;
+}
+
+/* ============================================================
+   TEMA 4: NUBE (light pastel — limpio y amigable)
+   ============================================================ */
+.theme-nube {
+  --color-primary:    99 102 241;     /* indigo suave */
+  --color-secondary:  124 58 237;
+  --color-accent:     196 181 253;    /* lavanda pastel */
+  --color-accent-soft: 237 233 254;
+  --color-surface:    250 250 255;
+  --color-surface-2:  244 244 255;
+  --color-surface-3:  237 237 253;
+  --color-on-surface: 30 27 75;
+  --color-on-primary: 255 255 255;
+  --color-border:     209 213 246;
+  --color-border-soft: 224 226 250;
+  --color-danger:     220 38 38;
+  --color-warning:    202 138 4;
+  --color-success:    22 163 74;
+  --color-info:       14 165 233;
+  --color-muted:      148 144 200;
+  /* Sidebar: índigo oscuro */
+  --sb-bg:        22 20 65;
+  --sb-bg-hover:  35 32 95;
+  --sb-text:      237 233 254;
+  --sb-accent:    167 139 250;
+  --sb-border:    55 50 120;
+}
+
+/* ============================================================
+   TEMA 5: ROSA (pink sunset — cálido y vibrante)
+   ============================================================ */
+.theme-rosa {
+  --color-primary:    244 63 94;      /* rosa coral */
+  --color-secondary:  251 113 133;
+  --color-accent:     253 186 116;    /* durazno pastel */
+  --color-accent-soft: 254 215 170;
+  --color-surface:    15 8 12;
+  --color-surface-2:  25 14 20;
+  --color-surface-3:  38 22 32;
+  --color-on-surface: 255 228 230;
+  --color-on-primary: 255 255 255;
+  --color-border:     60 30 45;
+  --color-border-soft: 48 24 36;
+  --color-danger:     239 68 68;
+  --color-warning:    251 191 36;
+  --color-success:    52 211 153;
+  --color-info:       125 211 252;
+  --color-muted:      160 90 120;
+  /* Sidebar: vinotinto oscuro */
+  --sb-bg:        28 8 16;
+  --sb-bg-hover:  48 14 28;
+  --sb-text:      255 228 230;
+  --sb-accent:    251 113 133;
+  --sb-border:    65 28 42;
+}
+
+/* ============================================================
+   TEMA 6: CARBON (neutral dark — ultra profesional)
+   ============================================================ */
+.theme-carbon {
+  --color-primary:    250 250 250;    /* blanco puro */
+  --color-secondary:  229 229 229;
+  --color-accent:     163 163 163;
+  --color-accent-soft: 212 212 212;
+  --color-surface:    10 10 10;
+  --color-surface-2:  18 18 18;
+  --color-surface-3:  26 26 26;
+  --color-on-surface: 245 245 245;
+  --color-on-primary: 10 10 10;
+  --color-border:     38 38 38;
+  --color-border-soft: 30 30 30;
+  --color-danger:     239 68 68;
+  --color-warning:    245 158 11;
+  --color-success:    34 197 94;
+  --color-info:       56 189 248;
+  --color-muted:      115 115 115;
+  /* Sidebar: negro carbón puro */
+  --sb-bg:        8 8 8;
+  --sb-bg-hover:  20 20 20;
+  --sb-text:      245 245 245;
+  --sb-accent:    200 200 200;
+  --sb-border:    40 40 40;
+}
+
+/* ============================================================
+   TEMA LA ENTRERRIANA — Verde, Dorado y Crema
+   ============================================================ */
+.theme-entrerriana {
+  --color-primary:      196 154 90;
+  --color-secondary:    139 94 52;
+  --color-accent:       212 175 112;
+  --color-accent-soft:  232 211 167;
+  --color-surface:      245 242 235;
+  --color-surface-2:    231 225 214;
+  --color-surface-3:    219 211 197;
+  --color-on-surface:   31 42 33;
+  --color-on-primary:   255 255 255;
+  --color-border:       209 198 178;
+  --color-border-soft:  220 210 192;
+  --color-danger:       185 28 28;
+  --color-warning:      180 83 9;
+  --color-success:      21 128 61;
+  --color-info:         29 78 216;
+  --color-muted:        130 120 100;
+  --sidebar-width:      260px;
+  --radius:             0.625rem;
+  --radius-lg:          1rem;
+  /* Sidebar: verde oscuro La Entrerriana */
+  --sb-bg:        31 42 33;
+  --sb-bg-hover:  46 61 47;
+  --sb-text:      245 242 235;
+  --sb-accent:    196 154 90;
+  --sb-border:    55 71 56;
+}
+
+/* ============================================================
+   BASE STYLES
+   ============================================================ */
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html {
+  font-size: 16px;
+  scroll-behavior: smooth;
+}
+
+body {
+  font-family: 'DM Sans', sans-serif;
+  background-color: rgb(var(--color-surface));
+  color: rgb(var(--color-on-surface));
+  min-height: 100vh;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* ============================================================
+   SCROLLBAR PERSONALIZADA
+   ============================================================ */
+::-webkit-scrollbar { width: 4px; height: 4px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb {
+  background: rgb(var(--color-border));
+  border-radius: 999px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: rgb(var(--color-primary) / 0.5);
+}
+
+/* ============================================================
+   TIPOGRAFÍA
+   ============================================================ */
+.font-display { font-family: 'Outfit', sans-serif; }
+.font-body    { font-family: 'DM Sans', sans-serif; }
+.font-mono    { font-family: 'JetBrains Mono', monospace; }
+
+/* ============================================================
+   COMPONENTES REUTILIZABLES
+   ============================================================ */
+@layer components {
+
+  /* --- Botones --- */
+  .btn {
+    @apply inline-flex items-center gap-2 px-4 py-2 rounded-[var(--radius)]
+           font-body font-medium text-sm transition-all duration-150
+           focus:outline-none focus:ring-2 focus:ring-offset-1
+           disabled:opacity-40 disabled:cursor-not-allowed select-none;
+    focus-ring-color: rgb(var(--color-primary) / 0.4);
+    ring-offset-color: rgb(var(--color-surface));
+  }
+  .btn-primary {
+    background: rgb(var(--color-primary));
+    color: rgb(var(--color-on-primary));
+    @apply btn hover:opacity-90 active:scale-[0.97] shadow-sm;
+  }
+  .btn-secondary {
+    background: rgb(var(--color-surface-3));
+    color: rgb(var(--color-on-surface));
+    border: 1px solid rgb(var(--color-border));
+    @apply btn hover:border-[rgb(var(--color-primary)/0.4)] active:scale-[0.97];
+  }
+  .btn-danger {
+    background: rgb(var(--color-danger));
+    color: #fff;
+    @apply btn hover:opacity-90 active:scale-[0.97];
+  }
+  .btn-ghost {
+    color: rgb(var(--color-on-surface) / 0.7);
+    @apply btn hover:bg-[rgb(var(--color-surface-3))] hover:text-[rgb(var(--color-on-surface))] active:scale-[0.97];
+  }
+  .btn-icon {
+    @apply inline-flex items-center justify-center w-9 h-9 rounded-[var(--radius)] transition-all duration-150
+           hover:bg-[rgb(var(--color-surface-3))] active:scale-[0.95] focus:outline-none;
+  }
+
+  /* --- Cards --- */
+  .card {
+    background: rgb(var(--color-surface-2));
+    border: 1px solid rgb(var(--color-border));
+    @apply rounded-[var(--radius-lg)] p-5 transition-all duration-200;
+  }
+  .card-hover {
+    @apply card cursor-pointer;
+    &:hover {
+      border-color: rgb(var(--color-primary) / 0.35);
+      background: rgb(var(--color-surface-3));
+    }
+  }
+
+  /* --- Inputs --- */
+  .input {
+    width: 100%;
+    background: rgb(var(--color-surface-3));
+    border: 1px solid rgb(var(--color-border));
+    color: rgb(var(--color-on-surface));
+    @apply rounded-[var(--radius)] px-3 py-2.5 text-sm
+           focus:outline-none transition-all duration-150;
+    &::placeholder { color: rgb(var(--color-on-surface) / 0.3); }
+    &:focus { border-color: rgb(var(--color-primary) / 0.6); box-shadow: 0 0 0 3px rgb(var(--color-primary) / 0.12); }
+  }
+  .input-label {
+    display: block;
+    color: rgb(var(--color-on-surface) / 0.5);
+    @apply text-xs font-semibold mb-1.5 uppercase tracking-widest;
+  }
+  .input-error {
+    color: rgb(var(--color-danger));
+    @apply text-xs mt-1;
+  }
+
+  /* --- Badges --- */
+  .badge {
+    @apply inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold;
+  }
+  .badge-success { background: rgb(var(--color-success) / 0.15); color: rgb(var(--color-success)); @apply badge; }
+  .badge-warning { background: rgb(var(--color-warning) / 0.15); color: rgb(var(--color-warning)); @apply badge; }
+  .badge-danger  { background: rgb(var(--color-danger)  / 0.15); color: rgb(var(--color-danger));  @apply badge; }
+  .badge-info    { background: rgb(var(--color-info)    / 0.15); color: rgb(var(--color-info));    @apply badge; }
+  .badge-neutral { background: rgb(var(--color-border)  / 0.5);  color: rgb(var(--color-muted));   @apply badge; }
+  .badge-primary { background: rgb(var(--color-primary) / 0.15); color: rgb(var(--color-primary)); @apply badge; }
+
+  /* Estados de pedido */
+  .estado-pendiente     { @apply badge-warning; }
+  .estado-preparacion   { @apply badge-primary; }
+  .estado-listo         { @apply badge-success; }
+  .estado-entregado     { @apply badge-info; }
+  .estado-cancelado     { @apply badge-danger; }
+
+  /* --- Tabla --- */
+  .table-wrapper {
+    border: 1px solid rgb(var(--color-border));
+    @apply w-full overflow-x-auto rounded-[var(--radius-lg)];
+  }
+  table { @apply w-full text-sm; color: rgb(var(--color-on-surface)); }
+  thead tr { background: rgb(var(--color-surface-3)); border-bottom: 1px solid rgb(var(--color-border)); }
+  thead th {
+    color: rgb(var(--color-on-surface) / 0.45);
+    @apply px-4 py-3 text-left text-xs font-semibold uppercase tracking-widest;
+  }
+  tbody tr { border-bottom: 1px solid rgb(var(--color-border-soft) / 0.5); transition: background 0.1s; }
+  tbody tr:hover { background: rgb(var(--color-primary) / 0.05); }
+  tbody tr:last-child { border-bottom: none; }
+  tbody td { @apply px-4 py-3; }
+
+  /* --- Stat card --- */
+  .stat-card { @apply card flex flex-col gap-1.5; }
+  .stat-value { font-family: 'Outfit', sans-serif; color: rgb(var(--color-on-surface)); @apply text-3xl font-bold; }
+  .stat-label { color: rgb(var(--color-muted)); @apply text-xs uppercase tracking-widest; }
+
+  /* --- Nav item sidebar --- */
+  .nav-item {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.5rem 0.75rem;
+    border-radius: var(--radius);
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: rgb(var(--color-on-surface) / 0.55);
+    cursor: pointer;
+    transition: all 0.15s ease;
+    text-decoration: none;
+    position: relative;
+    overflow: hidden;
+  }
+  .nav-item:hover {
+    color: rgb(var(--color-on-surface));
+    background: rgb(var(--color-surface-3));
+  }
+  .nav-item.active {
+    color: rgb(var(--color-primary));
+    background: rgb(var(--color-primary) / 0.12);
+    font-weight: 600;
+  }
+  .nav-item.active::before {
+    content: '';
+    position: absolute;
+    left: 0; top: 20%; bottom: 20%;
+    width: 3px;
+    border-radius: 0 999px 999px 0;
+    background: rgb(var(--color-primary));
+  }
+
+  /* --- Skeleton shimmer --- */
+  .skeleton {
+    border-radius: var(--radius);
+    animation: shimmer 1.6s infinite;
+    background: linear-gradient(
+      90deg,
+      rgb(var(--color-border) / 0.4) 25%,
+      rgb(var(--color-border) / 0.7) 50%,
+      rgb(var(--color-border) / 0.4) 75%
+    );
+    background-size: 200% 100%;
+  }
+
+  /* --- Divider --- */
+  .divider {
+    height: 1px;
+    background: rgb(var(--color-border));
+    @apply my-4;
+  }
+}
+
+/* ============================================================
+   LAYOUT PRINCIPAL
+   ============================================================ */
+.app-shell {
+  display: grid;
+  grid-template-columns: var(--sidebar-width, 260px) 1fr;
+  min-height: 100vh;
+}
+
+.main-content {
+  padding: 1.5rem;
+  overflow-y: auto;
+  max-height: 100vh;
+}
+
+/* ============================================================
+   SIDEBAR RESPONSIVE
+   ============================================================ */
+
+/* Overlay para móvil */
+.sidebar-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(4px);
+  z-index: 39;
+  opacity: 0;
+  transition: opacity 0.25s ease;
+}
+.sidebar-overlay.open {
+  display: block;
+  opacity: 1;
+}
+
+/* Sidebar móvil */
+@media (max-width: 768px) {
+  .app-shell {
+    grid-template-columns: 1fr;
+  }
+
+  .app-sidebar {
+    position: fixed !important;
+    top: 0;
+    left: 0;
+    height: 100vh;
+    z-index: 40;
+    transform: translateX(-100%);
+    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    width: 280px !important;
+  }
+
+  .app-sidebar.open {
+    transform: translateX(0);
+    box-shadow: 24px 0 48px rgba(0, 0, 0, 0.5);
+  }
+
+  .main-content {
+    padding: 1rem;
+  }
+}
+
+/* Sidebar en tablet: colapsable a iconos */
+@media (min-width: 769px) and (max-width: 1024px) {
+  :root { --sidebar-width: 72px; }
+  .nav-label, .sidebar-text { display: none; }
+  .nav-item { justify-content: center; padding: 0.6rem; }
+  .nav-item.active::before { display: none; }
+  .sidebar-logo-text, .sidebar-user-text, .sidebar-section-title, .theme-selector-grid { display: none; }
+  .sidebar-logo { justify-content: center; }
+  .sidebar-user { justify-content: center; }
+}
+
+/* ============================================================
+   ANIMACIONES
+   ============================================================ */
+@keyframes shimmer {
+  0%   { background-position: -200% 0; }
+  100% { background-position:  200% 0; }
+}
+
+@keyframes fade-up {
+  from { opacity: 0; transform: translateY(16px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes fade-in {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+@keyframes slide-in-left {
+  from { opacity: 0; transform: translateX(-20px); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+
+@keyframes pulse-dot {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: 0.4; }
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+.animate-fade-up        { animation: fade-up 0.4s ease both; }
+.animate-fade-in        { animation: fade-in 0.3s ease both; }
+.animate-slide-in-left  { animation: slide-in-left 0.35s ease both; }
+.animate-spin           { animation: spin 0.7s linear infinite; }
+.animate-pulse-dot      { animation: pulse-dot 2s ease-in-out infinite; }
+
+/* Stagger para listas */
+.stagger > *:nth-child(1) { animation-delay: 0.05s; }
+.stagger > *:nth-child(2) { animation-delay: 0.10s; }
+.stagger > *:nth-child(3) { animation-delay: 0.15s; }
+.stagger > *:nth-child(4) { animation-delay: 0.20s; }
+.stagger > *:nth-child(5) { animation-delay: 0.25s; }
+
+/* ============================================================
+   TRANSICIÓN DE TEMA (solo bg/color, no animations)
+   ============================================================ */
+*:not([class*="animate-"]) {
+  transition-property: background-color, border-color, color, box-shadow;
+  transition-duration: 200ms;
+  transition-timing-function: ease;
+}
+[class*="animate-"] { transition: none !important; }
+
+/* ============================================================
+   SIDEBAR "LA ENTRERRIANA" — colores dinámicos por tema
+   ============================================================ */
+.ent-sidebar {
+  background: rgb(var(--sb-bg)) !important;
+  border-right: 1px solid rgb(var(--sb-border)) !important;
+}
+.ent-sidebar .nav-item {
+  color: rgb(var(--sb-text) / 0.5) !important;
+}
+.ent-sidebar .nav-item:hover {
+  background: rgb(var(--sb-bg-hover)) !important;
+  color: rgb(var(--sb-text) / 0.92) !important;
+}
+.ent-sidebar .nav-item.active {
+  background: rgb(var(--sb-accent) / 0.18) !important;
+  color: rgb(var(--sb-accent)) !important;
+}
+.ent-sidebar .nav-item.active::before { display: none; }
+
+/* Theme toggle button */
+.ent-theme-toggle {
+  width: 100%; display: flex; align-items: center; justify-content: space-between;
+  padding: 0.5rem 0.75rem; border-radius: 0.5rem; border: 1px solid rgb(var(--sb-border));
+  background: rgb(var(--sb-bg-hover)); color: rgb(var(--sb-text) / 0.85);
+  font-size: 0.78rem; cursor: pointer; transition: all 0.2s;
+}
+.ent-theme-toggle:hover { border-color: rgb(var(--sb-accent) / 0.5); color: rgb(var(--sb-text)); }
+.ent-theme-toggle svg { transition: transform 0.2s; flex-shrink: 0; }
+.ent-theme-toggle.open svg { transform: rotate(180deg); }
+
+/* Theme option items in dropdown */
+.ent-theme-option {
+  width: 100%; display: flex; align-items: center; gap: 0.5rem;
+  padding: 0.45rem 0.75rem; border-radius: 0.4rem; border: none;
+  background: transparent; color: rgb(var(--sb-text) / 0.75);
+  font-size: 0.8rem; cursor: pointer; transition: all 0.15s; text-align: left;
+}
+.ent-theme-option:hover { background: rgb(var(--sb-bg-hover)); color: rgb(var(--sb-text)); }
+.ent-theme-option.active { color: rgb(var(--sb-accent)); }
+.ent-theme-option .ent-check { margin-left: auto; font-size: 0.75rem; color: rgb(var(--sb-accent)); }
+
+/* ============================================================
+   LOGIN "LA ENTRERRIANA" — para cocina
+   ============================================================ */
+.ent-login { min-height: 100vh; display: flex; }
+
+.ent-panel-left {
+  display: none; width: 50%; position: relative; overflow: hidden;
+  background:
+    radial-gradient(ellipse at 25% 85%, rgba(196,154,90,0.18) 0%, transparent 50%),
+    radial-gradient(ellipse at 75% 15%, rgba(139,94,52,0.12) 0%, transparent 50%),
+    linear-gradient(155deg, #1F2A21 0%, #2E3D2F 30%, #1c1810 65%, #0e0b08 100%);
+}
+@media (min-width: 768px) { .ent-panel-left { display: block; } }
+
+.ent-panel-left-texture {
+  position: absolute; inset: 0; pointer-events: none;
+  background-image: radial-gradient(circle at 1px 1px, rgba(255,255,255,0.04) 1px, transparent 0);
+  background-size: 26px 26px;
+}
+.ent-panel-left-glow {
+  position: absolute; inset: 0; pointer-events: none;
+  background: radial-gradient(ellipse at 40% 60%, rgba(196,154,90,0.09) 0%, transparent 50%);
+}
+.ent-panel-left-content {
+  position: relative; z-index: 5; height: 100%;
+  display: flex; flex-direction: column; justify-content: space-between;
+  padding: 3.5rem; color: #F5F2EB;
+}
+.ent-bienvenido {
+  font-size: 0.68rem; font-weight: 700; letter-spacing: 0.35em;
+  color: #C49A5A; margin-bottom: 0.5rem; text-transform: uppercase;
+}
+.ent-nombre-restaurante {
+  font-family: 'Playfair Display', Georgia, serif;
+  font-size: clamp(2rem, 4vw, 3.5rem); font-weight: 800;
+  color: #F5F2EB; line-height: 1.05; letter-spacing: 0.04em; margin-bottom: 1rem;
+}
+.ent-ornament-line {
+  width: 50px; height: 1.5px; margin: 0.75rem 0;
+  background: linear-gradient(to right, transparent, #C49A5A 40%, #C49A5A 60%, transparent);
+}
+.ent-tagline { font-size: 0.875rem; font-style: italic; color: rgba(245,242,235,0.65); }
+.ent-features-grid { display: flex; flex-direction: column; gap: 0.625rem; }
+.ent-feature-item {
+  display: flex; align-items: center; gap: 0.875rem; padding: 0.75rem 1rem;
+  border-radius: 0.75rem; background: rgba(245,242,235,0.06); border: 1px solid rgba(196,154,90,0.18);
+}
+.ent-feature-icon  { font-size: 1.1rem; flex-shrink: 0; }
+.ent-feature-label {
+  font-size: 0.68rem; font-weight: 700; letter-spacing: 0.12em;
+  color: rgba(245,242,235,0.8); text-transform: uppercase;
+}
+
+.ent-panel-right {
+  flex: 1; display: flex; flex-direction: column; align-items: center;
+  justify-content: center; padding: 2.5rem 1.25rem; overflow-y: auto;
+  background: rgb(var(--color-surface));
+}
+@media (max-width: 480px) {
+  .ent-panel-right { justify-content: flex-start; padding-top: 2.5rem; }
+}
+
+.ent-logo-area { text-align: center; margin-bottom: 1.25rem; }
+.ent-logo-svg  { width: 68px; height: 68px; color: rgb(var(--color-on-surface)); margin-bottom: 0.625rem; }
+.theme-entrerriana .ent-logo-svg { color: #1F2A21; }
+.ent-logo-nombre {
+  font-size: 0.78rem; font-weight: 800; letter-spacing: 0.28em;
+  color: rgb(var(--color-on-surface));
+}
+.ent-logo-sub {
+  font-size: 0.62rem; font-weight: 600; letter-spacing: 0.18em;
+  color: rgb(var(--color-primary));
+}
+
+.ent-form-container { width: 100%; max-width: 360px; }
+.ent-form-title {
+  font-size: 1.5rem; font-weight: 700; text-align: center;
+  color: rgb(var(--color-on-surface)); margin-bottom: 0.25rem;
+}
+.ent-form-ornament {
+  width: 36px; height: 1.5px; background: rgb(var(--color-primary));
+  margin: 0.5rem auto 0.75rem;
+}
+.ent-form-subtitle {
+  font-size: 0.78rem; text-align: center; line-height: 1.6; margin-bottom: 1.25rem;
+  color: rgb(var(--color-on-surface) / 0.5);
+}
+
+.ent-field { margin-bottom: 0.875rem; }
+.ent-input-wrapper { position: relative; display: flex; align-items: center; }
+.ent-input-icon {
+  position: absolute; left: 0.875rem; width: 1rem; height: 1rem;
+  color: rgb(var(--color-on-surface) / 0.35); pointer-events: none;
+}
+.ent-input {
+  width: 100%; padding: 0.75rem 0.875rem 0.75rem 2.5rem;
+  background: rgb(var(--color-surface-3)); border: 1px solid rgb(var(--color-border));
+  border-radius: 0.625rem; font-size: 0.875rem; color: rgb(var(--color-on-surface));
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+.ent-input::placeholder { color: rgb(var(--color-on-surface) / 0.35); }
+.ent-input:focus {
+  outline: none; border-color: rgb(var(--color-primary) / 0.6);
+  box-shadow: 0 0 0 3px rgb(var(--color-primary) / 0.1);
+}
+.ent-eye-btn {
+  position: absolute; right: 0.75rem; padding: 0.25rem; background: none; border: none;
+  cursor: pointer; color: rgb(var(--color-on-surface) / 0.4);
+  display: flex; align-items: center; justify-content: center;
+  border-radius: 0.375rem; transition: color 0.15s;
+}
+.ent-eye-btn:hover { color: rgb(var(--color-on-surface) / 0.7); }
+
+.ent-error {
+  padding: 0.625rem 0.875rem; margin-bottom: 0.75rem;
+  background: rgb(var(--color-danger) / 0.08); border: 1px solid rgb(var(--color-danger) / 0.25);
+  border-radius: 0.5rem; font-size: 0.8rem; color: rgb(var(--color-danger));
+  display: flex; align-items: center; gap: 0.5rem;
+}
+.ent-alert-blocked {
+  display: flex; align-items: flex-start; gap: 0.75rem; padding: 0.875rem; margin-bottom: 1rem;
+  background: rgb(var(--color-danger) / 0.08); border: 1px solid rgb(var(--color-danger) / 0.25);
+  border-radius: 0.75rem; font-size: 0.8rem;
+}
+.ent-alert-title { font-weight: 600; color: rgb(var(--color-danger)); }
+.ent-alert-sub   { color: rgb(var(--color-on-surface) / 0.5); font-size: 0.75rem; margin-top: 0.125rem; }
+
+.ent-submit-btn {
+  width: 100%; display: flex; align-items: center; justify-content: center;
+  padding: 0.875rem; margin-top: 0.5rem; font-size: 0.9rem; font-weight: 600;
+  border-radius: 0.625rem; border: none; cursor: pointer;
+  transition: filter 0.2s, opacity 0.2s;
+  background: rgb(var(--color-primary)); color: rgb(var(--color-on-primary));
+}
+.theme-entrerriana .ent-submit-btn { background: #1F2A21; color: #F5F2EB; }
+.ent-submit-btn:hover:not(:disabled)  { filter: brightness(1.08); }
+.ent-submit-btn:active:not(:disabled) { filter: brightness(0.95); }
+.ent-submit-btn:disabled              { opacity: 0.6; cursor: not-allowed; }
+
+.ent-spinner {
+  display: inline-block; width: 1rem; height: 1rem; margin-right: 0.5rem;
+  border-radius: 50%; border: 2px solid rgba(255,255,255,0.3); border-top-color: white;
+  animation: ent-spin 0.7s linear infinite;
+}
+@keyframes ent-spin { to { transform: rotate(360deg); } }
+
+.ent-divider-decor { display: flex; align-items: center; gap: 0.75rem; margin: 1.1rem 0; }
+.ent-divider-line  { flex: 1; height: 1px; background: rgb(var(--color-border)); }
+.ent-divider-icon  { color: rgb(var(--color-primary)); font-size: 0.7rem; }
+
+.ent-quote {
+  text-align: center; font-size: 0.78rem; font-style: italic; margin-bottom: 1.1rem;
+  color: rgb(var(--color-on-surface) / 0.4);
+}
+
+.ent-themes-section { margin-bottom: 0.75rem; }
+.ent-themes-label {
+  font-size: 0.62rem; font-weight: 700; text-transform: uppercase;
+  letter-spacing: 0.15em; text-align: center; margin-bottom: 0.5rem;
+  color: rgb(var(--color-on-surface) / 0.35);
+}
+.ent-themes-grid { display: flex; flex-wrap: wrap; gap: 0.375rem; justify-content: center; }
+.ent-theme-btn {
+  display: flex; flex-direction: column; align-items: center; gap: 0.2rem;
+  padding: 0.45rem 0.6rem; border-radius: 0.6rem;
+  border: 1px solid rgb(var(--color-border)); background: transparent;
+  cursor: pointer; font-size: 0.62rem; font-weight: 600;
+  color: rgb(var(--color-on-surface) / 0.45); transition: all 0.15s;
+}
+.ent-theme-btn:hover { border-color: rgb(var(--color-primary) / 0.45); }
+.ent-theme-btn.ent-theme-active {
+  background: rgb(var(--color-primary) / 0.1);
+  border-color: rgb(var(--color-primary) / 0.5);
+  color: rgb(var(--color-primary));
+}
+.ent-theme-btn span:first-child { font-size: 1rem; }
+
+.ent-switch-link {
+  display: flex; align-items: center; justify-content: center; gap: 0.375rem;
+  font-size: 0.75rem; font-weight: 600; text-decoration: none;
+  color: rgb(var(--color-primary)); padding: 0.5rem;
+  border-radius: 0.5rem; transition: background 0.15s;
+}
+.ent-switch-link:hover { background: rgb(var(--color-primary) / 0.08); }
