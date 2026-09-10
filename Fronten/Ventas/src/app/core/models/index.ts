@@ -202,6 +202,15 @@ export interface Cliente {
   ultimaCompra: string | null;
 }
 
+export interface Empresa {
+  id: number;
+  nombre: string;
+  nit: string | null;
+  direccion: string | null;
+  telefono: string | null;
+  logoUrl: string | null;
+}
+
 export type EstadoCliente =
   | 'CLIENTE_NUEVO'
   | 'POSIBLE_ACTIVO'
@@ -318,6 +327,7 @@ export interface MovimientoCaja {
   monto: number;
   motivo: string | null;
   usuario?: { id: number; username: string };
+  revierteId?: number | null;
   creadoEn: string;
 }
 

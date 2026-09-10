@@ -40,6 +40,10 @@ public class MovimientoCaja {
     @JsonIgnoreProperties({"hibernateLazyInitializer", "handler", "passwordHash"})
     private Usuario usuario;
 
+    /** Si este movimiento es la reversión de otro, apunta al id del movimiento original. */
+    @Column(name = "revierte_id")
+    private Long revierteId;
+
     @CreationTimestamp
     @Column(updatable = false)
     private LocalDateTime creadoEn;

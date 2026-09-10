@@ -4,17 +4,23 @@ import { FormsModule } from '@angular/forms';
 import { RouterModule, RouterOutlet, ActivatedRoute, NavigationEnd, Router } from '@angular/router';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { filter, map, startWith } from 'rxjs';
+import { LucideDynamicIcon } from '@lucide/angular';
 import { AuthService } from '../core/services/auth.service';
 import { ThemeService } from '../core/services/theme.service';
-import { AlertaService, SucursalService } from '../core/services/api.service';
+import { AlertaService, SucursalService, EmpresaService } from '../core/services/api.service';
 import { ToastContainerComponent } from '../shared/components/toast-container.component';
+import { EmpresaOnboardingComponent } from '../shared/components/empresa-onboarding.component';
 import { Sucursal } from '../core/models';
+import { ICONOS_DISPONIBLES } from '../core/icons/app-icons.provider';
 
 @Component({
   selector: 'app-shell',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterOutlet, RouterModule, ToastContainerComponent],
+  imports: [CommonModule, FormsModule, RouterOutlet, RouterModule, ToastContainerComponent, EmpresaOnboardingComponent, LucideDynamicIcon],
   template: `
+    @if (mostrarOnboarding()) {
+      <app-empresa-onboarding (completado)="mostrarOnboarding.set(false)" />
+    }
     <div class="app-shell">
 
       <!-- OVERLAY -->
@@ -81,7 +87,7 @@ import { Sucursal } from '../core/models';
                routerLinkActive="active"
                class="nav-item"
                (click)="closeSidebar()">
-              <span class="text-base w-5 text-center flex-shrink-0">{{ getEmoji(item.codigo) }}</span>
+              <svg [lucideIcon]="iconoSeguro(item.icono)" class="w-[18px] h-[18px] flex-shrink-0" [strokeWidth]="1.75"></svg>
               <span class="flex-1 truncate">{{ item.nombre }}</span>
             </a>
           }
@@ -276,7 +282,7 @@ import { Sucursal } from '../core/models';
     <nav class="bottom-nav">
       @for (item of bottomNavItems(); track item.id) {
         <a [routerLink]="item.ruta" routerLinkActive="active" class="bottom-nav-item">
-          <span class="bottom-nav-icon">{{ getEmoji(item.codigo) }}</span>
+          <svg [lucideIcon]="iconoSeguro(item.icono)" class="bottom-nav-icon" [strokeWidth]="1.75"></svg>
           <span>{{ item.nombre | slice:0:8 }}</span>
         </a>
       }
@@ -288,6 +294,7 @@ export class ShellComponent implements OnInit {
   sidebarOpen       = signal(false);
   themeSelectorOpen = signal(false);
   sucursales        = signal<Sucursal[]>([]);
+  mostrarOnboarding = signal(false);
 
   breadcrumbTitulo = toSignal(
     this.router.events.pipe(
@@ -324,6 +331,7 @@ export class ShellComponent implements OnInit {
     public themeService: ThemeService,
     private alertaService: AlertaService,
     private sucursalService: SucursalService,
+    private empresaService: EmpresaService,
     private router: Router,
     private activatedRoute: ActivatedRoute,
   ) {}
@@ -331,6 +339,13 @@ export class ShellComponent implements OnInit {
   ngOnInit(): void {
     this.cargarAlertas();
     setInterval(() => this.cargarAlertas(), 60_000);
+
+    if (this.auth.rol() === 'ADMIN') {
+      this.empresaService.obtener().subscribe({
+        next: () => {},
+        error: err => { if (err?.status === 404) this.mostrarOnboarding.set(true); },
+      });
+    }
 
     if (this.auth.sucursalFija() == null) {
       this.sucursalService.listar().subscribe({
@@ -379,30 +394,13 @@ export class ShellComponent implements OnInit {
     });
   }
 
-  getEmoji(codigo: string): string {
-    const map: Record<string, string> = {
-      MOD_VENTAS:          '💰',
-      MOD_CAJA:            '💳',
-      MOD_PEDIDOS_VENTAS:  '🛍️',
-      MOD_CLIENTES:        '👥',
-      MOD_PENSIONADOS:     '🏠',
-      MOD_COBROS:          '🧾',
-      MOD_ASISTENCIA:      '✅',
-      MOD_TIPOS_ALMUERZO:  '🍲',
-      MOD_CATEGORIAS_PLATO:'🏷️',
-      MOD_SUCURSALES:      '🏪',
-      MOD_ADMIN:           '⚙️',
-      MOD_EMPLEADOS:       '👤',
-      MOD_ROLES:           '🛡️',
-      MOD_USUARIOS:        '👤',
-      MOD_PROVEEDORES:     '🏭',
-      MOD_HISTORIAL_VENTAS:'📊',
-      MOD_ALERTAS_VENTAS:  '🔔',
-      MOD_AUDITORIA:       '📄',
-      MOD_REPORTES:        '📊',
-      MOD_ALERTAS_SISTEMA: '🔔',
-    };
-    return map[codigo] ?? '📌';
+  /**
+   * Un módulo creado a mano desde "Módulos y Menús" puede traer un `icono` que no está
+   * registrado en `provideAppIcons()` — `LucideDynamicIcon` lanza una excepción en ese caso,
+   * así que se cae a un ícono neutro ("tag") en vez de romper el menú.
+   */
+  iconoSeguro(icono: string): string {
+    return ICONOS_DISPONIBLES.has(icono) ? icono : 'tag';
   }
 
   private cargarAlertas(): void {

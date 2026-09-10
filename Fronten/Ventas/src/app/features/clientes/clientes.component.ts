@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ClienteService } from '../../core/services/api.service';
 import { ToastService } from '../../core/services/toast.service';
+import { AuthService } from '../../core/services/auth.service';
 import { PaginationComponent } from '../../shared/components/pagination.component';
 import { Cliente, EstadoCliente } from '../../core/models';
 
@@ -99,6 +100,7 @@ type SortCol = 'nombre' | 'registro' | 'ultimaCompra' | 'estado';
                   <span class="text-xs opacity-40">{{ sortIndicador('estado') }}</span>
                 </div>
               </th>
+              @if (puedeEditar()) { <th>Acciones</th> }
             </tr>
           </thead>
           <tbody>
@@ -132,11 +134,18 @@ type SortCol = 'nombre' | 'registro' | 'ultimaCompra' | 'estado';
                     {{ getEstadoLabel(c.estado) }}
                   </span>
                 </td>
+                @if (puedeEditar()) {
+                  <td>
+                    <button (click)="abrirEdicion(c)" class="btn-ghost text-xs px-2 py-1">
+                      ✏️ Editar
+                    </button>
+                  </td>
+                }
               </tr>
             }
             @if (!cargando() && clientesFiltrados().length === 0) {
               <tr>
-                <td colspan="5" class="text-center py-10"
+                <td [attr.colspan]="puedeEditar() ? 6 : 5" class="text-center py-10"
                     style="color:rgb(var(--color-on-surface)/0.35)">
                   Sin clientes con este filtro
                 </td>
@@ -162,7 +171,7 @@ type SortCol = 'nombre' | 'registro' | 'ultimaCompra' | 'estado';
         <div class="card max-w-sm w-full space-y-4 animate-pop"
              (click)="$event.stopPropagation()">
           <h3 class="font-display font-bold" style="color:rgb(var(--color-on-surface))">
-            👥 Nuevo Cliente
+            {{ editando() ? '✏️ Editar Cliente' : '👥 Nuevo Cliente' }}
           </h3>
           <div class="space-y-3">
             <div>
@@ -219,6 +228,7 @@ export class ClientesComponent implements OnInit {
   filtroEstado = signal<string>('TODOS');
   modal        = signal(false);
   guardando    = signal(false);
+  editando     = signal<Cliente | null>(null);
 
   sortCol = signal<SortCol | ''>('');
   sortDir = signal<'asc' | 'desc'>('asc');
@@ -279,7 +289,12 @@ export class ClientesComponent implements OnInit {
   constructor(
     private clienteService: ClienteService,
     private toastSvc: ToastService,
+    public auth: AuthService,
   ) {}
+
+  puedeEditar(): boolean {
+    return this.auth.rol() === 'ADMIN' || this.auth.tieneModulo('MOD_CLIENTES');
+  }
 
   ngOnInit(): void {
     this.clienteService.listar().subscribe({
@@ -309,12 +324,20 @@ export class ClientesComponent implements OnInit {
   }
 
   abrirModal(): void {
+    this.editando.set(null);
     this.formCliente = { nombre: '', telefono: '', correo: '' };
     this.errNombre = this.errTelefono = this.errCorreo = '';
     this.modal.set(true);
   }
 
-  cerrarModal(): void { this.modal.set(false); }
+  abrirEdicion(c: Cliente): void {
+    this.editando.set(c);
+    this.formCliente = { nombre: c.nombre, telefono: c.telefono ?? '', correo: c.correo ?? '' };
+    this.errNombre = this.errTelefono = this.errCorreo = '';
+    this.modal.set(true);
+  }
+
+  cerrarModal(): void { this.modal.set(false); this.editando.set(null); }
 
   guardar(): void {
     this.errNombre = this.errTelefono = this.errCorreo = '';
@@ -338,13 +361,25 @@ export class ClientesComponent implements OnInit {
 
     if (!valid) return;
 
+    const editandoActual = this.editando();
     this.guardando.set(true);
-    this.clienteService.crear(this.formCliente).subscribe({
+
+    const obs = editandoActual
+      ? this.clienteService.actualizar(editandoActual.id, this.formCliente)
+      : this.clienteService.crear(this.formCliente);
+
+    obs.subscribe({
       next: c => {
-        this.clientes.update(cs => [...cs, c]);
+        if (editandoActual) {
+          this.clientes.update(cs => cs.map(x => x.id === c.id ? c : x));
+          this.toastSvc.success(`Cliente "${c.nombre}" actualizado correctamente`);
+        } else {
+          this.clientes.update(cs => [...cs, c]);
+          this.toastSvc.success(`Cliente "${c.nombre}" registrado correctamente`);
+        }
         this.guardando.set(false);
         this.modal.set(false);
-        this.toastSvc.success(`Cliente "${c.nombre}" registrado correctamente`);
+        this.editando.set(null);
       },
       error: err => {
         this.guardando.set(false);

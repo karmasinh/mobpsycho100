@@ -2,7 +2,7 @@ import { Component, OnInit, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import {
-  InsumoService, RecetaService, GeminiService,
+  InsumoService, RecetaService, SugerenciaIaService,
   RecetaResumen, RecetaDetalle, IngredienteDetalle,
 } from '../../core/services/api.service';
 import { Insumo } from '../../core/models';
@@ -295,7 +295,7 @@ interface IngredienteForm {
                     <button (click)="tab.set('gemini'); sugerirConGemini()"
                             class="btn-secondary text-sm flex items-center gap-1.5"
                             [disabled]="ingredientesForm().length === 0">
-                      ✨ Sugerir con Gemini
+                      ✨ Sugerir con IA
                     </button>
                     <div class="flex-1"></div>
                     <button (click)="descargarPDF()"
@@ -322,23 +322,33 @@ interface IngredienteForm {
               </div>
             }
 
-            <!-- ── Tab Gemini IA ───────────────────────────── -->
+            <!-- ── Tab Sugerencia IA ───────────────────────────── -->
             @if (tab() === 'gemini') {
               <div class="card flex-1 flex flex-col gap-4">
-                <div class="flex items-center justify-between">
+                <div class="flex items-center justify-between flex-wrap gap-2">
                   <p class="font-semibold" style="color:rgb(var(--color-on-surface))">
-                    ✨ Sugerencia de Gemini IA
+                    ✨ Sugerencia por IA
                   </p>
-                  <button (click)="sugerirConGemini()"
-                          [disabled]="cargandoGemini() || ingredientesForm().length === 0"
-                          class="btn-primary text-sm">
-                    @if (cargandoGemini()) {
-                      <span class="w-4 h-4 rounded-full border-2 border-white/30 border-t-white animate-spin inline-block mr-1"></span>
-                      Consultando IA...
-                    } @else {
-                      🔄 {{ geminiRespuesta() ? 'Regenerar' : 'Sugerir receta' }}
-                    }
-                  </button>
+                  <div class="flex items-center gap-2">
+                    <select [(ngModel)]="proveedorIa" class="input text-xs py-1.5" style="width:auto">
+                      @for (p of proveedoresIa(); track p) {
+                        <option [value]="p">{{ etiquetaProveedor(p) }}</option>
+                      }
+                      @if (proveedoresIa().length === 0) {
+                        <option value="">Sin proveedores configurados</option>
+                      }
+                    </select>
+                    <button (click)="sugerirConGemini()"
+                            [disabled]="cargandoGemini() || ingredientesForm().length === 0 || !proveedorIa"
+                            class="btn-primary text-sm">
+                      @if (cargandoGemini()) {
+                        <span class="w-4 h-4 rounded-full border-2 border-white/30 border-t-white animate-spin inline-block mr-1"></span>
+                        Consultando IA...
+                      } @else {
+                        🔄 {{ geminiRespuesta() ? 'Regenerar' : 'Sugerir receta' }}
+                      }
+                    </button>
+                  </div>
                 </div>
 
                 @if (ingredientesForm().length === 0) {
@@ -352,7 +362,7 @@ interface IngredienteForm {
                     <div class="w-10 h-10 rounded-full border-4 animate-spin mb-4"
                          style="border-color:rgb(var(--color-border));border-top-color:rgb(var(--color-primary))"></div>
                     <p class="text-sm" style="color:rgb(var(--color-on-surface)/0.5)">
-                      Gemini está analizando tus ingredientes...
+                      {{ etiquetaProveedor(proveedorIa) }} está analizando tus ingredientes...
                     </p>
                   </div>
                 } @else if (geminiRespuesta()) {
@@ -374,14 +384,14 @@ interface IngredienteForm {
                   <div class="flex-1 flex flex-col items-center justify-center py-12"
                        style="color:rgb(var(--color-on-surface)/0.35)">
                     <p class="text-3xl mb-2">✨</p>
-                    <p class="text-sm">Presiona "Sugerir receta" para obtener ideas de Gemini</p>
+                    <p class="text-sm">Presiona "Sugerir receta" para obtener ideas de la IA</p>
                   </div>
                 }
 
                 @if (errorGemini()) {
                   <p class="text-xs px-3 py-2 rounded-lg"
                      style="background:rgb(var(--color-danger)/0.1);color:rgb(var(--color-danger))">
-                    ⚠️ {{ errorGemini() }} — Verifica tu API Key en environment.ts
+                    ⚠️ {{ errorGemini() }}
                   </p>
                 }
               </div>
@@ -462,10 +472,12 @@ export class RecetasComponent implements OnInit {
     this.ingredientesForm().reduce((s, i) => s + i.costoCalculado, 0)
   );
 
-  // ── gemini ────────────────────────────────────────────────────
+  // ── sugerencia por IA ────────────────────────────────────────────
   geminiRespuesta = signal('');
   cargandoGemini  = signal(false);
   errorGemini     = signal('');
+  proveedoresIa   = signal<string[]>([]);
+  proveedorIa     = '';
 
   // ── acciones ──────────────────────────────────────────────────
   guardando = signal(false);
@@ -474,13 +486,25 @@ export class RecetasComponent implements OnInit {
   constructor(
     private recetaSvc: RecetaService,
     private insumoSvc: InsumoService,
-    private geminiSvc: GeminiService,
+    private iaSvc: SugerenciaIaService,
     private toastSvc: ToastService,
   ) {}
+
+  etiquetaProveedor(codigo: string): string {
+    const map: Record<string, string> = { GEMINI: 'Gemini', CLAUDE: 'Claude', OPENAI: 'ChatGPT' };
+    return map[codigo] ?? codigo;
+  }
 
   ngOnInit(): void {
     this.cargarPlatos();
     this.cargarInsumos();
+    this.iaSvc.proveedoresDisponibles().subscribe({
+      next: lista => {
+        this.proveedoresIa.set(lista);
+        if (lista.length > 0) this.proveedorIa = lista[0];
+      },
+      error: () => {},
+    });
   }
 
   sortBy(col: string): void {
@@ -617,11 +641,11 @@ export class RecetasComponent implements OnInit {
     });
   }
 
-  // ── gemini ────────────────────────────────────────────────────
+  // ── sugerencia por IA ────────────────────────────────────────────
 
   sugerirConGemini(): void {
     const plato = this.platoSeleccionado();
-    if (!plato || this.ingredientesForm().length === 0) return;
+    if (!plato || this.ingredientesForm().length === 0 || !this.proveedorIa) return;
     this.cargandoGemini.set(true);
     this.geminiRespuesta.set('');
     this.errorGemini.set('');
@@ -632,14 +656,14 @@ export class RecetasComponent implements OnInit {
       unidad: i.unidadMedida,
     }));
 
-    this.geminiSvc.sugerirReceta(plato.platoNombre, ingredientesIA, this.costoTotal()).subscribe({
+    this.iaSvc.sugerirReceta(plato.platoNombre, ingredientesIA, this.costoTotal(), this.proveedorIa).subscribe({
       next: texto => {
         this.geminiRespuesta.set(texto);
         this.cargandoGemini.set(false);
       },
       error: err => {
         this.cargandoGemini.set(false);
-        this.errorGemini.set(err?.error?.error?.message ?? err?.message ?? 'Error al contactar Gemini');
+        this.errorGemini.set(err?.error?.mensaje ?? 'Error al contactar la IA');
       },
     });
   }

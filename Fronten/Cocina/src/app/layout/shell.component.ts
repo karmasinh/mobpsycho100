@@ -4,16 +4,18 @@ import { FormsModule } from '@angular/forms';
 import { RouterModule, RouterOutlet, ActivatedRoute, NavigationEnd, Router } from '@angular/router';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { filter, map, startWith } from 'rxjs';
+import { LucideDynamicIcon } from '@lucide/angular';
 import { AuthService } from '../core/services/auth.service';
 import { ThemeService } from '../core/services/theme.service';
 import { AlertaService, SucursalService } from '../core/services/api.service';
 import { ToastContainerComponent } from '../shared/components/toast-container.component';
 import { Sucursal } from '../core/models';
+import { ICONOS_DISPONIBLES } from '../core/icons/app-icons.provider';
 
 @Component({
   selector: 'app-shell',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterOutlet, RouterModule, ToastContainerComponent],
+  imports: [CommonModule, FormsModule, RouterOutlet, RouterModule, ToastContainerComponent, LucideDynamicIcon],
   template: `
     <div class="app-shell" [style.background]="'rgb(var(--color-surface))'">
 
@@ -81,9 +83,7 @@ import { Sucursal } from '../core/models';
                routerLinkActive="active"
                class="nav-item"
                (click)="closeSidebar()">
-              <span class="text-[18px] w-5 h-5 flex items-center justify-center flex-shrink-0 leading-none">
-                {{ getEmoji(modulo.codigo) }}
-              </span>
+              <svg [lucideIcon]="iconoSeguro(modulo.icono)" class="w-[18px] h-[18px] flex-shrink-0" [strokeWidth]="1.75"></svg>
               <span class="flex-1 truncate">{{ modulo.nombre }}</span>
             </a>
           }
@@ -361,27 +361,13 @@ export class ShellComponent {
     });
   }
 
-  getEmoji(codigo: string): string {
-    const map: Record<string, string> = {
-      MOD_COCINA:            '🍳',
-      MOD_PEDIDOS_COCINA:    '📋',
-      MOD_PRODUCCION:        '🔥',
-      MOD_RECETAS:           '📖',
-      MOD_PLATOS:            '🍽️',
-      MOD_INVENTARIO:        '📦',
-      MOD_INSUMOS:           '🗄️',
-      MOD_PROVEEDORES:       '🚚',
-      MOD_ALERTAS_INV:       '🔔',
-      MOD_CATEGORIAS_INSUMO: '🏷️',
-      MOD_ADMIN:             '⚙️',
-      MOD_EMPLEADOS:         '👤',
-      MOD_ROLES:             '🛡️',
-      MOD_USUARIOS:          '👥',
-      MOD_AUDITORIA:         '📄',
-      MOD_AUDITORIA_COCINA:  '📄',
-      MOD_MODULOS:           '⚙️',
-    };
-    return map[codigo] ?? '📌';
+  /**
+   * Un módulo creado a mano desde "Módulos y Menús" puede traer un `icono` que no está
+   * registrado en `provideAppIcons()` — `LucideDynamicIcon` lanza una excepción en ese caso,
+   * así que se cae a un ícono neutro ("tag") en vez de romper el menú.
+   */
+  iconoSeguro(icono: string): string {
+    return ICONOS_DISPONIBLES.has(icono) ? icono : 'tag';
   }
 
   private cargarAlertCount(): void {

@@ -5,11 +5,17 @@ import com.restaurante.entity.Plato;
 import com.restaurante.entity.Receta;
 import com.restaurante.entity.RecetaIngrediente;
 import com.restaurante.exception.RecursoNoEncontradoException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import com.restaurante.repository.InsumoRepository;
 import com.restaurante.repository.PlatoRepository;
+import com.restaurante.dto.request.SugerenciaIaRequest;
 import com.restaurante.repository.RecetaRepository;
+import com.restaurante.service.UnidadConversionService;
+import com.restaurante.service.ia.SugerenciaIaService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -26,9 +32,13 @@ import java.util.*;
 @Transactional(readOnly = true)
 public class RecetaController {
 
+    private static final Logger log = LoggerFactory.getLogger(RecetaController.class);
+
     private final RecetaRepository recetaRepository;
     private final PlatoRepository platoRepository;
     private final InsumoRepository insumoRepository;
+    private final UnidadConversionService unidadConversionService;
+    private final SugerenciaIaService sugerenciaIaService;
 
     /** Lista todos los platos activos con el estado de su receta activa */
     @GetMapping
@@ -115,19 +125,34 @@ public class RecetaController {
         for (Map<String, Object> ing : ingredientesBody) {
             Long insumoId = ((Number) ing.get("insumoId")).longValue();
             double cantidad = ((Number) ing.get("cantidad")).doubleValue();
-            String unidadMedida = (String) ing.getOrDefault("unidadMedida", "");
+            Object unidadRaw = ing.getOrDefault("unidadMedida", "");
+            String unidadMedida = unidadRaw == null ? "" : (String) unidadRaw;
 
             Insumo insumo = insumoRepository.findById(insumoId)
                     .orElseThrow(() -> new RecursoNoEncontradoException("Insumo", insumoId));
 
-            double costoIngrediente = cantidad * insumo.getPrecioUnitario();
+            String unidadFinal = unidadMedida.isBlank() ? insumo.getUnidadMedida() : unidadMedida;
+
+            // El precio del insumo está fijado por su propia unidad; si el ingrediente
+            // se registró en una unidad distinta (ej. insumo por litro, receta en ml),
+            // se convierte antes de costear. Si no se reconocen ambas unidades o no son
+            // de la misma magnitud, se conserva el comportamiento anterior (sin convertir)
+            // pero se deja registrado en el log — un costo sin convertir puede ser incorrecto.
+            var conversion = unidadConversionService.convertir(cantidad, unidadFinal, insumo.getUnidadMedida());
+            if (conversion.isEmpty() && !unidadFinal.equalsIgnoreCase(insumo.getUnidadMedida())) {
+                log.warn("No se pudo convertir '{}' a '{}' para el insumo {} — se costea sin convertir, revisar manualmente.",
+                        unidadFinal, insumo.getUnidadMedida(), insumo.getId());
+            }
+            double cantidadEnUnidadInsumo = conversion.orElse(cantidad);
+
+            double costoIngrediente = cantidadEnUnidadInsumo * insumo.getPrecioUnitario();
             costoTotal += costoIngrediente;
 
             receta.getIngredientes().add(RecetaIngrediente.builder()
                     .receta(receta)
                     .insumo(insumo)
                     .cantidad(cantidad)
-                    .unidadMedida(unidadMedida.isBlank() ? insumo.getUnidadMedida() : unidadMedida)
+                    .unidadMedida(unidadFinal)
                     .costoIngrediente(costoIngrediente)
                     .build());
         }
@@ -161,6 +186,22 @@ public class RecetaController {
         platoRepository.save(target.getPlato());
 
         return ResponseEntity.ok(toMap(target));
+    }
+
+    /** Proveedores de IA con clave configurada (para que el frontend sepa qué ofrecer). */
+    @GetMapping("/sugerencia-ia/proveedores")
+    @PreAuthorize("hasAnyRole('COCINERO', 'JEFE_COCINA', 'ADMIN') or @perm.tiene(authentication, 'MOD_RECETAS')")
+    public ResponseEntity<List<String>> proveedoresIa() {
+        return ResponseEntity.ok(sugerenciaIaService.proveedoresDisponibles());
+    }
+
+    /** Pide una sugerencia de preparación a un proveedor de IA (Gemini/Claude/ChatGPT), sin exponer la clave al frontend. */
+    @PostMapping("/sugerencia-ia")
+    @PreAuthorize("hasAnyRole('COCINERO', 'JEFE_COCINA', 'ADMIN') or @perm.tiene(authentication, 'MOD_RECETAS')")
+    @Operation(summary = "Sugerencia de preparación generada por IA (proveedor a elección)")
+    public ResponseEntity<Map<String, String>> sugerenciaIa(@Valid @RequestBody SugerenciaIaRequest request) {
+        String texto = sugerenciaIaService.sugerirReceta(request);
+        return ResponseEntity.ok(Map.of("texto", texto));
     }
 
     // ── helper ─────────────────────────────────────────────────────────────────

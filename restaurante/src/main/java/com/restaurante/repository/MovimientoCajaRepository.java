@@ -9,4 +9,5 @@ import java.util.List;
 @Repository
 public interface MovimientoCajaRepository extends JpaRepository<MovimientoCaja, Long> {
     List<MovimientoCaja> findByCierreCaja_IdOrderByCreadoEnAsc(Long cierreCajaId);
+    boolean existsByRevierteId(Long revierteId);
 }

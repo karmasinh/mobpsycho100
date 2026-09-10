@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { HttpBackend, HttpClient, HttpParams } from '@angular/common/http';
+import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
 import { environment } from '../../../environments/environment';
@@ -400,37 +400,24 @@ export class RecetaService {
   activar(id: number): Observable<RecetaDetalle>                { return this.http.put<RecetaDetalle>(`${API}/recetas/${id}/activar`, null); }
 }
 
-// ── Gemini IA ─────────────────────────────────────────────────
+// ── Sugerencia de receta por IA (proxy backend — la clave nunca llega al frontend) ──
 @Injectable({ providedIn: 'root' })
-export class GeminiService {
-  private readonly GEMINI_URL =
-    'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent';
-  private http: HttpClient;
+export class SugerenciaIaService {
+  constructor(private http: HttpClient) {}
 
-  constructor(handler: HttpBackend) {
-    this.http = new HttpClient(handler);
+  proveedoresDisponibles(): Observable<string[]> {
+    return this.http.get<string[]>(`${API}/recetas/sugerencia-ia/proveedores`);
   }
 
   sugerirReceta(
     platoNombre: string,
     ingredientes: { nombre: string; cantidad: number; unidad: string }[],
-    costoTotal: number
+    costoTotal: number,
+    proveedor: string,
   ): Observable<string> {
-    const lista = ingredientes.map(i => `- ${i.nombre}: ${i.cantidad} ${i.unidad}`).join('\n');
-    const prompt =
-      `Eres un chef experto en cocina boliviana. Estoy preparando "${platoNombre}" con los siguientes ingredientes:\n\n` +
-      `${lista}\n\nCosto total de ingredientes: Bs ${costoTotal.toFixed(2)}\n\n` +
-      `Por favor proporciona:\n1. **Preparación paso a paso** (numerada)\n2. **Tiempo de preparación** estimado\n` +
-      `3. **Porciones** sugeridas\n4. **Consejos del chef**\n\nResponde en español.`;
-
-    const body = {
-      contents: [{ parts: [{ text: prompt }] }],
-      generationConfig: { temperature: 0.7, maxOutputTokens: 1024 },
-    };
-
     return this.http
-      .post<any>(`${this.GEMINI_URL}?key=${environment.geminiApiKey}`, body)
-      .pipe(map(res => res?.candidates?.[0]?.content?.parts?.[0]?.text ?? 'Sin respuesta de la IA.'));
+      .post<{ texto: string }>(`${API}/recetas/sugerencia-ia`, { platoNombre, ingredientes, costoTotal, proveedor })
+      .pipe(map(res => res.texto));
   }
 }
 

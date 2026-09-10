@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { HttpBackend, HttpClient, HttpParams } from '@angular/common/http';
+import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
 import { environment } from '../../../environments/environment';
@@ -9,7 +9,8 @@ import {
   Proveedor, Rol, Empleado, CategoriaPlato, ModuloMenuDto,
   Sucursal, TipoAlmuerzo, Insumo, AuditoriaLog, TopProductoDto,
   LineaProduccion, ProduccionDia, TipoLineaProduccion, EstadoProduccion,
-  CierreCaja, RentabilidadPlato, VentaPorSucursal, MovimientoCaja, TipoMovimientoCaja
+  CierreCaja, RentabilidadPlato, VentaPorSucursal, MovimientoCaja, TipoMovimientoCaja,
+  Empresa
 } from '../models';
 
 const API = environment.apiUrl;
@@ -23,6 +24,16 @@ export class ClienteService {
   listarPorEstado(estado: EstadoCliente): Observable<Cliente[]> { return this.http.get<Cliente[]>(`${API}/clientes/estado/${estado}`); }
   obtener(id: number): Observable<Cliente>                  { return this.http.get<Cliente>(`${API}/clientes/${id}`); }
   crear(body: Partial<Cliente>): Observable<Cliente>        { return this.http.post<Cliente>(`${API}/clientes`, body); }
+  actualizar(id: number, body: Partial<Cliente>): Observable<Cliente> { return this.http.put<Cliente>(`${API}/clientes/${id}`, body); }
+}
+
+// ── Empresa ───────────────────────────────────────────────────
+@Injectable({ providedIn: 'root' })
+export class EmpresaService {
+  constructor(private http: HttpClient) {}
+
+  obtener(): Observable<Empresa>                            { return this.http.get<Empresa>(`${API}/empresa`); }
+  guardar(body: Partial<Empresa>): Observable<Empresa>      { return this.http.put<Empresa>(`${API}/empresa`, body); }
 }
 
 // ── Pensionados ───────────────────────────────────────────────
@@ -144,6 +155,10 @@ export class CierreCajaService {
 
   listarMovimientos(cierreCajaId: number): Observable<MovimientoCaja[]> {
     return this.http.get<MovimientoCaja[]>(`${API}/cierres-caja/${cierreCajaId}/movimientos`);
+  }
+
+  revertirMovimiento(movimientoId: number, motivo: string): Observable<MovimientoCaja> {
+    return this.http.patch<MovimientoCaja>(`${API}/cierres-caja/movimientos/${movimientoId}/revertir`, { motivo });
   }
 }
 
@@ -346,45 +361,3 @@ export class ProduccionService {
   }
 }
 
-// ── Gemini IA ─────────────────────────────────────────────────
-// Usa HttpBackend para saltarse el interceptor JWT y evitar que
-// un error 401 de Gemini cierre la sesión del usuario.
-@Injectable({ providedIn: 'root' })
-export class GeminiService {
-  private readonly GEMINI_URL =
-    'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent';
-  private http: HttpClient;
-
-  constructor(handler: HttpBackend) {
-    this.http = new HttpClient(handler);
-  }
-
-  sugerirReceta(
-    platoNombre: string,
-    ingredientes: { nombre: string; cantidad: number; unidad: string }[],
-    costoTotal: number
-  ): Observable<string> {
-    const lista = ingredientes
-      .map(i => `- ${i.nombre}: ${i.cantidad} ${i.unidad}`)
-      .join('\n');
-
-    const prompt =
-      `Eres un chef experto en cocina boliviana. Estoy preparando "${platoNombre}" con los siguientes ingredientes:\n\n` +
-      `${lista}\n\nCosto total de ingredientes: Bs ${costoTotal.toFixed(2)}\n\n` +
-      `Por favor proporciona:\n` +
-      `1. **Preparación paso a paso** (numerada)\n` +
-      `2. **Tiempo de preparación** estimado\n` +
-      `3. **Porciones** sugeridas\n` +
-      `4. **Consejos del chef** (presentación o variaciones)\n\n` +
-      `Responde en español, de forma clara y práctica para un cocinero de restaurante.`;
-
-    const body = {
-      contents: [{ parts: [{ text: prompt }] }],
-      generationConfig: { temperature: 0.7, maxOutputTokens: 1024 },
-    };
-
-    return this.http
-      .post<any>(`${this.GEMINI_URL}?key=${environment.geminiApiKey}`, body)
-      .pipe(map(res => res?.candidates?.[0]?.content?.parts?.[0]?.text ?? 'Sin respuesta de la IA.'));
-  }
-}

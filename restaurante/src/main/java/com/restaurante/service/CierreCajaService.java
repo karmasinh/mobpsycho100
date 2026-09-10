@@ -15,4 +15,5 @@ public interface CierreCajaService {
     List<CierreCaja> listarPorSucursal(Long sucursalId);
     MovimientoCaja registrarMovimiento(Long cierreCajaId, TipoMovimientoCaja tipo, Double monto, String motivo, Long usuarioId);
     List<MovimientoCaja> listarMovimientos(Long cierreCajaId);
+    MovimientoCaja revertirMovimiento(Long movimientoId, String motivo, Long usuarioId);
 }

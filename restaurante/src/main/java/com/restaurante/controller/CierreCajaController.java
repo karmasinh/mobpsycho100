@@ -84,6 +84,15 @@ public class CierreCajaController {
         return ResponseEntity.ok(cierreCajaService.listarMovimientos(id));
     }
 
+    @PatchMapping("/movimientos/{id}/revertir")
+    @PreAuthorize("hasRole('ADMIN')")
+    @Operation(summary = "Revierte un movimiento de caja (crea uno inverso, requiere turno abierto) — solo ADMIN")
+    public ResponseEntity<MovimientoCaja> revertirMovimiento(@PathVariable Long id,
+                                                               @RequestBody Map<String, String> body,
+                                                               @AuthenticationPrincipal UserDetailsImpl user) {
+        return ResponseEntity.ok(cierreCajaService.revertirMovimiento(id, body.get("motivo"), user.getId()));
+    }
+
     @GetMapping("/sucursal/{sucursalId}")
     @PreAuthorize("hasAnyRole('CAJERO','VENDEDOR','ADMIN') or @perm.tiene(authentication, 'MOD_CAJA')")
     @Operation(summary = "Historial de turnos de caja de una sucursal")

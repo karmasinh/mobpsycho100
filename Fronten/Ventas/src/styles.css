@@ -366,8 +366,8 @@ body {
   }
 
   .bottom-nav-item .bottom-nav-icon {
-    font-size: 20px;
-    line-height: 1;
+    width: 20px;
+    height: 20px;
   }
 
   .bottom-nav-item.active {

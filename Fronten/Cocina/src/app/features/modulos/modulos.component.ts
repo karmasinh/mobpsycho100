@@ -1,15 +1,17 @@
 import { Component, OnInit, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { LucideDynamicIcon } from '@lucide/angular';
 import { ModuloMenuService } from '../../core/services/api.service';
 import { ModuloMenuDto } from '../../core/models';
 import { ToastService } from '../../core/services/toast.service';
 import { PaginationComponent } from '../../shared/components/pagination.component';
+import { ICONOS_DISPONIBLES } from '../../core/icons/app-icons.provider';
 
 @Component({
   selector: 'app-modulos',
   standalone: true,
-  imports: [CommonModule, FormsModule, PaginationComponent],
+  imports: [CommonModule, FormsModule, PaginationComponent, LucideDynamicIcon],
   template: `
     <div class="space-y-5 animate-fade-up">
       <!-- Header -->
@@ -81,7 +83,11 @@ import { PaginationComponent } from '../../shared/components/pagination.componen
                     </p>
                   </td>
                   <td class="text-sm text-center">
-                    <span class="inline-block text-lg" title="{{ mod.icono }}">{{ getEmoji(mod.codigo) }}</span>
+                    @if (iconoValido(mod.icono)) {
+                      <svg [lucideIcon]="mod.icono" [title]="mod.icono" class="w-5 h-5 inline-block" [strokeWidth]="1.75"></svg>
+                    } @else {
+                      <svg lucideIcon="tag" [title]="mod.icono + ' (no reconocido)'" class="w-5 h-5 inline-block opacity-40" [strokeWidth]="1.75"></svg>
+                    }
                   </td>
                   <td class="font-mono text-xs">{{ mod.ruta || '—' }}</td>
                   <td>
@@ -177,7 +183,7 @@ import { PaginationComponent } from '../../shared/components/pagination.componen
                        placeholder="Ej: /admin/reportes" maxlength="200">
               </div>
               <div>
-                <label class="input-label">Nombre del Icono</label>
+                <label class="input-label">Nombre del Icono (lucide.dev/icons)</label>
                 <input [(ngModel)]="formMod.icono" class="input text-sm"
                        placeholder="Ej: bar-chart" maxlength="50">
               </div>
@@ -342,38 +348,8 @@ export class ModulosComponent implements OnInit {
     return this.modulos().find(m => m.id === padreId)?.nombre || '';
   }
 
-  getEmoji(codigo: string): string {
-    const map: Record<string, string> = {
-      MOD_COCINA:         '🍳',
-      MOD_PEDIDOS_COCINA: '📋',
-      MOD_PRODUCCION:     '🔥',
-      MOD_RECETAS:        '📖',
-      MOD_PLATOS:         '🍽️',
-      MOD_INVENTARIO:     '📦',
-      MOD_INSUMOS:        '🗄️',
-      MOD_PROVEEDORES:    '🚚',
-      MOD_ALERTAS_INV:    '🔔',
-      MOD_CATEGORIAS_INSUMO: '🏷️',
-      MOD_VENTAS:         '💰',
-      MOD_CAJA:           '💳',
-      MOD_PEDIDOS_VENTAS: '🛍️',
-      MOD_CLIENTES:       '👥',
-      MOD_PENSIONADOS:    '🏠',
-      MOD_COBROS:         '🧾',
-      MOD_ASISTENCIA:     '✅',
-      MOD_TIPOS_ALMUERZO: '🍲',
-      MOD_CATEGORIAS_PLATO:'🏷️',
-      MOD_ADMIN:          '⚙️',
-      MOD_EMPLEADOS:      '👤',
-      MOD_ROLES:          '🛡️',
-      MOD_USUARIOS:       '👤',
-      MOD_SUCURSALES:     '🏢',
-      MOD_AUDITORIA:      '📄',
-      MOD_REPORTES:       '📊',
-      MOD_ALERTAS_SISTEMA:'🔔',
-      MOD_MODULOS:        '⚙️',
-    };
-    return map[codigo] ?? '📌';
+  iconoValido(icono: string): boolean {
+    return ICONOS_DISPONIBLES.has(icono);
   }
 
   abrirCrearModal(): void {

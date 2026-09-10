@@ -1,5 +1,6 @@
 package com.restaurante.service.impl;
 
+import com.restaurante.entity.AuditoriaLog;
 import com.restaurante.entity.CierreCaja;
 import com.restaurante.entity.MovimientoCaja;
 import com.restaurante.entity.Sucursal;
@@ -10,6 +11,7 @@ import com.restaurante.enums.FormaPago;
 import com.restaurante.enums.TipoMovimientoCaja;
 import com.restaurante.exception.NegocioException;
 import com.restaurante.exception.RecursoNoEncontradoException;
+import com.restaurante.repository.AuditoriaLogRepository;
 import com.restaurante.repository.CierreCajaRepository;
 import com.restaurante.repository.MovimientoCajaRepository;
 import com.restaurante.repository.SucursalRepository;
@@ -33,6 +35,7 @@ public class CierreCajaServiceImpl implements CierreCajaService {
     private final MovimientoCajaRepository movimientoCajaRepository;
     private final SucursalRepository sucursalRepository;
     private final UsuarioRepository usuarioRepository;
+    private final AuditoriaLogRepository auditoriaLogRepository;
 
     @Override
     @Transactional
@@ -150,6 +153,55 @@ public class CierreCajaServiceImpl implements CierreCajaService {
     public List<MovimientoCaja> listarMovimientos(Long cierreCajaId) {
         obtenerPorId(cierreCajaId);
         return movimientoCajaRepository.findByCierreCaja_IdOrderByCreadoEnAsc(cierreCajaId);
+    }
+
+    @Override
+    @Transactional
+    public MovimientoCaja revertirMovimiento(Long movimientoId, String motivo, Long usuarioId) {
+        if (motivo == null || motivo.isBlank()) {
+            throw new NegocioException("Debe indicar un motivo para revertir el movimiento.");
+        }
+
+        MovimientoCaja original = movimientoCajaRepository.findById(movimientoId)
+                .orElseThrow(() -> new RecursoNoEncontradoException("MovimientoCaja", movimientoId));
+
+        CierreCaja turno = original.getCierreCaja();
+        if (turno.getEstado() != EstadoCierreCaja.ABIERTO) {
+            throw new NegocioException("No se puede revertir: el turno #" + turno.getId() + " ya está cerrado.");
+        }
+        if (original.getRevierteId() != null) {
+            throw new NegocioException("Este movimiento ya es en sí mismo una reversión.");
+        }
+        if (movimientoCajaRepository.existsByRevierteId(movimientoId)) {
+            throw new NegocioException("El movimiento #" + movimientoId + " ya fue revertido anteriormente.");
+        }
+
+        Usuario admin = usuarioRepository.findById(usuarioId)
+                .orElseThrow(() -> new RecursoNoEncontradoException("Usuario", usuarioId));
+
+        TipoMovimientoCaja tipoInverso = original.getTipo() == TipoMovimientoCaja.INGRESO
+                ? TipoMovimientoCaja.RETIRO
+                : TipoMovimientoCaja.INGRESO;
+
+        MovimientoCaja reversion = movimientoCajaRepository.save(MovimientoCaja.builder()
+                .cierreCaja(turno)
+                .tipo(tipoInverso)
+                .monto(original.getMonto())
+                .motivo("Reversión de movimiento #" + movimientoId + (motivo != null && !motivo.isBlank() ? ": " + motivo : ""))
+                .usuario(admin)
+                .revierteId(movimientoId)
+                .build());
+
+        auditoriaLogRepository.save(AuditoriaLog.builder()
+                .entidad("MovimientoCaja")
+                .entidadId(movimientoId)
+                .accion("REVERSION_MOVIMIENTO")
+                .valorAnterior(original.getTipo() + " " + original.getMonto() + " (motivo: " + original.getMotivo() + ")")
+                .valorNuevo("Revertido con movimiento #" + reversion.getId() + " — " + motivo)
+                .username(admin.getUsername())
+                .build());
+
+        return reversion;
     }
 
     @Override
