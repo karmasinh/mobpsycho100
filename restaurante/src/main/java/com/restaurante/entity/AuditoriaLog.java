@@ -30,6 +30,11 @@ public class AuditoriaLog {
     @Column(length = 150)
     private String username;
 
+    /** Sucursal de la entidad auditada, cuando aplica. Nulo = evento global o sin sucursal asociada (AUD-A-028/AUD-L-022). */
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "sucursal_id")
+    private Sucursal sucursal;
+
     @Column(columnDefinition = "TEXT")
     private String valorAnterior;
 

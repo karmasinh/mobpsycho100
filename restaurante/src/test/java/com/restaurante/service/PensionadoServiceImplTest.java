@@ -96,6 +96,50 @@ class PensionadoServiceImplTest {
     }
 
     @Test
+    void registrarPago_rechazaMontoNoPositivo() {
+        CobroMensualRequest request = new CobroMensualRequest();
+        request.setPensionadoId(20L);
+        request.setMes(3);
+        request.setAnio(2026);
+        request.setMontoPagado(0.0);
+
+        assertThrows(NegocioException.class, () -> pensionadoService.registrarPago(request, 99L));
+
+        CobroMensualRequest negativo = new CobroMensualRequest();
+        negativo.setPensionadoId(20L);
+        negativo.setMes(3);
+        negativo.setAnio(2026);
+        negativo.setMontoPagado(-5.0);
+
+        assertThrows(NegocioException.class, () -> pensionadoService.registrarPago(negativo, 99L));
+    }
+
+    @Test
+    void registrarPago_sobrepagoNoDejaSaldoNegativo() {
+        CobroMensual cobro = CobroMensual.builder()
+                .id(50L).pensionado(pensionado).mes(3).anio(2026)
+                .montoBase(100.0).saldoAnterior(15.0).totalCobrado(115.0)
+                .montoPagado(0.0).saldoRestante(115.0).pagado(false)
+                .build();
+        when(cobroMensualRepository.findByPensionado_IdAndMesAndAnio(20L, 3, 2026))
+                .thenReturn(Optional.of(cobro));
+        when(usuarioRepository.findById(99L)).thenReturn(Optional.empty());
+        when(cobroMensualRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
+
+        CobroMensualRequest request = new CobroMensualRequest();
+        request.setPensionadoId(20L);
+        request.setMes(3);
+        request.setAnio(2026);
+        request.setMontoPagado(200.0); // paga más de lo que debe
+
+        CobroMensual resultado = pensionadoService.registrarPago(request, 99L);
+
+        assertThat(resultado.getPagado()).isTrue();
+        assertThat(resultado.getSaldoRestante()).isEqualTo(0.0);
+        assertThat(pensionado.getSaldoPendiente()).isEqualTo(0.0);
+    }
+
+    @Test
     void registrarPago_rechazaCobroYaPagado() {
         CobroMensual cobro = CobroMensual.builder()
                 .id(50L).pensionado(pensionado).mes(3).anio(2026)

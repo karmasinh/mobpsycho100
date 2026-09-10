@@ -1,8 +1,11 @@
 import { Component, OnInit, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
-import { VentaService, PensionadoService, ClienteService } from '../../core/services/api.service';
+import { VentaService, PensionadoService, ClienteService, AlertaService } from '../../core/services/api.service';
 import { AuthService } from '../../core/services/auth.service';
+import { Venta, VentaPorSucursal, TopProductoDto, AlertaSistema } from '../../core/models';
+
+interface DiaTendencia { etiqueta: string; total: number; }
 
 @Component({
   selector: 'app-dashboard',
@@ -37,14 +40,10 @@ import { AuthService } from '../../core/services/auth.service';
 
       <!-- Stats grid -->
       <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-
-        <!-- Ventas de hoy -->
         <div class="stat-card">
           <div class="flex items-center justify-between mb-2">
             <span class="text-2xl">💰</span>
-            @if (!cargando()) {
-              <span class="badge-success badge">Hoy</span>
-            }
+            @if (!cargando()) { <span class="badge-success badge">Hoy</span> }
           </div>
           @if (cargando()) {
             <div class="skeleton h-8 w-32 rounded-lg"></div>
@@ -55,7 +54,6 @@ import { AuthService } from '../../core/services/auth.service';
           }
         </div>
 
-        <!-- Pensionados activos -->
         <div class="stat-card">
           <div class="flex items-center justify-between mb-2">
             <span class="text-2xl">🏠</span>
@@ -70,7 +68,6 @@ import { AuthService } from '../../core/services/auth.service';
           }
         </div>
 
-        <!-- Cobros pendientes -->
         <div class="stat-card">
           <div class="flex items-center justify-between mb-2">
             <span class="text-2xl">🧾</span>
@@ -89,7 +86,6 @@ import { AuthService } from '../../core/services/auth.service';
           }
         </div>
 
-        <!-- Clientes activos -->
         <div class="stat-card">
           <div class="flex items-center justify-between mb-2">
             <span class="text-2xl">👥</span>
@@ -104,6 +100,112 @@ import { AuthService } from '../../core/services/auth.service';
           }
         </div>
       </div>
+
+      <!-- ══ ADMIN: comparativo entre sucursales + alertas críticas ══ -->
+      @if (esAdmin()) {
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+          <div class="card space-y-3">
+            <h3 class="font-display font-semibold" style="color:rgb(var(--color-on-surface))">
+              🏪 Ventas por sucursal (últimos 7 días)
+            </h3>
+            @if (cargandoBi()) {
+              <div class="skeleton h-24 rounded-xl"></div>
+            } @else if (comparativoSucursal().length === 0) {
+              <p class="text-xs" style="color:rgb(var(--color-on-surface)/0.4)">Sin datos en el período.</p>
+            } @else {
+              <div class="space-y-2">
+                @for (c of comparativoSucursal(); track c.sucursalId) {
+                  <div class="flex items-center gap-3">
+                    <div class="flex-1 min-w-0">
+                      <p class="text-xs font-semibold" style="color:rgb(var(--color-on-surface))">{{ c.sucursalNombre }}</p>
+                      <div class="mt-1 h-1.5 rounded-full overflow-hidden" style="background:rgb(var(--color-surface-2))">
+                        <div class="h-full rounded-full" style="background:rgb(var(--color-primary))"
+                             [style.width]="(c.total / maxComparativoSucursal()) * 100 + '%'"></div>
+                      </div>
+                    </div>
+                    <p class="font-mono text-xs font-bold flex-shrink-0" style="color:rgb(var(--color-primary))">
+                      Bs {{ c.total | number:'1.0-0' }}
+                    </p>
+                  </div>
+                }
+              </div>
+            }
+          </div>
+
+          <div class="card space-y-3">
+            <div class="flex items-center justify-between">
+              <h3 class="font-display font-semibold" style="color:rgb(var(--color-on-surface))">
+                🔔 Alertas recientes
+              </h3>
+              <a [routerLink]="['/alertas']" class="text-xs font-semibold" style="color:rgb(var(--color-primary))">Ver todas →</a>
+            </div>
+            @if (alertasRecientes().length === 0) {
+              <p class="text-xs" style="color:rgb(var(--color-on-surface)/0.4)">No hay alertas sin leer.</p>
+            } @else {
+              <div class="space-y-2">
+                @for (a of alertasRecientes(); track a.id) {
+                  <div class="text-xs p-2 rounded-lg" style="background:rgb(var(--color-surface-2))">
+                    {{ a.mensaje }}
+                  </div>
+                }
+              </div>
+            }
+          </div>
+        </div>
+      }
+
+      <!-- ══ GERENTE_SUCURSAL: tendencia de su sucursal + top productos ══ -->
+      @if (esGerente()) {
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+          <div class="card space-y-3">
+            <h3 class="font-display font-semibold" style="color:rgb(var(--color-on-surface))">
+              📈 Tendencia de ventas (7 días)
+            </h3>
+            @if (cargandoBi()) {
+              <div class="skeleton h-24 rounded-xl"></div>
+            } @else {
+              <div class="flex items-end gap-2 h-28">
+                @for (d of tendencia7Dias(); track d.etiqueta) {
+                  <div class="flex-1 flex flex-col items-center justify-end gap-1">
+                    <div class="w-full rounded-t-md" style="background:rgb(var(--color-primary))"
+                         [style.height]="alturaBarra(d.total) + '%'"
+                         [title]="'Bs ' + d.total.toFixed(2)"></div>
+                    <span class="text-[10px]" style="color:rgb(var(--color-on-surface)/0.5)">{{ d.etiqueta }}</span>
+                  </div>
+                }
+              </div>
+            }
+          </div>
+
+          <div class="card space-y-3">
+            <h3 class="font-display font-semibold" style="color:rgb(var(--color-on-surface))">
+              🍽️ Top productos de la semana
+            </h3>
+            @if (cargandoBi()) {
+              <div class="skeleton h-24 rounded-xl"></div>
+            } @else if (topProductos().length === 0) {
+              <p class="text-xs" style="color:rgb(var(--color-on-surface)/0.4)">Sin ventas en el período.</p>
+            } @else {
+              <div class="space-y-2">
+                @for (p of topProductos(); track p.platoId) {
+                  <div class="flex items-center gap-3">
+                    <div class="flex-1 min-w-0">
+                      <p class="text-xs font-semibold truncate" style="color:rgb(var(--color-on-surface))">{{ p.platoNombre }}</p>
+                      <div class="mt-1 h-1.5 rounded-full overflow-hidden" style="background:rgb(var(--color-surface-2))">
+                        <div class="h-full rounded-full" style="background:rgb(var(--color-success))"
+                             [style.width]="(p.cantidadVendida / maxTopProducto()) * 100 + '%'"></div>
+                      </div>
+                    </div>
+                    <p class="font-mono text-xs font-bold flex-shrink-0" style="color:rgb(var(--color-on-surface)/0.7)">
+                      {{ p.cantidadVendida }}
+                    </p>
+                  </div>
+                }
+              </div>
+            }
+          </div>
+        </div>
+      }
 
       <!-- Cobros pendientes urgentes -->
       @if (listaCobros().length > 0) {
@@ -162,11 +264,22 @@ import { AuthService } from '../../core/services/auth.service';
 })
 export class DashboardComponent implements OnInit {
   cargando          = signal(true);
+  cargandoBi        = signal(true);
   totalHoy          = signal(0);
   pensionadosActivos = signal(0);
   cobrosPendientes  = signal(0);
   clientesActivos   = signal(0);
   listaCobros       = signal<any[]>([]);
+
+  // BI: ADMIN
+  comparativoSucursal = signal<VentaPorSucursal[]>([]);
+  maxComparativoSucursal = computed(() => Math.max(...this.comparativoSucursal().map(c => c.total), 1));
+  alertasRecientes  = signal<AlertaSistema[]>([]);
+
+  // BI: GERENTE_SUCURSAL
+  tendencia7Dias    = signal<DiaTendencia[]>([]);
+  topProductos      = signal<TopProductoDto[]>([]);
+  maxTopProducto    = computed(() => Math.max(...this.topProductos().map(p => p.cantidadVendida), 1));
 
   accesosRapidos = [
     { ruta: '/caja',             label: 'Nueva Venta',  emoji: '💳' },
@@ -183,11 +296,21 @@ export class DashboardComponent implements OnInit {
     private ventaService: VentaService,
     private pensionadoService: PensionadoService,
     private clienteService: ClienteService,
+    private alertaService: AlertaService,
     public authService: AuthService,
   ) {}
 
   ngOnInit(): void {
     this.cargarDatos();
+    this.cargarDatosBi();
+  }
+
+  esAdmin(): boolean {
+    return this.authService.rol() === 'ADMIN';
+  }
+
+  esGerente(): boolean {
+    return this.authService.rol() === 'GERENTE_SUCURSAL';
   }
 
   fechaHoy(): string {
@@ -196,13 +319,18 @@ export class DashboardComponent implements OnInit {
     });
   }
 
+  alturaBarra(total: number): number {
+    const max = Math.max(...this.tendencia7Dias().map(d => d.total), 1);
+    return Math.max((total / max) * 100, total > 0 ? 4 : 0);
+  }
+
   private cargarDatos(): void {
     const hoy   = new Date();
     const desde = new Date(hoy.getFullYear(), hoy.getMonth(), hoy.getDate()).toISOString();
     const hasta = new Date(hoy.getFullYear(), hoy.getMonth(), hoy.getDate(), 23, 59, 59).toISOString();
 
-    // Total ventas de hoy
-    this.ventaService.total(desde, hasta).subscribe({
+    // Total ventas de hoy (respeta la sucursal activa seleccionada por ADMIN/multi-sucursal)
+    this.ventaService.total(desde, hasta, this.authService.sucursalActiva()).subscribe({
       next: r => this.totalHoy.set(r.total ?? 0),
       error: () => {},
     });
@@ -228,5 +356,56 @@ export class DashboardComponent implements OnInit {
       next: cs => this.clientesActivos.set(cs.length),
       error: () => {},
     });
+  }
+
+  /** Secciones de inteligencia de negocio (BI) por rol — sin backend nuevo, agregación client-side igual que reportes.component.ts. */
+  private cargarDatosBi(): void {
+    if (this.esAdmin()) {
+      const hoy = new Date();
+      const desde = new Date(hoy.getFullYear(), hoy.getMonth(), hoy.getDate() - 6).toISOString();
+      const hasta = new Date(hoy.getFullYear(), hoy.getMonth(), hoy.getDate(), 23, 59, 59).toISOString();
+      this.ventaService.comparativoSucursales(desde, hasta).subscribe({
+        next: cs => { this.comparativoSucursal.set(cs); this.cargandoBi.set(false); },
+        error: () => this.cargandoBi.set(false),
+      });
+      this.alertaService.listarNoLeidas().subscribe({
+        next: as => this.alertasRecientes.set(as.slice(0, 5)),
+        error: () => {},
+      });
+    } else if (this.esGerente()) {
+      const hoy = new Date();
+      const desdeSemana = new Date(hoy.getFullYear(), hoy.getMonth(), hoy.getDate() - 6);
+      const desde = desdeSemana.toISOString();
+      const hasta = new Date(hoy.getFullYear(), hoy.getMonth(), hoy.getDate(), 23, 59, 59).toISOString();
+      const sucursalId = this.authService.sucursalActiva();
+
+      this.ventaService.listar(desde, hasta, sucursalId).subscribe({
+        next: ventas => { this.tendencia7Dias.set(this.agruparPorDia(ventas, desdeSemana)); this.cargandoBi.set(false); },
+        error: () => this.cargandoBi.set(false),
+      });
+      this.ventaService.topProductos(desde, hasta, 5, sucursalId).subscribe({
+        next: ps => this.topProductos.set(ps),
+        error: () => {},
+      });
+    } else {
+      this.cargandoBi.set(false);
+    }
+  }
+
+  private agruparPorDia(ventas: Venta[], desde: Date): DiaTendencia[] {
+    const dias: DiaTendencia[] = [];
+    const etiquetas = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'];
+    for (let i = 0; i < 7; i++) {
+      const fecha = new Date(desde.getFullYear(), desde.getMonth(), desde.getDate() + i);
+      const totalDia = ventas
+        .filter(v => !v.anulada && this.mismoDia(new Date(v.creadoEn), fecha))
+        .reduce((sum, v) => sum + v.totalCobrado, 0);
+      dias.push({ etiqueta: etiquetas[fecha.getDay()], total: totalDia });
+    }
+    return dias;
+  }
+
+  private mismoDia(a: Date, b: Date): boolean {
+    return a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth() && a.getDate() === b.getDate();
   }
 }

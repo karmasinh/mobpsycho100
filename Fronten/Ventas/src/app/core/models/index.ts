@@ -331,6 +331,23 @@ export interface MovimientoCaja {
   creadoEn: string;
 }
 
+export type TipoSolicitud = 'ANULACION_VENTA' | 'REVERSION_MOVIMIENTO_CAJA';
+export type EstadoSolicitud = 'PENDIENTE' | 'APROBADA' | 'RECHAZADA';
+
+export interface SolicitudAprobacion {
+  id: number;
+  tipo: TipoSolicitud;
+  entidadId: number;
+  sucursal?: { id: number; nombre: string };
+  motivo: string;
+  estado: EstadoSolicitud;
+  solicitante?: { id: number; username: string };
+  resueltoPor?: { id: number; username: string };
+  motivoRechazo?: string | null;
+  creadoEn: string;
+  resueltoEn?: string | null;
+}
+
 export interface Proveedor {
   id: number;
   nit: string;

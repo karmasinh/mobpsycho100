@@ -126,6 +126,7 @@ public class ClienteController {
                 .entidad("Cliente")
                 .entidadId(actualizado.getId())
                 .accion("EDICION")
+                .sucursal(actualizado.getSucursal())
                 .valorAnterior(valorAnterior)
                 .valorNuevo(valorNuevo)
                 .username(user.getUsername())

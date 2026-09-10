@@ -30,6 +30,7 @@ class InventarioServiceImplTest {
     @Mock private SucursalRepository sucursalRepository;
     @Mock private ProveedorRepository proveedorRepository;
     @Mock private UsuarioRepository usuarioRepository;
+    @Mock private AuditoriaLogRepository auditoriaLogRepository;
 
     private InventarioServiceImpl inventarioService;
 
@@ -41,7 +42,8 @@ class InventarioServiceImplTest {
     void setUp() {
         inventarioService = new InventarioServiceImpl(
                 insumoRepository, loteInsumoRepository, movimientoInventarioRepository,
-                stockInsumoRepository, sucursalRepository, proveedorRepository, usuarioRepository);
+                stockInsumoRepository, sucursalRepository, proveedorRepository, usuarioRepository,
+                auditoriaLogRepository);
 
         insumo = Insumo.builder().id(1L).codigo("INS-1").nombre("Arroz").unidadMedida("Kg")
                 .precioUnitario(10.0).activo(true).build();
@@ -112,6 +114,35 @@ class InventarioServiceImplTest {
         assertThat(stockA.getStockActual()).isEqualTo(10.0);
         assertThat(stockB.getStockActual()).isEqualTo(5.0);
         verify(stockInsumoRepository, never()).findByInsumo_IdAndSucursal_Id(1L, 2L);
+    }
+
+    // ── Auditoría de ajustes y mermas (RF-L-004/CU-L-007) ────────────
+
+    @Test
+    void ajustarStock_quedaRegistradoEnAuditoriaGeneral() {
+        StockInsumo stockA = StockInsumo.builder().insumo(insumo).sucursal(sucursalA).stockActual(50.0).stockMinimo(0.0).build();
+        when(stockInsumoRepository.findByInsumo_IdAndSucursal_Id(1L, 1L)).thenReturn(Optional.of(stockA));
+
+        inventarioService.ajustarStock(1L, 1L, 45.0, "Conteo físico", null);
+
+        ArgumentCaptor<AuditoriaLog> captor = ArgumentCaptor.forClass(AuditoriaLog.class);
+        verify(auditoriaLogRepository).save(captor.capture());
+        assertThat(captor.getValue().getAccion()).isEqualTo("AJUSTE_STOCK");
+        assertThat(captor.getValue().getEntidad()).isEqualTo("Insumo");
+        assertThat(captor.getValue().getEntidadId()).isEqualTo(1L);
+    }
+
+    @Test
+    void registrarMerma_quedaRegistradaEnAuditoriaGeneral() {
+        StockInsumo stockA = StockInsumo.builder().insumo(insumo).sucursal(sucursalA).stockActual(20.0).stockMinimo(0.0).build();
+        when(stockInsumoRepository.findByInsumo_IdAndSucursal_Id(1L, 1L)).thenReturn(Optional.of(stockA));
+        when(loteInsumoRepository.findLotesFEFO(1L, 1L)).thenReturn(List.of());
+
+        inventarioService.registrarMerma(1L, 1L, 3.0, "Producto vencido", "Detectado en revisión diaria", null);
+
+        ArgumentCaptor<AuditoriaLog> captor = ArgumentCaptor.forClass(AuditoriaLog.class);
+        verify(auditoriaLogRepository).save(captor.capture());
+        assertThat(captor.getValue().getAccion()).isEqualTo("MERMA");
     }
 
     // ── Kárdex (AUD-L-007): saldo final debe conciliar con entradas/salidas ──

@@ -112,8 +112,8 @@ public class VentaController {
     }
 
     @PatchMapping("/{id}/anular")
-    @PreAuthorize("hasRole('ADMIN') or hasRole('GERENTE_SUCURSAL') or @perm.tiene(authentication, 'MOD_CAJA')")
-    @Operation(summary = "Anular una venta (requiere motivo)")
+    @PreAuthorize("hasRole('ADMIN')")
+    @Operation(summary = "Anular una venta directamente (requiere motivo) — ADMIN únicamente; los demás roles deben solicitarlo vía /solicitudes-aprobacion")
     public ResponseEntity<Void> anular(@PathVariable Long id,
                                         @RequestBody Map<String, String> body,
                                         @AuthenticationPrincipal UserDetailsImpl user) {

@@ -123,12 +123,35 @@ class VentaServiceImplTest {
     }
 
     @Test
+    void anular_rechazaMotivoVacio() {
+        assertThrows(NegocioException.class, () -> ventaService.anular(500L, "  ", 10L));
+        assertThrows(NegocioException.class, () -> ventaService.anular(500L, null, 10L));
+        verify(ventaRepository, never()).findById(any());
+    }
+
+    @Test
     void anular_rechazaVentaYaAnulada() {
         Pedido pedido = pedidoConTotal(50.0, EstadoPedido.CANCELADO);
         Venta venta = Venta.builder().id(500L).pedido(pedido).anulada(true).build();
         when(ventaRepository.findById(500L)).thenReturn(Optional.of(venta));
 
         assertThrows(NegocioException.class, () -> ventaService.anular(500L, "motivo", 10L));
+    }
+
+    @Test
+    void anular_rechazaLaSegundaAnulacionConcurrenteDeLaMismaVenta() {
+        // Igual patrón que cobrar_rechazaElSegundoCobroConcurrenteSobreElMismoPedido: la primera
+        // anulación marca `anulada=true` en el mismo objeto que ve la segunda consulta concurrente.
+        Pedido pedido = pedidoConTotal(50.0, EstadoPedido.ENTREGADO);
+        Venta venta = Venta.builder().id(500L).pedido(pedido).sucursal(sucursal)
+                .totalCobrado(50.0).anulada(false).creadoEn(java.time.LocalDateTime.now()).build();
+        when(ventaRepository.findById(500L)).thenReturn(Optional.of(venta));
+        when(usuarioRepository.findById(10L)).thenReturn(Optional.of(cajero));
+
+        ventaService.anular(500L, "Primer intento", 10L);
+
+        assertThrows(NegocioException.class, () -> ventaService.anular(500L, "Segundo intento", 10L));
+        assertThat(venta.getMotivoAnulacion()).isEqualTo("Primer intento");
     }
 
     @Test

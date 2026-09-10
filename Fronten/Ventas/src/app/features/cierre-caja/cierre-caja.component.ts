@@ -1,7 +1,7 @@
 import { Component, OnInit, signal, WritableSignal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { CierreCajaService } from '../../core/services/api.service';
+import { CierreCajaService, SolicitudAprobacionService } from '../../core/services/api.service';
 import { AuthService } from '../../core/services/auth.service';
 import { ToastService } from '../../core/services/toast.service';
 import { CierreCaja, MovimientoCaja, TipoMovimientoCaja } from '../../core/models';
@@ -79,8 +79,16 @@ import { CierreCaja, MovimientoCaja, TipoMovimientoCaja } from '../../core/model
                     <span [style.color]="m.tipo === 'INGRESO' ? 'rgb(var(--color-success))' : 'rgb(var(--color-danger))'">
                       {{ m.tipo === 'INGRESO' ? '↑ Ingreso' : '↓ Retiro' }}
                       @if (m.motivo) { — {{ m.motivo }} }
+                      @if (m.revierteId) { <span class="opacity-60">(reversión de #{{ m.revierteId }})</span> }
                     </span>
-                    <span class="font-mono font-semibold">Bs {{ m.monto | number:'1.2-2' }}</span>
+                    <div class="flex items-center gap-2">
+                      <span class="font-mono font-semibold">Bs {{ m.monto | number:'1.2-2' }}</span>
+                      @if (!esAdmin() && !m.revierteId && !fueRevertidoPropio(m.id)) {
+                        <button (click)="abrirSolicitarReversion(m)" class="btn-ghost text-xs px-2 py-0.5">
+                          Solicitar reversión
+                        </button>
+                      }
+                    </div>
                   </div>
                 }
               </div>
@@ -203,12 +211,15 @@ import { CierreCaja, MovimientoCaja, TipoMovimientoCaja } from '../../core/model
              style="background:rgba(0,0,0,0.6)" (click)="cerrarRevertir()">
           <div class="card max-w-sm w-full space-y-4 animate-fade-up" (click)="$event.stopPropagation()">
             <h3 class="font-display font-bold" style="color:rgb(var(--color-on-surface))">
-              Revertir movimiento
+              {{ esSolicitud() ? 'Solicitar reversión de movimiento' : 'Revertir movimiento' }}
             </h3>
             <p class="text-sm" style="color:rgb(var(--color-on-surface)/0.6)">
               {{ modalRevertir()!.tipo === 'INGRESO' ? 'Ingreso' : 'Retiro' }} de
               Bs {{ modalRevertir()!.monto | number:'1.2-2' }}
               @if (modalRevertir()!.motivo) { — {{ modalRevertir()!.motivo }} }
+              @if (esSolicitud()) {
+                <br>Queda pendiente hasta que un administrador la apruebe.
+              }
             </p>
             <div>
               <label class="input-label">Motivo de la reversión *</label>
@@ -226,7 +237,7 @@ import { CierreCaja, MovimientoCaja, TipoMovimientoCaja } from '../../core/model
               <button (click)="confirmarRevertir()" [disabled]="procesandoRevertir()" class="btn-primary flex-1 justify-center">
                 @if (procesandoRevertir()) {
                   <span class="w-4 h-4 rounded-full border-2 border-white/30 border-t-white animate-spin inline-block"></span>
-                } @else { Confirmar }
+                } @else { {{ esSolicitud() ? 'Enviar solicitud' : 'Confirmar' }} }
               </button>
             </div>
           </div>
@@ -281,6 +292,7 @@ export class CierreCajaComponent implements OnInit {
   procesandoRevertir   = signal(false);
   errorAdmin           = signal('');
   modalRevertir        = signal<MovimientoCaja | null>(null);
+  esSolicitud          = signal(false);
   motivoRevertir       = '';
 
   montoInicial: number | null = null;
@@ -292,6 +304,7 @@ export class CierreCajaComponent implements OnInit {
 
   constructor(
     private cierreCajaService: CierreCajaService,
+    private solicitudService: SolicitudAprobacionService,
     private auth: AuthService,
     private toastSvc: ToastService,
   ) {}
@@ -333,8 +346,21 @@ export class CierreCajaComponent implements OnInit {
     return this.movimientosAdmin().some(m => m.revierteId === movimientoId);
   }
 
+  fueRevertidoPropio(movimientoId: number): boolean {
+    return this.movimientos().some(m => m.revierteId === movimientoId);
+  }
+
   abrirRevertir(m: MovimientoCaja): void {
     this.modalRevertir.set(m);
+    this.esSolicitud.set(false);
+    this.motivoRevertir = '';
+    this.errorAdmin.set('');
+  }
+
+  /** CAJERO/VENDEDOR/GERENTE_SUCURSAL no pueden revertir directo — solo solicitarlo (aprueba un ADMIN). */
+  abrirSolicitarReversion(m: MovimientoCaja): void {
+    this.modalRevertir.set(m);
+    this.esSolicitud.set(true);
     this.motivoRevertir = '';
     this.errorAdmin.set('');
   }
@@ -350,9 +376,26 @@ export class CierreCajaComponent implements OnInit {
       this.errorAdmin.set('Indicá un motivo para la reversión.');
       return;
     }
+    const motivo = this.motivoRevertir.trim();
     this.procesandoRevertir.set(true);
     this.errorAdmin.set('');
-    this.cierreCajaService.revertirMovimiento(m.id, this.motivoRevertir.trim()).subscribe({
+
+    if (this.esSolicitud()) {
+      this.solicitudService.solicitar('REVERSION_MOVIMIENTO_CAJA', m.id, motivo).subscribe({
+        next: () => {
+          this.procesandoRevertir.set(false);
+          this.modalRevertir.set(null);
+          this.toastSvc.success('Solicitud enviada — pendiente de aprobación de un administrador');
+        },
+        error: err => {
+          this.procesandoRevertir.set(false);
+          this.errorAdmin.set(err?.error?.mensaje ?? 'No se pudo enviar la solicitud.');
+        },
+      });
+      return;
+    }
+
+    this.cierreCajaService.revertirMovimiento(m.id, motivo).subscribe({
       next: () => {
         this.procesandoRevertir.set(false);
         this.modalRevertir.set(null);

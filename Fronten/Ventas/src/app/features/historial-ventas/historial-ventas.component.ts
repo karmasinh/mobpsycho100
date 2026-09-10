@@ -1,7 +1,7 @@
 import { Component, OnInit, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { VentaService } from '../../core/services/api.service';
+import { VentaService, SolicitudAprobacionService } from '../../core/services/api.service';
 import { AuthService } from '../../core/services/auth.service';
 import { ToastService } from '../../core/services/toast.service';
 import { PaginationComponent } from '../../shared/components/pagination.component';
@@ -202,7 +202,7 @@ type SortCol = 'fecha' | 'total' | 'formaPago' | 'estado';
                         @if (!v.anulada && puedeAnular()) {
                           <button (click)="abrirAnular(v)"
                                   class="btn-ghost text-xs px-2 py-1 text-danger"
-                                  title="Anular venta">
+                                  [title]="esAdmin() ? 'Anular venta' : 'Solicitar anulación'">
                             ✕
                           </button>
                         }
@@ -345,10 +345,14 @@ type SortCol = 'fecha' | 'total' | 'formaPago' | 'estado';
            style="background:rgba(0,0,0,0.5)">
         <div class="card max-w-sm w-full space-y-4 animate-pop">
           <h3 class="font-display font-bold text-lg" style="color:rgb(var(--color-danger))">
-            Anular venta #{{ ventaAnular()?.id }}
+            {{ esAdmin() ? 'Anular' : 'Solicitar anulación de' }} venta #{{ ventaAnular()?.id }}
           </h3>
           <p class="text-sm" style="color:rgb(var(--color-on-surface)/0.6)">
-            Esta acción no se puede deshacer. Ingresá el motivo de anulación.
+            @if (esAdmin()) {
+              Esta acción no se puede deshacer. Ingresá el motivo de anulación.
+            } @else {
+              La anulación queda pendiente hasta que un administrador la apruebe. Ingresá el motivo.
+            }
           </p>
           <div>
             <label class="input-label">Motivo de anulación *</label>
@@ -373,7 +377,7 @@ type SortCol = 'fecha' | 'total' | 'formaPago' | 'estado';
               @if (procesando()) {
                 <span class="w-4 h-4 rounded-full border-2 border-white/30 border-t-white animate-spin inline-block"></span>
               }
-              Anular venta
+              {{ esAdmin() ? 'Anular venta' : 'Enviar solicitud' }}
             </button>
           </div>
         </div>
@@ -406,6 +410,7 @@ export class HistorialVentasComponent implements OnInit {
 
   constructor(
     private ventaService: VentaService,
+    private solicitudService: SolicitudAprobacionService,
     public auth: AuthService,
     private toastSvc: ToastService,
   ) {}
@@ -542,28 +547,48 @@ export class HistorialVentasComponent implements OnInit {
     this.modalAnular.set(true);
   }
 
+  /** ADMIN anula directo; cualquier otro rol con acceso (GERENTE_SUCURSAL/MOD_CAJA) solo puede solicitarlo — queda pendiente de aprobación. */
+  esAdmin(): boolean {
+    return this.auth.rol() === 'ADMIN';
+  }
+
   confirmarAnular(): void {
     if (!this.motivoAnulacion.trim()) {
       this.errMotivo.set('El motivo es obligatorio');
       return;
     }
+    const ventaId = this.ventaAnular()!.id;
+    const motivo = this.motivoAnulacion.trim();
     this.procesando.set(true);
-    this.ventaService.anular(this.ventaAnular()!.id, this.motivoAnulacion.trim()).subscribe({
-      next: () => {
-        this.ventas.update(list =>
-          list.map(v => v.id === this.ventaAnular()!.id
-            ? { ...v, anulada: true, motivoAnulacion: this.motivoAnulacion }
-            : v)
-        );
-        this.toastSvc.success(`Venta #${this.ventaAnular()!.id} anulada correctamente`);
-        this.modalAnular.set(false);
-        this.procesando.set(false);
-      },
-      error: () => {
-        this.toastSvc.error('No se pudo anular la venta');
-        this.procesando.set(false);
-      },
-    });
+
+    if (this.esAdmin()) {
+      this.ventaService.anular(ventaId, motivo).subscribe({
+        next: () => {
+          this.ventas.update(list =>
+            list.map(v => v.id === ventaId ? { ...v, anulada: true, motivoAnulacion: motivo } : v)
+          );
+          this.toastSvc.success(`Venta #${ventaId} anulada correctamente`);
+          this.modalAnular.set(false);
+          this.procesando.set(false);
+        },
+        error: () => {
+          this.toastSvc.error('No se pudo anular la venta');
+          this.procesando.set(false);
+        },
+      });
+    } else {
+      this.solicitudService.solicitar('ANULACION_VENTA', ventaId, motivo).subscribe({
+        next: () => {
+          this.toastSvc.success(`Solicitud enviada — pendiente de aprobación de un administrador`);
+          this.modalAnular.set(false);
+          this.procesando.set(false);
+        },
+        error: () => {
+          this.toastSvc.error('No se pudo enviar la solicitud de anulación');
+          this.procesando.set(false);
+        },
+      });
+    }
   }
 
   fpLabel(fp: string): string {

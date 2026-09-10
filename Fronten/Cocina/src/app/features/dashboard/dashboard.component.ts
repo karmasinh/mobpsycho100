@@ -1,8 +1,9 @@
-import { Component, OnInit, signal } from '@angular/core';
+import { Component, OnInit, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
-import { PedidoService, InventarioService, AlertaService } from '../../core/services/api.service';
+import { PedidoService, InventarioService, AlertaService, ProduccionService, MermaService, Merma } from '../../core/services/api.service';
 import { AuthService } from '../../core/services/auth.service';
+import { LineaProduccion } from '../../core/models';
 
 @Component({
   selector: 'app-dashboard',
@@ -22,17 +23,19 @@ import { AuthService } from '../../core/services/auth.service';
       <!-- Stats -->
       <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
 
-        <div class="stat-card">
-          <span class="text-2xl">⏳</span>
-          <p class="stat-value mt-2">{{ pendientes() }}</p>
-          <p class="stat-label">Pendientes</p>
-        </div>
+        @if (!esAlmacenero()) {
+          <div class="stat-card">
+            <span class="text-2xl">⏳</span>
+            <p class="stat-value mt-2">{{ pendientes() }}</p>
+            <p class="stat-label">Pendientes</p>
+          </div>
 
-        <div class="stat-card">
-          <span class="text-2xl">🍳</span>
-          <p class="stat-value mt-2">{{ enPreparacion() }}</p>
-          <p class="stat-label">En preparación</p>
-        </div>
+          <div class="stat-card">
+            <span class="text-2xl">🍳</span>
+            <p class="stat-value mt-2">{{ enPreparacion() }}</p>
+            <p class="stat-label">En preparación</p>
+          </div>
+        }
 
         <div class="stat-card">
           <span class="text-2xl">📦</span>
@@ -70,6 +73,69 @@ import { AuthService } from '../../core/services/auth.service';
         }
       </div>
 
+      <!-- ══ ADMIN/JEFE_COCINA/COCINERO: avance de producción del día ══ -->
+      @if (!esAlmacenero()) {
+        <div class="card space-y-3">
+          <h3 class="font-display font-semibold" style="color: rgb(var(--color-on-surface))">
+            🍳 Avance de producción de hoy
+          </h3>
+          @if (cargandoBi()) {
+            <div class="skeleton h-20 rounded-xl"></div>
+          } @else if (lineasProduccion().length === 0) {
+            <p class="text-xs" style="color: rgb(var(--color-on-surface)/0.4)">No hay plan de producción para hoy.</p>
+          } @else {
+            <div class="space-y-2">
+              @for (l of lineasProduccion(); track l.id) {
+                <div class="flex items-center gap-3">
+                  <div class="flex-1 min-w-0">
+                    <p class="text-xs font-semibold truncate" style="color: rgb(var(--color-on-surface))">{{ l.plato.nombre }}</p>
+                    <div class="mt-1 h-1.5 rounded-full overflow-hidden" style="background: rgb(var(--color-surface-2))">
+                      <div class="h-full rounded-full"
+                           [style.width]="(l.cantidadProducida / l.cantidadPlanificada) * 100 + '%'"
+                           [style.background]="l.cantidadProducida >= l.cantidadPlanificada ? 'rgb(var(--color-success))' : 'rgb(var(--color-primary))'">
+                      </div>
+                    </div>
+                  </div>
+                  <p class="font-mono text-xs font-bold flex-shrink-0" style="color: rgb(var(--color-on-surface)/0.7)">
+                    {{ l.cantidadProducida }}/{{ l.cantidadPlanificada }}
+                  </p>
+                </div>
+              }
+            </div>
+          }
+        </div>
+      }
+
+      <!-- ══ ADMIN/JEFE_COCINA/ALMACENERO: mermas del mes ══ -->
+      @if (esInventario()) {
+        <div class="card space-y-3">
+          <div class="flex items-center justify-between">
+            <h3 class="font-display font-semibold" style="color: rgb(var(--color-on-surface))">
+              🗑️ Mermas del mes
+            </h3>
+            <a [routerLink]="['/mermas']" class="text-xs font-semibold" style="color: rgb(var(--color-primary))">Ver todas →</a>
+          </div>
+          @if (cargandoBi()) {
+            <div class="skeleton h-16 rounded-xl"></div>
+          } @else if (mermasMes().length === 0) {
+            <p class="text-xs" style="color: rgb(var(--color-on-surface)/0.4)">Sin mermas registradas este mes.</p>
+          } @else {
+            <p class="text-xs" style="color: rgb(var(--color-on-surface)/0.6)">
+              {{ mermasMes().length }} merma(s) — valor total
+              <span class="font-mono font-bold" style="color: rgb(var(--color-danger))">Bs {{ valorTotalMermas() | number:'1.2-2' }}</span>
+            </p>
+            <div class="space-y-1">
+              @for (m of mermasMes().slice(0, 5); track m.id) {
+                <div class="flex items-center justify-between text-xs p-2 rounded-lg" style="background: rgb(var(--color-surface-2))">
+                  <span>{{ m.insumoNombre }} — {{ m.causa }}</span>
+                  <span class="font-mono">{{ m.cantidad }} {{ m.insumoUnidad }}</span>
+                </div>
+              }
+            </div>
+          }
+        </div>
+      }
+
       <!-- Alertas de vencimiento -->
       @if (alertasVenc().length > 0) {
         <div class="card"
@@ -102,6 +168,11 @@ export class DashboardComponent implements OnInit {
   vencimientoCount = signal(0);
   alertasVenc     = signal<any[]>([]);
 
+  cargandoBi        = signal(true);
+  lineasProduccion  = signal<LineaProduccion[]>([]);
+  mermasMes         = signal<Merma[]>([]);
+  valorTotalMermas  = computed(() => this.mermasMes().reduce((s, m) => s + (m.valorEconomico ?? 0), 0));
+
   accesos = [
     { ruta: '/produccion', label: 'Producción del día', desc: 'Plan diario de sopas y segundos', emoji: '🍳' },
     { ruta: '/pedidos',    label: 'Cola de pedidos',    desc: 'Ver y gestionar pedidos',         emoji: '📋' },
@@ -113,17 +184,22 @@ export class DashboardComponent implements OnInit {
     private pedidoService: PedidoService,
     private inventarioService: InventarioService,
     private alertaService: AlertaService,
+    private produccionService: ProduccionService,
+    private mermaService: MermaService,
     private auth: AuthService,
   ) {}
 
   ngOnInit(): void {
-    this.pedidoService.listarPorEstado('PENDIENTE').subscribe({
-      next: ps => this.pendientes.set(ps.length), error: () => {}
-    });
-    this.pedidoService.listarPorEstado('EN_PREPARACION').subscribe({
-      next: ps => this.enPreparacion.set(ps.length), error: () => {}
-    });
     const sucursalId = this.auth.sucursalActiva();
+
+    if (!this.esAlmacenero()) {
+      this.pedidoService.listarPorEstado('PENDIENTE', sucursalId).subscribe({
+        next: ps => this.pendientes.set(ps.length), error: () => {}
+      });
+      this.pedidoService.listarPorEstado('EN_PREPARACION', sucursalId).subscribe({
+        next: ps => this.enPreparacion.set(ps.length), error: () => {}
+      });
+    }
     if (sucursalId != null) {
       this.inventarioService.stockBajo(sucursalId).subscribe({
         next: is => this.stockBajoCount.set(is.length), error: () => {}
@@ -135,6 +211,47 @@ export class DashboardComponent implements OnInit {
     this.alertaService.listarNoLeidas().subscribe({
       next: as => this.alertasVenc.set(as), error: () => {}
     });
+
+    this.cargarDatosBi(sucursalId);
+  }
+
+  esAlmacenero(): boolean {
+    return this.auth.rol() === 'ALMACENERO';
+  }
+
+  /** Roles con foco en inventario/mermas (además de cocina). */
+  esInventario(): boolean {
+    return ['ADMIN', 'JEFE_COCINA', 'ALMACENERO'].includes(this.auth.rol());
+  }
+
+  /** Secciones de inteligencia de negocio (BI) por rol — sin backend nuevo. */
+  private cargarDatosBi(sucursalId: number | null): void {
+    let pendientesCargas = 0;
+    const listo = () => { if (--pendientesCargas <= 0) this.cargandoBi.set(false); };
+
+    if (!this.esAlmacenero() && sucursalId != null) {
+      pendientesCargas++;
+      this.produccionService.hoy(sucursalId).subscribe({
+        next: p => { this.lineasProduccion.set(p?.lineas ?? []); listo(); },
+        error: () => listo(),
+      });
+    }
+    if (this.esInventario()) {
+      pendientesCargas++;
+      const hoy = new Date();
+      this.mermaService.listar(sucursalId).subscribe({
+        next: ms => {
+          const esteMes = ms.filter(m => {
+            const f = new Date(m.fecha);
+            return f.getFullYear() === hoy.getFullYear() && f.getMonth() === hoy.getMonth();
+          });
+          this.mermasMes.set(esteMes);
+          listo();
+        },
+        error: () => listo(),
+      });
+    }
+    if (pendientesCargas === 0) this.cargandoBi.set(false);
   }
 
   fechaHoy(): string {

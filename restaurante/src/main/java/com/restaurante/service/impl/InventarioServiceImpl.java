@@ -27,6 +27,7 @@ public class InventarioServiceImpl implements InventarioService {
     private final SucursalRepository sucursalRepository;
     private final ProveedorRepository proveedorRepository;
     private final UsuarioRepository usuarioRepository;
+    private final AuditoriaLogRepository auditoriaLogRepository;
 
     @Override
     @Transactional
@@ -155,6 +156,10 @@ public class InventarioServiceImpl implements InventarioService {
         registrarMovimiento(insumo, sucursal, null, TipoMovimientoInventario.AJUSTE_MANUAL,
                 Math.abs(diferencia), stockAnterior, nuevaCantidad,
                 "Ajuste manual: " + motivo, usuarioId);
+
+        registrarAuditoria(insumo, sucursal, usuarioId, "AJUSTE_STOCK",
+                stockAnterior + " " + insumo.getUnidadMedida(),
+                nuevaCantidad + " " + insumo.getUnidadMedida() + " (motivo: " + motivo + ")");
     }
 
     @Override
@@ -192,7 +197,7 @@ public class InventarioServiceImpl implements InventarioService {
 
         Usuario usuario = usuarioId != null ? usuarioRepository.findById(usuarioId).orElse(null) : null;
 
-        return movimientoInventarioRepository.save(MovimientoInventario.builder()
+        MovimientoInventario merma = movimientoInventarioRepository.save(MovimientoInventario.builder()
                 .insumo(insumo)
                 .sucursal(sucursal)
                 .tipo(TipoMovimientoInventario.MERMA)
@@ -204,6 +209,12 @@ public class InventarioServiceImpl implements InventarioService {
                 .valorEconomico(valorEconomico)
                 .usuario(usuario)
                 .build());
+
+        registrarAuditoria(insumo, sucursal, usuarioId, "MERMA",
+                stockAnterior + " " + insumo.getUnidadMedida(),
+                cantidad + " " + insumo.getUnidadMedida() + " (causa: " + causa + ")");
+
+        return merma;
     }
 
     @Override
@@ -334,6 +345,20 @@ public class InventarioServiceImpl implements InventarioService {
                 i.getId(), i.getCodigo(), i.getNombre(), i.getUnidadMedida(),
                 s.getStockActual(), s.getStockMinimo(), i.getPrecioUnitario(), i.getPerecedero(),
                 cat != null ? cat.getId() : null, cat != null ? cat.getNombre() : null);
+    }
+
+    /** Registra en el log general de auditoría (pantalla /auditoria), además del kárdex específico de inventario — RF-L-004/CU-L-007. */
+    private void registrarAuditoria(Insumo insumo, Sucursal sucursal, Long usuarioId, String accion, String valorAnterior, String valorNuevo) {
+        Usuario usuario = usuarioId != null ? usuarioRepository.findById(usuarioId).orElse(null) : null;
+        auditoriaLogRepository.save(AuditoriaLog.builder()
+                .entidad("Insumo")
+                .entidadId(insumo.getId())
+                .accion(accion)
+                .valorAnterior(valorAnterior)
+                .valorNuevo(valorNuevo)
+                .username(usuario != null ? usuario.getUsername() : "sistema")
+                .sucursal(sucursal)
+                .build());
     }
 
     private void registrarMovimiento(Insumo insumo, Sucursal sucursal, LoteInsumo lote,

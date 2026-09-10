@@ -149,6 +149,13 @@ export const routes: Routes = [
           import('./features/reportes/reportes.component').then(m => m.ReportesComponent),
       },
       {
+        path: 'aprobaciones',
+        data: { modulo: 'MOD_APROBACIONES', title: 'Aprobaciones' },
+        canActivate: [authGuard],
+        loadComponent: () =>
+          import('./features/aprobaciones/aprobaciones.component').then(m => m.AprobacionesComponent),
+      },
+      {
         path: 'sin-acceso',
         loadComponent: () =>
           import('./shared/components/sin-acceso.component').then(m => m.SinAccesoComponent),

@@ -10,7 +10,7 @@ import {
   Sucursal, TipoAlmuerzo, Insumo, AuditoriaLog, TopProductoDto,
   LineaProduccion, ProduccionDia, TipoLineaProduccion, EstadoProduccion,
   CierreCaja, RentabilidadPlato, VentaPorSucursal, MovimientoCaja, TipoMovimientoCaja,
-  Empresa
+  Empresa, SolicitudAprobacion
 } from '../models';
 
 const API = environment.apiUrl;
@@ -159,6 +159,32 @@ export class CierreCajaService {
 
   revertirMovimiento(movimientoId: number, motivo: string): Observable<MovimientoCaja> {
     return this.http.patch<MovimientoCaja>(`${API}/cierres-caja/movimientos/${movimientoId}/revertir`, { motivo });
+  }
+}
+
+// ── Solicitudes de aprobación (anulación de venta / reversión de caja) ──
+@Injectable({ providedIn: 'root' })
+export class SolicitudAprobacionService {
+  constructor(private http: HttpClient) {}
+
+  solicitar(tipo: 'ANULACION_VENTA' | 'REVERSION_MOVIMIENTO_CAJA', entidadId: number, motivo: string): Observable<SolicitudAprobacion> {
+    return this.http.post<SolicitudAprobacion>(`${API}/solicitudes-aprobacion`, { tipo, entidadId, motivo });
+  }
+
+  aprobar(id: number): Observable<SolicitudAprobacion> {
+    return this.http.patch<SolicitudAprobacion>(`${API}/solicitudes-aprobacion/${id}/aprobar`, null);
+  }
+
+  rechazar(id: number, motivo: string): Observable<SolicitudAprobacion> {
+    return this.http.patch<SolicitudAprobacion>(`${API}/solicitudes-aprobacion/${id}/rechazar`, { motivo });
+  }
+
+  listarPendientes(): Observable<SolicitudAprobacion[]> {
+    return this.http.get<SolicitudAprobacion[]>(`${API}/solicitudes-aprobacion/pendientes`);
+  }
+
+  listarMias(): Observable<SolicitudAprobacion[]> {
+    return this.http.get<SolicitudAprobacion[]>(`${API}/solicitudes-aprobacion/mias`);
   }
 }
 

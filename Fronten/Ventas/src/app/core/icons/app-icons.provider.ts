@@ -30,6 +30,7 @@ import {
   LucideChartNoAxesColumnIncreasing,
   LucideTriangleAlert,
   LucidePanelsTopLeft,
+  LucideCircleCheck,
 } from '@lucide/angular';
 
 /**
@@ -71,6 +72,7 @@ const ICONOS = [
   LucideChartNoAxesColumnIncreasing,
   LucideTriangleAlert,
   LucidePanelsTopLeft,
+  LucideCircleCheck,
 ] as const;
 
 /**

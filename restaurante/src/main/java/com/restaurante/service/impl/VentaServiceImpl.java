@@ -123,6 +123,7 @@ public class VentaServiceImpl implements VentaService {
                 .accion("COBRO")
                 .valorNuevo("Total: " + venta.getTotalCobrado() + " | Forma: " + formaPago)
                 .username(cajero != null ? cajero.getUsername() : "sistema")
+                .sucursal(venta.getSucursal())
                 .build());
 
         return venta;
@@ -131,6 +132,10 @@ public class VentaServiceImpl implements VentaService {
     @Override
     @Transactional
     public void anular(Long ventaId, String motivo, Long usuarioId) {
+        if (motivo == null || motivo.isBlank()) {
+            throw new NegocioException("Debe indicar un motivo para anular la venta.");
+        }
+
         Venta venta = obtenerPorId(ventaId);
 
         if (Boolean.TRUE.equals(venta.getAnulada())) {
@@ -179,6 +184,7 @@ public class VentaServiceImpl implements VentaService {
                 .valorAnterior("ACTIVA")
                 .valorNuevo("ANULADA: " + motivo)
                 .username(usuario.getUsername())
+                .sucursal(venta.getSucursal())
                 .build());
     }
 

@@ -185,6 +185,10 @@ public class PensionadoServiceImpl implements PensionadoService {
     @Override
     @Transactional
     public CobroMensual registrarPago(CobroMensualRequest request, Long usuarioId) {
+        if (request.getMontoPagado() == null || request.getMontoPagado() <= 0) {
+            throw new NegocioException("El monto pagado debe ser mayor a cero.");
+        }
+
         CobroMensual cobro = cobroMensualRepository
                 .findByPensionado_IdAndMesAndAnio(request.getPensionadoId(),
                         request.getMes(), request.getAnio())

@@ -199,6 +199,7 @@ public class CierreCajaServiceImpl implements CierreCajaService {
                 .valorAnterior(original.getTipo() + " " + original.getMonto() + " (motivo: " + original.getMotivo() + ")")
                 .valorNuevo("Revertido con movimiento #" + reversion.getId() + " — " + motivo)
                 .username(admin.getUsername())
+                .sucursal(turno.getSucursal())
                 .build());
 
         return reversion;
