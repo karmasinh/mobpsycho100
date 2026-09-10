@@ -5,6 +5,7 @@ import com.restaurante.enums.EstadoPedido;
 import com.restaurante.enums.FormaPago;
 import com.restaurante.exception.NegocioException;
 import com.restaurante.repository.*;
+import com.restaurante.service.CierreCajaService;
 import com.restaurante.service.impl.VentaServiceImpl;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -19,6 +20,10 @@ import java.util.Optional;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.lenient;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
@@ -32,6 +37,7 @@ class VentaServiceImplTest {
     @Mock private DetallePedidoRepository detallePedidoRepository;
     @Mock private PlatoRepository platoRepository;
     @Mock private ProduccionService produccionService;
+    @Mock private CierreCajaService cierreCajaService;
 
     @InjectMocks
     private VentaServiceImpl ventaService;
@@ -43,6 +49,8 @@ class VentaServiceImplTest {
     void setUp() {
         sucursal = Sucursal.builder().id(1L).nombre("Casa Matriz").activo(true).build();
         cajero = Usuario.builder().id(10L).username("cajero1").build();
+        lenient().when(cierreCajaService.obtenerAbiertoPorCajero(10L))
+                .thenReturn(Optional.of(CierreCaja.builder().id(1L).build()));
     }
 
     private Pedido pedidoConTotal(double total, EstadoPedido estado) {
@@ -121,5 +129,39 @@ class VentaServiceImplTest {
         when(ventaRepository.findById(500L)).thenReturn(Optional.of(venta));
 
         assertThrows(NegocioException.class, () -> ventaService.anular(500L, "motivo", 10L));
+    }
+
+    @Test
+    void cobrar_rechazaElSegundoCobroConcurrenteSobreElMismoPedido() {
+        // Simula dos cobros concurrentes del mismo pedido (BL-A-003/RNF-A-003): el primero
+        // ve el pedido sin venta todavía; para cuando el segundo consulta, la venta del
+        // primero ya existe, así que debe rechazar en vez de crear una venta duplicada.
+        Pedido pedido = pedidoConTotal(50.0, EstadoPedido.LISTO);
+        when(pedidoRepository.findById(100L)).thenReturn(Optional.of(pedido));
+        when(usuarioRepository.findById(10L)).thenReturn(Optional.of(cajero));
+        when(ventaRepository.findByPedidoId(100L))
+                .thenReturn(Optional.empty())
+                .thenReturn(Optional.of(Venta.builder().id(999L).pedido(pedido).build()));
+
+        Venta primerCobro = ventaService.cobrar(100L, 60.0, FormaPago.EFECTIVO, 10L);
+        assertThat(primerCobro).isNotNull();
+
+        assertThrows(NegocioException.class,
+                () -> ventaService.cobrar(100L, 60.0, FormaPago.EFECTIVO, 10L));
+
+        verify(ventaRepository, times(1)).save(any());
+    }
+
+    @Test
+    void cobrar_rechazaSinTurnoDeCajaAbierto() {
+        Pedido pedido = pedidoConTotal(50.0, EstadoPedido.LISTO);
+        when(pedidoRepository.findById(100L)).thenReturn(Optional.of(pedido));
+        when(ventaRepository.findByPedidoId(100L)).thenReturn(Optional.empty());
+        when(cierreCajaService.obtenerAbiertoPorCajero(10L)).thenReturn(Optional.empty());
+
+        assertThrows(NegocioException.class,
+                () -> ventaService.cobrar(100L, 60.0, FormaPago.EFECTIVO, 10L));
+
+        verify(ventaRepository, never()).save(any());
     }
 }

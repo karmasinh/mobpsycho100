@@ -103,8 +103,8 @@ public class VentaController {
     }
 
     @GetMapping("/comparativo-sucursales")
-    @PreAuthorize("hasAnyRole('ADMIN','GERENTE_SUCURSAL') or @perm.tiene(authentication, 'MOD_REPORTES')")
-    @Operation(summary = "Total de ventas por sucursal en un rango de fechas")
+    @PreAuthorize("hasRole('ADMIN')")
+    @Operation(summary = "Total de ventas por sucursal en un rango de fechas — alcance global, solo ADMIN (RN-A-014)")
     public ResponseEntity<List<VentaPorSucursalDto>> comparativoSucursales(
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime desde,
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime hasta) {

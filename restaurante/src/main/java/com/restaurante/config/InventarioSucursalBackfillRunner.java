@@ -5,6 +5,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.ApplicationArguments;
 import org.springframework.boot.ApplicationRunner;
+import org.springframework.core.annotation.Order;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Component;
 
@@ -19,9 +20,13 @@ import java.util.List;
  *   si la base ya tenía datos — se leen con SQL nativo).
  * Toda la migración asigna la primera sucursal activa encontrada. Idempotente:
  * solo toca filas con sucursal_id nulo / insumos sin stock_insumo todavía.
+ *
+ * <p>{@code @Order} explícito (después de {@code DataInitializer}/{@code DatosPruebaRunner})
+ * para no depender del orden implícito de Spring entre runners sin anotar (AUD-A-026).
  */
 @Component
 @RequiredArgsConstructor
+@Order(2)
 public class InventarioSucursalBackfillRunner implements ApplicationRunner {
 
     private static final Logger log = LoggerFactory.getLogger(InventarioSucursalBackfillRunner.class);

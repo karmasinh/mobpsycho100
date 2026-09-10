@@ -1,6 +1,7 @@
 package com.restaurante.service.ia;
 
 import com.restaurante.exception.NegocioException;
+import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpEntity;
@@ -12,6 +13,7 @@ import java.util.List;
 import java.util.Map;
 
 @Component
+@RequiredArgsConstructor
 public class GeminiProvider implements SugerenciaIaProvider {
 
     private static final String URL =
@@ -20,7 +22,7 @@ public class GeminiProvider implements SugerenciaIaProvider {
     @Value("${app.ai.gemini.key:}")
     private String apiKey;
 
-    private final RestTemplate restTemplate = new RestTemplate();
+    private final RestTemplate restTemplate;
 
     @Override
     public String codigo() { return "GEMINI"; }

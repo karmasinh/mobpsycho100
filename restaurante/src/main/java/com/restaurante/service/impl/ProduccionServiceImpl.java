@@ -19,6 +19,7 @@ import com.restaurante.repository.RecetaRepository;
 import com.restaurante.repository.SucursalRepository;
 import com.restaurante.service.InventarioService;
 import com.restaurante.service.ProduccionService;
+import com.restaurante.service.UnidadConversionService;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -40,6 +41,7 @@ public class ProduccionServiceImpl implements ProduccionService {
     private final SucursalRepository sucursalRepository;
     private final RecetaRepository recetaRepository;
     private final InventarioService inventarioService;
+    private final UnidadConversionService unidadConversionService;
 
     @Override
     @Transactional
@@ -96,10 +98,24 @@ public class ProduccionServiceImpl implements ProduccionService {
         return produccionRepo.findBySucursalIdOrderByFechaDesc(sucursalId);
     }
 
+    /**
+     * Transiciones válidas del estado de producción del día: sólo hacia
+     * adelante y sin saltos (PLANIFICADO → EN_CURSO → CERRADO). AUD-L-005.
+     */
+    private static final java.util.Map<EstadoProduccion, EstadoProduccion> SIGUIENTE_ESTADO = java.util.Map.of(
+            EstadoProduccion.PLANIFICADO, EstadoProduccion.EN_CURSO,
+            EstadoProduccion.EN_CURSO, EstadoProduccion.CERRADO
+    );
+
     @Override
     @Transactional
     public ProduccionDia cambiarEstado(Long id, EstadoProduccion nuevoEstado) {
         ProduccionDia produccion = obtenerPorId(id);
+        EstadoProduccion actual = produccion.getEstado();
+        if (!nuevoEstado.equals(SIGUIENTE_ESTADO.get(actual))) {
+            throw new NegocioException(
+                    "Transición inválida: no se puede pasar de " + actual + " a " + nuevoEstado + ".");
+        }
         produccion.setEstado(nuevoEstado);
         return produccionRepo.save(produccion);
     }
@@ -110,6 +126,10 @@ public class ProduccionServiceImpl implements ProduccionService {
         LineaProduccion linea = lineaRepo.findById(lineaId)
                 .orElseThrow(() -> new RecursoNoEncontradoException("LineaProduccion", lineaId));
         if (cantidadProducida < 0) throw new NegocioException("La cantidad producida no puede ser negativa");
+        if (cantidadProducida > linea.getCantidadPlanificada()) {
+            throw new NegocioException("La cantidad producida (" + cantidadProducida
+                    + ") no puede superar la cantidad planificada (" + linea.getCantidadPlanificada() + ").");
+        }
 
         int delta = cantidadProducida - linea.getCantidadProducida();
         if (delta > 0) {
@@ -125,13 +145,22 @@ public class ProduccionServiceImpl implements ProduccionService {
     private void consumirInsumosPorReceta(Plato plato, Long sucursalId, int cantidadProducida, Long usuarioId) {
         Receta receta = recetaRepository.findByPlatoIdAndActivaTrue(plato.getId()).orElse(null);
         if (receta == null) {
-            log.warn("Plato '{}' (id={}) no tiene receta activa: producción registrada sin descontar insumos.",
-                    plato.getNombre(), plato.getId());
-            return;
+            throw new NegocioException("El plato '" + plato.getNombre()
+                    + "' no tiene una receta activa: no se puede registrar producción sin poder descontar insumos.");
         }
 
         for (RecetaIngrediente ingrediente : receta.getIngredientes()) {
-            double cantidadAConsumir = ingrediente.getCantidad() * cantidadProducida;
+            String unidadInsumo = ingrediente.getInsumo().getUnidadMedida();
+            double cantidadEnUnidadInsumo = unidadConversionService
+                    .convertir(ingrediente.getCantidad(), ingrediente.getUnidadMedida(), unidadInsumo)
+                    .orElseGet(() -> {
+                        log.warn("No se pudo convertir '{}' de '{}' a '{}' para el insumo '{}': se usa la "
+                                + "cantidad sin convertir (unidades no reconocidas o de distinta magnitud).",
+                                ingrediente.getCantidad(), ingrediente.getUnidadMedida(), unidadInsumo,
+                                ingrediente.getInsumo().getNombre());
+                        return ingrediente.getCantidad();
+                    });
+            double cantidadAConsumir = cantidadEnUnidadInsumo * cantidadProducida;
             inventarioService.consumirStock(
                     ingrediente.getInsumo().getId(),
                     sucursalId,

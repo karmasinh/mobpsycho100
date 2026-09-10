@@ -69,7 +69,7 @@ public class PensionadoController {
     // ─── Asistencia ────────────────────────────────────────────────
 
     @PostMapping("/{id}/asistencia")
-    @PreAuthorize("isAuthenticated()")
+    @PreAuthorize(ROLES_PENSIONADOS)
     @Operation(summary = "Marcar asistencia del pensionado para una fecha")
     public ResponseEntity<AsistenciaPensionado> registrarAsistencia(
             @PathVariable Long id,

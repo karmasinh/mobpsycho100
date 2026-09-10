@@ -11,6 +11,7 @@ import com.restaurante.enums.FormaPago;
 import com.restaurante.exception.NegocioException;
 import com.restaurante.exception.RecursoNoEncontradoException;
 import com.restaurante.repository.*;
+import com.restaurante.service.CierreCajaService;
 import com.restaurante.service.ProduccionService;
 import com.restaurante.service.VentaService;
 import lombok.RequiredArgsConstructor;
@@ -35,6 +36,7 @@ public class VentaServiceImpl implements VentaService {
     private final DetallePedidoRepository detallePedidoRepository;
     private final PlatoRepository platoRepository;
     private final ProduccionService produccionService;
+    private final CierreCajaService cierreCajaService;
 
     @Override
     @Transactional
@@ -54,6 +56,10 @@ public class VentaServiceImpl implements VentaService {
 
         if (ventaRepository.findByPedidoId(pedidoId).isPresent()) {
             throw new NegocioException("El pedido #" + pedidoId + " ya fue cobrado.");
+        }
+
+        if (cierreCajaService.obtenerAbiertoPorCajero(usuarioId).isEmpty()) {
+            throw new NegocioException("Debe abrir un turno de caja antes de cobrar.");
         }
 
         if (formaPago != FormaPago.CREDITO_CUENTA && montoRecibido < pedido.getTotal()) {

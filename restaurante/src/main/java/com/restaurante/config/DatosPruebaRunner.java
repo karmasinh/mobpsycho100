@@ -31,6 +31,7 @@ import com.restaurante.repository.RolRepository;
 import com.restaurante.repository.SucursalRepository;
 import com.restaurante.repository.TipoAlmuerzoRepository;
 import com.restaurante.repository.UsuarioRepository;
+import com.restaurante.service.CierreCajaService;
 import com.restaurante.service.InventarioService;
 import com.restaurante.service.PedidoService;
 import com.restaurante.service.PensionadoService;
@@ -69,14 +70,11 @@ import java.util.Map;
  * <p><b>Nota sobre conversión de unidades</b>: la receta de "Milanesa de pollo con
  * papas" usa intencionalmente unidades distintas a las del insumo (aceite vegetal en
  * ml sobre un insumo cargado en litros, sal en g sobre un insumo cargado en kg) para
- * demostrar la conversión real al costear (ver {@code RecetaController.crear}, que
- * usa el mismo {@link UnidadConversionService}). Ese plato se deja solo
- * "planificado" (no se llama {@code actualizarProducida}): el descuento de insumos al
- * producir ({@code ProduccionServiceImpl.consumirInsumosPorReceta}) multiplica la
- * cantidad del ingrediente tal cual, sin convertir — es una brecha ya conocida
- * (independiente de esta semilla, ver control de cambios), y producir ese plato aquí
- * agotaría el stock de forma artificial. Los platos que sí se producen y venden en
- * esta semilla usan unidades ya coincidentes con su insumo.
+ * ejercitar la conversión real tanto al costear ({@code RecetaController.crear}) como
+ * al producir ({@code ProduccionServiceImpl.consumirInsumosPorReceta}, corregido para
+ * convertir con el mismo {@link UnidadConversionService} en vez de descontar la
+ * cantidad cruda — ver control de cambios, hallazgo AUD-L-020). Los tres platos de
+ * esta semilla se producen y venden.
  */
 @Component
 @RequiredArgsConstructor
@@ -101,6 +99,7 @@ public class DatosPruebaRunner implements CommandLineRunner {
     private final ProduccionService produccionService;
     private final PedidoService pedidoService;
     private final VentaService ventaService;
+    private final CierreCajaService cierreCajaService;
     private final PensionadoService pensionadoService;
     private final UnidadConversionService unidadConversionService;
     private final PasswordEncoder passwordEncoder;
@@ -157,15 +156,16 @@ public class DatosPruebaRunner implements CommandLineRunner {
 
         Cliente clienteSur = crearCliente(sucursalSur);
 
+        abrirTurnoSiNoTiene(casaMatriz, cajero1.getId());
+        abrirTurnoSiNoTiene(sucursalSur, usuarioCajeroSur.getId());
         venderPedido(casaMatriz, null, sopaArroz, 2, segundoCarne, 1, cajero1.getId());
         venderPedido(sucursalSur, clienteSur, sopaArroz, 1, segundoCarne, 2, usuarioCajeroSur.getId());
 
         TipoAlmuerzo tipoAlmuerzo = crearTipoAlmuerzo();
         sembrarPensionadoConHistorial(tipoAlmuerzo, admin.getId());
 
-        log.info("[DatosPrueba] Segunda semilla completa: sucursal '{}', {} insumos, 3 platos/recetas, " +
-                        "producción del día en ambas sucursales (línea 'Milanesa' planificada sin producir), " +
-                        "2 pedidos vendidos, 1 cliente y 1 pensionado con historial de 2 meses.",
+        log.info("[DatosPrueba] Segunda semilla completa: sucursal '{}', {} insumos, 3 platos/recetas producidos " +
+                        "en ambas sucursales, 2 pedidos vendidos, 1 cliente y 1 pensionado con historial de 2 meses.",
                 SUCURSAL_SUR, insumos.size());
     }
 
@@ -390,11 +390,7 @@ public class DatosPruebaRunner implements CommandLineRunner {
         ProduccionDia produccion = produccionService.crear(request);
 
         for (LineaProduccion linea : produccion.getLineas()) {
-            String nombrePlato = linea.getPlato().getNombre();
-            if (nombrePlato.startsWith("Sopa") || nombrePlato.startsWith("Segundo de carne")) {
-                produccionService.actualizarProducida(linea.getId(), 15, usuarioId);
-            }
-            // "Milanesa de pollo con papas" queda planificada (cantidadProducida = 0).
+            produccionService.actualizarProducida(linea.getId(), 15, usuarioId);
         }
 
         log.info("[DatosPrueba] Producción del día registrada en '{}'.", sucursal.getNombre());
@@ -415,6 +411,13 @@ public class DatosPruebaRunner implements CommandLineRunner {
     }
 
     // ─── Pedidos y ventas ────────────────────────────────────────────
+
+    /** Cobrar exige un turno de caja abierto (ver VentaServiceImpl.cobrar); se abre uno de prueba si el cajero no tiene. */
+    private void abrirTurnoSiNoTiene(Sucursal sucursal, Long usuarioId) {
+        if (cierreCajaService.obtenerAbiertoPorCajero(usuarioId).isEmpty()) {
+            cierreCajaService.abrir(sucursal.getId(), 200.0, usuarioId);
+        }
+    }
 
     private void venderPedido(Sucursal sucursal, Cliente cliente,
                                Plato platoA, int cantidadA, Plato platoB, int cantidadB, Long usuarioId) {

@@ -44,9 +44,16 @@ public class AlertaController {
 
     @GetMapping("/count")
     @PreAuthorize("isAuthenticated()")
-    @Operation(summary = "Cantidad de alertas no leídas (para badge en UI)")
-    public ResponseEntity<Map<String, Long>> contarNoLeidas() {
-        return ResponseEntity.ok(Map.of("total", alertaRepository.countByLeidaFalse()));
+    @Operation(summary = "Cantidad de alertas no leídas (para badge en UI, filtrada por sucursal si corresponde)")
+    public ResponseEntity<Map<String, Long>> contarNoLeidas(@RequestParam(required = false) Long sucursalId,
+                                                              @AuthenticationPrincipal UserDetailsImpl userDetails) {
+        Long efectiva = sucursalAccessService.resolver(userDetails, sucursalId);
+        long total = efectiva == null
+                ? alertaRepository.countByLeidaFalse()
+                : alertaRepository.findByLeidaFalseOrderByCreadoEnDesc().stream()
+                        .filter(a -> a.getSucursal() == null || efectiva.equals(a.getSucursal().getId()))
+                        .count();
+        return ResponseEntity.ok(Map.of("total", total));
     }
 
     @PatchMapping("/{id}/leer")
@@ -67,9 +74,14 @@ public class AlertaController {
 
     @PatchMapping("/leer-todas")
     @PreAuthorize("isAuthenticated()")
-    public ResponseEntity<Void> marcarTodasLeidas(@AuthenticationPrincipal UserDetailsImpl userDetails) {
+    @Operation(summary = "Marcar como leídas todas las alertas visibles para el usuario (filtradas por sucursal si corresponde)")
+    public ResponseEntity<Void> marcarTodasLeidas(@RequestParam(required = false) Long sucursalId,
+                                                   @AuthenticationPrincipal UserDetailsImpl userDetails) {
+        Long efectiva = sucursalAccessService.resolver(userDetails, sucursalId);
         Usuario usuario = usuarioRepository.findById(userDetails.getId()).orElse(null);
-        List<AlertaSistema> noLeidas = alertaRepository.findByLeidaFalseOrderByCreadoEnDesc();
+        List<AlertaSistema> noLeidas = alertaRepository.findByLeidaFalseOrderByCreadoEnDesc().stream()
+                .filter(a -> efectiva == null || a.getSucursal() == null || efectiva.equals(a.getSucursal().getId()))
+                .toList();
         noLeidas.forEach(a -> {
             a.setLeida(true);
             a.setLeidaEn(LocalDateTime.now());

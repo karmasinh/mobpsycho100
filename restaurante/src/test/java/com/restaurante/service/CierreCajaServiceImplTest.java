@@ -87,6 +87,46 @@ class CierreCajaServiceImplTest {
     }
 
     @Test
+    void cerrar_concilianTotalesPorFormaDePagoConMultiplesVentasYMovimientos() {
+        LocalDateTime apertura = LocalDateTime.now().minusHours(3);
+        CierreCaja turno = CierreCaja.builder()
+                .id(5L).sucursal(sucursal).cajero(cajero)
+                .fechaApertura(apertura).montoInicial(50.0).estado(EstadoCierreCaja.ABIERTO)
+                .build();
+        when(cierreCajaRepository.findById(5L)).thenReturn(Optional.of(turno));
+
+        List<Venta> ventas = List.of(
+                Venta.builder().totalCobrado(30.0).formaPago(FormaPago.EFECTIVO).build(),
+                Venta.builder().totalCobrado(20.0).formaPago(FormaPago.EFECTIVO).build(),
+                Venta.builder().totalCobrado(40.0).formaPago(FormaPago.QR).build(),
+                Venta.builder().totalCobrado(15.0).formaPago(FormaPago.MIXTO).build(),
+                Venta.builder().totalCobrado(25.0).formaPago(FormaPago.CREDITO_CUENTA).build());
+        when(ventaRepository.findByCajero_IdAndSucursalIdAndCreadoEnBetweenAndAnuladaFalse(
+                any(), any(), any(), any())).thenReturn(ventas);
+
+        List<MovimientoCaja> movimientos = List.of(
+                MovimientoCaja.builder().tipo(TipoMovimientoCaja.INGRESO).monto(10.0).build(),
+                MovimientoCaja.builder().tipo(TipoMovimientoCaja.INGRESO).monto(5.0).build(),
+                MovimientoCaja.builder().tipo(TipoMovimientoCaja.RETIRO).monto(8.0).build());
+        when(movimientoCajaRepository.findByCierreCaja_IdOrderByCreadoEnAsc(5L)).thenReturn(movimientos);
+        when(cierreCajaRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
+
+        // Esperado efectivo: 50 (inicial) + 50 (efectivo: 30+20) + 15 (ingresos: 10+5) - 8 (retiro) = 107
+        CierreCaja cerrado = cierreCajaService.cerrar(5L, 107.0, null, 10L);
+
+        assertThat(cerrado.getTotalVentasEfectivo()).isEqualTo(50.0);
+        assertThat(cerrado.getTotalVentasQr()).isEqualTo(40.0);
+        assertThat(cerrado.getTotalVentasMixto()).isEqualTo(15.0);
+        assertThat(cerrado.getTotalVentasCredito()).isEqualTo(25.0);
+        assertThat(cerrado.getTotalVentasGeneral()).isEqualTo(130.0);
+        assertThat(cerrado.getCantidadVentas()).isEqualTo(5);
+        assertThat(cerrado.getTotalIngresos()).isEqualTo(15.0);
+        assertThat(cerrado.getTotalRetiros()).isEqualTo(8.0);
+        assertThat(cerrado.getMontoEsperadoEfectivo()).isEqualTo(107.0);
+        assertThat(cerrado.getDiferencia()).isEqualTo(0.0);
+    }
+
+    @Test
     void cerrar_soloElCajeroQueAbrioElTurnoPuedeCerrarlo() {
         CierreCaja turno = CierreCaja.builder()
                 .id(5L).sucursal(sucursal).cajero(cajero)

@@ -759,9 +759,9 @@ export class ReportesComponent implements OnInit {
     { id: 'sucursales' as Seccion, label: 'Sucursales',    emoji: '🏪' },
   ];
 
-  // Solo usuarios sin sucursal fija (admin/multi-sucursal) ven el comparativo entre sucursales
+  // El comparativo entre sucursales es alcance global (RN-A-014): solo ADMIN lo consulta en el backend
   seccionesVisibles = computed(() =>
-    this.auth.sucursalFija() == null
+    this.auth.rol() === 'ADMIN'
       ? this.secciones
       : this.secciones.filter(s => s.id !== 'sucursales')
   );

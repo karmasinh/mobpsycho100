@@ -1,6 +1,7 @@
 package com.restaurante.service.ia;
 
 import com.restaurante.exception.NegocioException;
+import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
@@ -12,6 +13,7 @@ import java.util.List;
 import java.util.Map;
 
 @Component
+@RequiredArgsConstructor
 public class ClaudeProvider implements SugerenciaIaProvider {
 
     private static final String URL = "https://api.anthropic.com/v1/messages";
@@ -20,7 +22,7 @@ public class ClaudeProvider implements SugerenciaIaProvider {
     @Value("${app.ai.claude.key:}")
     private String apiKey;
 
-    private final RestTemplate restTemplate = new RestTemplate();
+    private final RestTemplate restTemplate;
 
     @Override
     public String codigo() { return "CLAUDE"; }

@@ -1,4 +1,4 @@
-import { Component, OnInit, signal } from '@angular/core';
+import { Component, OnInit, signal, WritableSignal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { CierreCajaService } from '../../core/services/api.service';
@@ -325,10 +325,8 @@ export class CierreCajaComponent implements OnInit {
   seleccionarTurnoAdmin(id: number | null): void {
     this.errorAdmin.set('');
     if (id == null) { this.movimientosAdmin.set([]); return; }
-    this.cierreCajaService.listarMovimientos(id).subscribe({
-      next: ms => this.movimientosAdmin.set(ms),
-      error: () => this.errorAdmin.set('No se pudieron cargar los movimientos de este turno.'),
-    });
+    this.cargarMovimientosEn(id, this.movimientosAdmin,
+        () => this.errorAdmin.set('No se pudieron cargar los movimientos de este turno.'));
   }
 
   fueRevertido(movimientoId: number): boolean {
@@ -369,9 +367,15 @@ export class CierreCajaComponent implements OnInit {
   }
 
   private cargarMovimientos(cierreCajaId: number): void {
+    this.cargarMovimientosEn(cierreCajaId, this.movimientos);
+  }
+
+  /** Carga compartida por el flujo del cajero (`movimientos`) y el del admin (`movimientosAdmin`) — AUD-A-027. */
+  private cargarMovimientosEn(cierreCajaId: number, destino: WritableSignal<MovimientoCaja[]>,
+                               onError?: () => void): void {
     this.cierreCajaService.listarMovimientos(cierreCajaId).subscribe({
-      next: ms => this.movimientos.set(ms),
-      error: () => {},
+      next: ms => destino.set(ms),
+      error: () => onError?.(),
     });
   }
 

@@ -113,4 +113,35 @@ class InventarioServiceImplTest {
         assertThat(stockB.getStockActual()).isEqualTo(5.0);
         verify(stockInsumoRepository, never()).findByInsumo_IdAndSucursal_Id(1L, 2L);
     }
+
+    // ── Kárdex (AUD-L-007): saldo final debe conciliar con entradas/salidas ──
+
+    @Test
+    void obtenerKardex_concilianSaldoInicialEntradasYSalidas() {
+        java.time.LocalDate desde = java.time.LocalDate.now().minusDays(7);
+        java.time.LocalDate hasta = java.time.LocalDate.now();
+
+        MovimientoInventario ingreso = MovimientoInventario.builder()
+                .id(1L).tipo(TipoMovimientoInventario.INGRESO_COMPRA).cantidad(50.0)
+                .stockAnterior(100.0).stockPosterior(150.0)
+                .creadoEn(java.time.LocalDateTime.now().minusDays(1)).build();
+        MovimientoInventario consumo = MovimientoInventario.builder()
+                .id(2L).tipo(TipoMovimientoInventario.CONSUMO_PRODUCCION).cantidad(30.0)
+                .stockAnterior(150.0).stockPosterior(120.0)
+                .creadoEn(java.time.LocalDateTime.now()).build();
+
+        when(movimientoInventarioRepository.findTop1ByInsumoIdAndSucursalIdAndCreadoEnBeforeOrderByCreadoEnDesc(
+                eq(1L), eq(1L), any())).thenReturn(List.of(
+                        MovimientoInventario.builder().stockPosterior(100.0).build()));
+        when(movimientoInventarioRepository.findByInsumoIdEnPeriodo(eq(1L), eq(1L), any(), any()))
+                .thenReturn(List.of(ingreso, consumo));
+
+        var kardex = inventarioService.obtenerKardex(1L, 1L, desde, hasta);
+
+        assertThat(kardex.get("saldoInicial")).isEqualTo(100.0);
+        assertThat(kardex.get("totalEntradas")).isEqualTo(50.0);
+        assertThat(kardex.get("totalSalidas")).isEqualTo(30.0);
+        // saldoFinal debe conciliar exactamente: 100 + 50 - 30 = 120 (igual al stockPosterior del último movimiento)
+        assertThat(kardex.get("saldoFinal")).isEqualTo(120.0);
+    }
 }

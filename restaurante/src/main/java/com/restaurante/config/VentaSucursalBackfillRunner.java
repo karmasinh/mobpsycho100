@@ -5,6 +5,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.ApplicationArguments;
 import org.springframework.boot.ApplicationRunner;
+import org.springframework.core.annotation.Order;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Component;
 
@@ -12,9 +13,13 @@ import org.springframework.stereotype.Component;
  * Rellena ventas.sucursal_id para filas creadas antes de que Venta tuviera
  * el campo sucursal propio, tomando la sucursal del pedido asociado.
  * Idempotente: solo toca filas con sucursal_id nulo.
+ *
+ * <p>{@code @Order} explícito (después de {@code DataInitializer}/{@code DatosPruebaRunner})
+ * para no depender del orden implícito de Spring entre runners sin anotar (AUD-A-026).
  */
 @Component
 @RequiredArgsConstructor
+@Order(3)
 public class VentaSucursalBackfillRunner implements ApplicationRunner {
 
     private static final Logger log = LoggerFactory.getLogger(VentaSucursalBackfillRunner.class);
