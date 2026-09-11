@@ -1,4 +1,4 @@
-import { Component, OnInit, signal, computed } from '@angular/core';
+import { Component, OnInit, signal, computed, CUSTOM_ELEMENTS_SCHEMA } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
 import { PedidoService, InventarioService, AlertaService, ProduccionService, MermaService, Merma } from '../../core/services/api.service';
@@ -9,6 +9,7 @@ import { LineaProduccion } from '../../core/models';
   selector: 'app-dashboard',
   standalone: true,
   imports: [CommonModule, RouterModule],
+  schemas: [CUSTOM_ELEMENTS_SCHEMA],
   template: `
     <div class="space-y-6 animate-fade-up">
 
@@ -25,20 +26,20 @@ import { LineaProduccion } from '../../core/models';
 
         @if (!esAlmacenero()) {
           <div class="stat-card">
-            <span class="text-2xl">⏳</span>
+            <iconify-icon icon="tabler:hourglass" width="24" height="24" style="color:currentColor"></iconify-icon>
             <p class="stat-value mt-2">{{ pendientes() }}</p>
             <p class="stat-label">Pendientes</p>
           </div>
 
           <div class="stat-card">
-            <span class="text-2xl">🍳</span>
+            <iconify-icon icon="tabler:chef-hat" width="24" height="24" style="color:currentColor"></iconify-icon>
             <p class="stat-value mt-2">{{ enPreparacion() }}</p>
             <p class="stat-label">En preparación</p>
           </div>
         }
 
         <div class="stat-card">
-          <span class="text-2xl">📦</span>
+          <iconify-icon icon="tabler:package" width="24" height="24" style="color:currentColor"></iconify-icon>
           <p class="stat-value mt-2"
              [style.color]="stockBajoCount() > 0 ? 'rgb(var(--color-danger))' : 'inherit'">
             {{ stockBajoCount() }}
@@ -47,7 +48,7 @@ import { LineaProduccion } from '../../core/models';
         </div>
 
         <div class="stat-card">
-          <span class="text-2xl">⚠️</span>
+          <iconify-icon icon="tabler:alert-triangle" width="24" height="24" style="color:currentColor"></iconify-icon>
           <p class="stat-value mt-2"
              [style.color]="vencimientoCount() > 0 ? 'rgb(var(--color-warning))' : 'inherit'">
             {{ vencimientoCount() }}
@@ -60,7 +61,7 @@ import { LineaProduccion } from '../../core/models';
       <div class="grid grid-cols-2 md:grid-cols-3 gap-3">
         @for (a of accesos; track a.ruta) {
           <a [routerLink]="a.ruta" class="card-hover flex items-center gap-3">
-            <span class="text-3xl">{{ a.emoji }}</span>
+            <iconify-icon [attr.icon]="a.icono" width="30" height="30" style="color:currentColor"></iconify-icon>
             <div>
               <p class="font-semibold text-sm" style="color: rgb(var(--color-on-surface))">
                 {{ a.label }}
@@ -76,8 +77,9 @@ import { LineaProduccion } from '../../core/models';
       <!-- ══ ADMIN/JEFE_COCINA/COCINERO: avance de producción del día ══ -->
       @if (!esAlmacenero()) {
         <div class="card space-y-3">
-          <h3 class="font-display font-semibold" style="color: rgb(var(--color-on-surface))">
-            🍳 Avance de producción de hoy
+          <h3 class="font-display font-semibold inline-flex items-center gap-2" style="color: rgb(var(--color-on-surface))">
+            <iconify-icon icon="tabler:chef-hat" width="18" height="18" style="color:currentColor"></iconify-icon>
+            Avance de producción de hoy
           </h3>
           @if (cargandoBi()) {
             <div class="skeleton h-20 rounded-xl"></div>
@@ -110,8 +112,9 @@ import { LineaProduccion } from '../../core/models';
       @if (esInventario()) {
         <div class="card space-y-3">
           <div class="flex items-center justify-between">
-            <h3 class="font-display font-semibold" style="color: rgb(var(--color-on-surface))">
-              🗑️ Mermas del mes
+            <h3 class="font-display font-semibold inline-flex items-center gap-2" style="color: rgb(var(--color-on-surface))">
+              <iconify-icon icon="tabler:trash" width="18" height="18" style="color:currentColor"></iconify-icon>
+              Mermas del mes
             </h3>
             <a [routerLink]="['/mermas']" class="text-xs font-semibold" style="color: rgb(var(--color-primary))">Ver todas →</a>
           </div>
@@ -141,18 +144,21 @@ import { LineaProduccion } from '../../core/models';
         <div class="card"
              style="border-color: rgb(var(--color-warning)/0.4);
                     background: rgb(var(--color-warning)/0.05)">
-          <h3 class="font-display font-semibold mb-3"
+          <h3 class="font-display font-semibold mb-3 inline-flex items-center gap-2"
               style="color: rgb(var(--color-warning))">
-            ⚠️ Alertas de inventario ({{ alertasVenc().length }})
+            <iconify-icon icon="tabler:alert-triangle" width="18" height="18" style="color:currentColor"></iconify-icon>
+            Alertas de inventario ({{ alertasVenc().length }})
           </h3>
           <div class="space-y-2">
             @for (a of alertasVenc().slice(0,5); track a.id) {
               <div class="flex items-start gap-2 text-sm"
                    style="color: rgb(var(--color-on-surface)/0.8)">
-                <span class="mt-0.5">{{ getTipoAlertaEmoji(a.tipo) }}</span>
+                <iconify-icon [attr.icon]="getTipoAlertaIcono(a.tipo)" width="16" height="16" class="mt-0.5" style="color:currentColor"></iconify-icon>
                 <span class="flex-1">{{ a.mensaje }}</span>
                 <button (click)="marcarLeida(a.id)"
-                        class="text-xs opacity-50 hover:opacity-100 flex-shrink-0">✕</button>
+                        class="text-xs opacity-50 hover:opacity-100 flex-shrink-0">
+                  <iconify-icon icon="line-md:close" width="14" height="14" style="color:currentColor"></iconify-icon>
+                </button>
               </div>
             }
           </div>
@@ -174,10 +180,10 @@ export class DashboardComponent implements OnInit {
   valorTotalMermas  = computed(() => this.mermasMes().reduce((s, m) => s + (m.valorEconomico ?? 0), 0));
 
   accesos = [
-    { ruta: '/produccion', label: 'Producción del día', desc: 'Plan diario de sopas y segundos', emoji: '🍳' },
-    { ruta: '/pedidos',    label: 'Cola de pedidos',    desc: 'Ver y gestionar pedidos',         emoji: '📋' },
-    { ruta: '/inventario', label: 'Inventario',          desc: 'Stock y lotes FEFO',              emoji: '📦' },
-    { ruta: '/platos',     label: 'Platos y recetas',    desc: 'Menú del restaurante',            emoji: '🍽️' },
+    { ruta: '/produccion', label: 'Producción del día', desc: 'Plan diario de sopas y segundos', icono: 'tabler:chef-hat' },
+    { ruta: '/pedidos',    label: 'Cola de pedidos',    desc: 'Ver y gestionar pedidos',         icono: 'tabler:clipboard-list' },
+    { ruta: '/inventario', label: 'Inventario',          desc: 'Stock y lotes FEFO',              icono: 'tabler:package' },
+    { ruta: '/platos',     label: 'Platos y recetas',    desc: 'Menú del restaurante',            icono: 'tabler:bowl' },
   ];
 
   constructor(
@@ -260,10 +266,10 @@ export class DashboardComponent implements OnInit {
     });
   }
 
-  getTipoAlertaEmoji(tipo: string): string {
-    if (tipo.includes('VENCIMIENTO')) return '📅';
-    if (tipo.includes('STOCK'))       return '📦';
-    return '🔔';
+  getTipoAlertaIcono(tipo: string): string {
+    if (tipo.includes('VENCIMIENTO')) return 'tabler:calendar-check';
+    if (tipo.includes('STOCK'))       return 'tabler:package';
+    return 'tabler:bell';
   }
 
   marcarLeida(id: number): void {

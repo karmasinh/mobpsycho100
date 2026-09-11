@@ -1,4 +1,4 @@
-import { Component, OnInit, signal, computed } from '@angular/core';
+import { Component, OnInit, signal, computed, CUSTOM_ELEMENTS_SCHEMA } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { InsumoService, CategoriaService } from '../../core/services/api.service';
@@ -10,6 +10,7 @@ import { PaginationComponent } from '../../shared/components/pagination.componen
   selector: 'app-insumos',
   standalone: true,
   imports: [CommonModule, FormsModule, PaginationComponent],
+  schemas: [CUSTOM_ELEMENTS_SCHEMA],
   template: `
     <div class="space-y-5 animate-fade-up">
 
@@ -24,7 +25,7 @@ import { PaginationComponent } from '../../shared/components/pagination.componen
           </p>
         </div>
         <div class="flex gap-2 w-full sm:w-auto">
-          <input [(ngModel)]="busqueda" (ngModelChange)="pagina.set(1)" maxlength="100" class="input w-full sm:w-48 text-sm" placeholder="🔍 Buscar insumo...">
+          <input [(ngModel)]="busqueda" (ngModelChange)="pagina.set(1)" maxlength="100" class="input w-full sm:w-48 text-sm" placeholder="Buscar insumo...">
           <button (click)="abrirCrearModal()" class="btn-primary text-sm py-2 px-3 whitespace-nowrap">
             + Nuevo Insumo
           </button>
@@ -79,7 +80,10 @@ import { PaginationComponent } from '../../shared/components/pagination.componen
                   <td class="font-mono text-xs">Bs {{ insumo.precioUnitario | number:'1.2-2' }}</td>
                   <td class="text-xs">
                     @if (insumo.perecedero) {
-                      <span class="badge-warning text-[10px]">📆 Perecedero</span>
+                      <span class="badge-warning text-[10px] inline-flex items-center gap-1">
+                        <iconify-icon icon="tabler:calendar-check" width="12" height="12" style="color:currentColor"></iconify-icon>
+                        Perecedero
+                      </span>
                     } @else {
                       <span class="badge-neutral text-[10px]" style="opacity: 0.6;">No perecedero</span>
                     }
@@ -93,16 +97,19 @@ import { PaginationComponent } from '../../shared/components/pagination.componen
                   </td>
                   <td>
                     <div class="flex gap-1.5">
-                      <button (click)="abrirEditarModal(insumo)" class="text-xs py-1 px-2 rounded-lg border border-border bg-surface hover:border-primary/50 text-on-surface/75">
-                        ✏️ Editar
+                      <button (click)="abrirEditarModal(insumo)" class="text-xs py-1 px-2 rounded-lg border border-border bg-surface hover:border-primary/50 text-on-surface/75 inline-flex items-center gap-1">
+                        <iconify-icon icon="line-md:edit" width="14" height="14" style="color:currentColor"></iconify-icon>
+                        Editar
                       </button>
                       @if (insumo.activo) {
-                        <button (click)="desactivarInsumo(insumo)" class="text-xs py-1 px-2 rounded-lg bg-danger/10 text-danger hover:bg-danger/20">
-                          ✕ Baja
+                        <button (click)="desactivarInsumo(insumo)" class="text-xs py-1 px-2 rounded-lg bg-danger/10 text-danger hover:bg-danger/20 inline-flex items-center gap-1">
+                          <iconify-icon icon="line-md:minus-circle" width="14" height="14" style="color:currentColor"></iconify-icon>
+                          Baja
                         </button>
                       } @else {
-                        <button (click)="activarInsumo(insumo)" class="text-xs py-1 px-2 rounded-lg bg-success/10 text-success border border-success/30 hover:bg-success/20">
-                          ✓ Alta
+                        <button (click)="activarInsumo(insumo)" class="text-xs py-1 px-2 rounded-lg bg-success/10 text-success border border-success/30 hover:bg-success/20 inline-flex items-center gap-1">
+                          <iconify-icon icon="line-md:plus-circle" width="14" height="14" style="color:currentColor"></iconify-icon>
+                          Alta
                         </button>
                       }
                     </div>
@@ -113,7 +120,7 @@ import { PaginationComponent } from '../../shared/components/pagination.componen
               @if (!cargando() && insumosFiltrados().length === 0) {
                 <tr>
                   <td colspan="8" class="text-center py-12 text-on-surface/40">
-                    <p class="text-3xl mb-2">📦</p>
+                    <p class="mb-2 flex justify-center"><iconify-icon icon="tabler:package" width="40" height="40" style="color:currentColor"></iconify-icon></p>
                     <p>No se encontraron insumos</p>
                   </td>
                 </tr>
@@ -138,10 +145,16 @@ import { PaginationComponent } from '../../shared/components/pagination.componen
              (click)="$event.stopPropagation()">
 
           <div class="flex items-center justify-between">
-            <h3 class="font-display font-bold text-lg" style="color:rgb(var(--color-on-surface))">
-              {{ modoEditar() ? '✏️ Editar Insumo' : '📦 Registrar Nuevo Insumo' }}
+            <h3 class="font-display font-bold text-lg inline-flex items-center gap-1.5" style="color:rgb(var(--color-on-surface))">
+              @if (modoEditar()) {
+                <iconify-icon icon="line-md:edit" width="18" height="18" style="color:currentColor"></iconify-icon>
+                Editar Insumo
+              } @else {
+                <iconify-icon icon="tabler:package" width="18" height="18" style="color:currentColor"></iconify-icon>
+                Registrar Nuevo Insumo
+              }
             </h3>
-            <button (click)="cerrarModal()" class="btn-ghost p-1">✕</button>
+            <button (click)="cerrarModal()" class="btn-ghost p-1"><iconify-icon icon="line-md:close" width="16" height="16" style="color:currentColor"></iconify-icon></button>
           </div>
 
           <div class="space-y-3">
@@ -199,8 +212,9 @@ import { PaginationComponent } from '../../shared/components/pagination.componen
           </div>
 
           @if (errorForm()) {
-            <p class="text-xs p-2.5 rounded-lg" style="background:rgb(var(--color-danger)/0.1);color:rgb(var(--color-danger))">
-              ⚠️ {{ errorForm() }}
+            <p class="text-xs p-2.5 rounded-lg inline-flex items-center gap-1.5" style="background:rgb(var(--color-danger)/0.1);color:rgb(var(--color-danger))">
+              <iconify-icon icon="tabler:alert-triangle" width="14" height="14" style="color:currentColor"></iconify-icon>
+              {{ errorForm() }}
             </p>
           }
 
@@ -378,7 +392,7 @@ export class InsumosComponent implements OnInit {
       next: () => {
         this.guardando.set(false);
         this.cerrarModal();
-        this.toastSvc.success(this.modoEditar() ? '✅ Insumo actualizado exitosamente' : '✅ Insumo registrado exitosamente');
+        this.toastSvc.success(this.modoEditar() ? 'Insumo actualizado exitosamente' : 'Insumo registrado exitosamente');
         this.cargar();
       },
       error: (err: any) => {
@@ -398,10 +412,10 @@ export class InsumosComponent implements OnInit {
     if (confirm(`¿Está seguro de dar de baja al insumo "${insumo.nombre}"?`)) {
       this.insumoService.desactivar(insumo.id).subscribe({
         next: () => {
-          this.toastSvc.success('✕ Insumo dado de baja correctamente');
+          this.toastSvc.success('Insumo dado de baja correctamente');
           this.cargar();
         },
-        error: () => this.toastSvc.error('❌ Error al dar de baja el insumo')
+        error: () => this.toastSvc.error('Error al dar de baja el insumo')
       });
     }
   }
@@ -417,10 +431,10 @@ export class InsumosComponent implements OnInit {
       activo: true
     }).subscribe({
       next: () => {
-        this.toastSvc.success('✓ Insumo reactivado correctamente');
+        this.toastSvc.success('Insumo reactivado correctamente');
         this.cargar();
       },
-      error: () => this.toastSvc.error('❌ Error al reactivar el insumo')
+      error: () => this.toastSvc.error('Error al reactivar el insumo')
     });
   }
 }

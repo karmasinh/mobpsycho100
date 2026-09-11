@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">Restaurante Cocina</string>
+    <string name="title_activity_main">Restaurante Cocina</string>
+    <string name="package_name">com.laentrerriana.cocina</string>
+    <string name="custom_url_scheme">com.laentrerriana.cocina</string>
+</resources>

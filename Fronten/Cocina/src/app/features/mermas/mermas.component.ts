@@ -1,4 +1,4 @@
-import { Component, OnInit, signal, computed } from '@angular/core';
+import { Component, OnInit, signal, computed, CUSTOM_ELEMENTS_SCHEMA } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { MermaService, InventarioService, Merma } from '../../core/services/api.service';
@@ -11,6 +11,7 @@ import { PaginationComponent } from '../../shared/components/pagination.componen
   selector: 'app-mermas',
   standalone: true,
   imports: [CommonModule, FormsModule, PaginationComponent],
+  schemas: [CUSTOM_ELEMENTS_SCHEMA],
   template: `
     <div class="space-y-5 animate-fade-up">
 
@@ -25,9 +26,10 @@ import { PaginationComponent } from '../../shared/components/pagination.componen
           </p>
         </div>
         <div class="flex gap-2 flex-wrap">
-          <button (click)="descargarPdf()" class="btn-secondary text-sm py-2 px-3"
+          <button (click)="descargarPdf()" class="btn-secondary text-sm py-2 px-3 inline-flex items-center gap-1.5"
             [disabled]="mermasFiltradas().length === 0">
-            📄 Exportar PDF
+            <iconify-icon icon="tabler:file-text" width="16" height="16" style="color:currentColor"></iconify-icon>
+            Exportar PDF
           </button>
           <button (click)="abrirModal()" class="btn-primary text-sm py-2 px-3">
             + Nueva Merma
@@ -63,7 +65,7 @@ import { PaginationComponent } from '../../shared/components/pagination.componen
       <!-- Filtros -->
       <div class="flex gap-2 flex-wrap">
         <input [(ngModel)]="busqueda" (ngModelChange)="pagina.set(1); actualizarFiltros()"
-          class="input text-sm w-full sm:w-52" placeholder="🔍 Buscar insumo o causa..."
+          class="input text-sm w-full sm:w-52" placeholder="Buscar insumo o causa..."
           maxlength="100">
         <select [(ngModel)]="insumoFiltro" (ngModelChange)="pagina.set(1); actualizarFiltros()"
           class="input text-sm w-full sm:w-52">
@@ -262,8 +264,9 @@ import { PaginationComponent } from '../../shared/components/pagination.componen
           </div>
 
           @if (error()) {
-            <p class="text-sm text-red-400 rounded p-2" style="background:rgb(220 38 38/0.1)">
-              ⚠ {{ error() }}
+            <p class="text-sm text-red-400 rounded p-2 inline-flex items-center gap-1.5" style="background:rgb(220 38 38/0.1)">
+              <iconify-icon icon="tabler:alert-triangle" width="14" height="14" style="color:currentColor"></iconify-icon>
+              {{ error() }}
             </p>
           }
 
@@ -424,7 +427,7 @@ export class MermasComponent implements OnInit {
       next: () => {
         this.guardando.set(false);
         this.cerrarModal();
-        this.toastSvc.success('✅ Merma registrada correctamente');
+        this.toastSvc.success('Merma registrada correctamente');
         this.cargarMermas();
         this.inventarioService.stock(sucursalId).subscribe(ins => this.insumos.set(ins));
       },

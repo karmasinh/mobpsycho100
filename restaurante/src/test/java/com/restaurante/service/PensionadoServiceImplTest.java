@@ -1,8 +1,10 @@
 package com.restaurante.service;
 
 import com.restaurante.dto.request.CobroMensualRequest;
+import com.restaurante.dto.request.PensionadoRequest;
 import com.restaurante.entity.CobroMensual;
 import com.restaurante.entity.Pensionado;
+import com.restaurante.entity.Rol;
 import com.restaurante.entity.TipoAlmuerzo;
 import com.restaurante.exception.NegocioException;
 import com.restaurante.repository.*;
@@ -19,7 +21,10 @@ import java.util.Optional;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
 
 @ExtendWith(MockitoExtension.class)
 class PensionadoServiceImplTest {
@@ -60,6 +65,51 @@ class PensionadoServiceImplTest {
         assertThat(cobro.getTotalCobrado()).isEqualTo(115.0);
         assertThat(cobro.getSaldoRestante()).isEqualTo(115.0);
         assertThat(cobro.getPagado()).isFalse();
+    }
+
+    @Test
+    void generarCobroMensual_elMontoBaseQuedaComoInstantaneaYNoCambiaSiSeEditaElTipoDespues() {
+        when(pensionadoRepository.findById(20L)).thenReturn(Optional.of(pensionado));
+        when(cobroMensualRepository.existsByPensionado_IdAndMesAndAnio(20L, 3, 2026)).thenReturn(false);
+        when(asistenciaRepository.countAsistenciasByMesAnio(20L, 3, 2026)).thenReturn(18);
+        when(cobroMensualRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
+
+        CobroMensual cobro = pensionadoService.generarCobroMensual(20L, 3, 2026);
+        assertThat(cobro.getMontoBase()).isEqualTo(100.0);
+
+        // CU-A-018: editar la tarifa del tipo de almuerzo después de generar el cobro
+        // no debe alterar el cobro ya emitido — montoBase queda como valor propio del registro.
+        pensionado.getTipoAlmuerzo().setPrecioMensual(500.0);
+
+        assertThat(cobro.getMontoBase()).isEqualTo(100.0);
+    }
+
+    @Test
+    void registrar_normalizaTelefonoYCorreoVaciosANull() {
+        // Hallazgo real (2026-09-10, probado en emulador Android): telefono/correo
+        // tienen UNIQUE en BD; "" (a diferencia de null) sí choca contra otro "".
+        PensionadoRequest request = new PensionadoRequest();
+        request.setNombre("Ana"); request.setApellido("Gómez"); request.setCedula("1234567");
+        request.setTelefono(""); request.setCorreo("");
+        request.setTipoAlmuerzoId(1L);
+        request.setFechaInscripcion(java.time.LocalDate.now());
+        request.setUsernamePersonalizado("ana.test");
+        request.setPasswordInicial("Clave123!");
+
+        when(pensionadoRepository.existsByCedula("1234567")).thenReturn(false);
+        when(tipoAlmuerzoRepository.findById(1L)).thenReturn(Optional.of(
+                TipoAlmuerzo.builder().id(1L).nombre("Completo").precioMensual(100.0).build()));
+        when(pensionadoRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
+        when(rolRepository.findByNombre("PENSIONADO")).thenReturn(Optional.of(Rol.builder().id(1L).nombre("PENSIONADO").build()));
+        when(usuarioRepository.existsByUsername("ana.test")).thenReturn(false);
+        when(passwordEncoder.encode(anyString())).thenReturn("hash");
+
+        Pensionado creado = pensionadoService.registrar(request);
+
+        assertThat(creado.getTelefono()).isNull();
+        assertThat(creado.getCorreo()).isNull();
+        verify(pensionadoRepository, never()).existsByTelefono(anyString());
+        verify(pensionadoRepository, never()).existsByCorreo(anyString());
     }
 
     @Test

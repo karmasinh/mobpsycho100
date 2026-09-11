@@ -1,4 +1,4 @@
-import { Component, OnInit, signal, computed } from '@angular/core';
+import { Component, OnInit, signal, computed, CUSTOM_ELEMENTS_SCHEMA } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
 import { VentaService, PensionadoService, ClienteService, AlertaService } from '../../core/services/api.service';
@@ -11,6 +11,7 @@ interface DiaTendencia { etiqueta: string; total: number; }
   selector: 'app-dashboard',
   standalone: true,
   imports: [CommonModule, RouterModule],
+  schemas: [CUSTOM_ELEMENTS_SCHEMA],
   template: `
     <div class="space-y-6 animate-slide-up">
 
@@ -29,9 +30,9 @@ interface DiaTendencia { etiqueta: string; total: number; }
         @for (acc of accesosRapidos; track acc.ruta) {
           <a [routerLink]="acc.ruta"
              class="card-hover flex flex-col items-center gap-2 py-5 text-center group">
-            <span class="text-3xl group-hover:scale-110 transition-transform duration-200">
-              {{ acc.emoji }}
-            </span>
+            <iconify-icon [attr.icon]="acc.icon" width="32" height="32"
+                          class="group-hover:scale-110 transition-transform duration-200"
+                          style="color:currentColor"></iconify-icon>
             <span class="text-xs font-semibold"
                   style="color: rgb(var(--color-on-surface)/0.7)">{{ acc.label }}</span>
           </a>
@@ -42,7 +43,7 @@ interface DiaTendencia { etiqueta: string; total: number; }
       <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <div class="stat-card">
           <div class="flex items-center justify-between mb-2">
-            <span class="text-2xl">💰</span>
+            <iconify-icon icon="tabler:currency-dollar" width="24" height="24" style="color:currentColor"></iconify-icon>
             @if (!cargando()) { <span class="badge-success badge">Hoy</span> }
           </div>
           @if (cargando()) {
@@ -56,7 +57,7 @@ interface DiaTendencia { etiqueta: string; total: number; }
 
         <div class="stat-card">
           <div class="flex items-center justify-between mb-2">
-            <span class="text-2xl">🏠</span>
+            <iconify-icon icon="tabler:home" width="24" height="24" style="color:currentColor"></iconify-icon>
             <span class="badge-info badge">Total</span>
           </div>
           @if (cargando()) {
@@ -70,7 +71,7 @@ interface DiaTendencia { etiqueta: string; total: number; }
 
         <div class="stat-card">
           <div class="flex items-center justify-between mb-2">
-            <span class="text-2xl">🧾</span>
+            <iconify-icon icon="tabler:receipt" width="24" height="24" style="color:currentColor"></iconify-icon>
             @if (cobrosPendientes() > 0) {
               <span class="badge-warning badge">{{ cobrosPendientes() }}</span>
             } @else {
@@ -88,7 +89,7 @@ interface DiaTendencia { etiqueta: string; total: number; }
 
         <div class="stat-card">
           <div class="flex items-center justify-between mb-2">
-            <span class="text-2xl">👥</span>
+            <iconify-icon icon="tabler:users" width="24" height="24" style="color:currentColor"></iconify-icon>
             <span class="badge-neutral badge">Clientes</span>
           </div>
           @if (cargando()) {
@@ -105,8 +106,8 @@ interface DiaTendencia { etiqueta: string; total: number; }
       @if (esAdmin()) {
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
           <div class="card space-y-3">
-            <h3 class="font-display font-semibold" style="color:rgb(var(--color-on-surface))">
-              🏪 Ventas por sucursal (últimos 7 días)
+            <h3 class="font-display font-semibold inline-flex items-center gap-1.5" style="color:rgb(var(--color-on-surface))">
+              <iconify-icon icon="tabler:building-store" width="18" height="18" style="color:currentColor"></iconify-icon> Ventas por sucursal (últimos 7 días)
             </h3>
             @if (cargandoBi()) {
               <div class="skeleton h-24 rounded-xl"></div>
@@ -134,8 +135,8 @@ interface DiaTendencia { etiqueta: string; total: number; }
 
           <div class="card space-y-3">
             <div class="flex items-center justify-between">
-              <h3 class="font-display font-semibold" style="color:rgb(var(--color-on-surface))">
-                🔔 Alertas recientes
+              <h3 class="font-display font-semibold inline-flex items-center gap-1.5" style="color:rgb(var(--color-on-surface))">
+                <iconify-icon icon="tabler:bell" width="18" height="18" style="color:currentColor"></iconify-icon> Alertas recientes
               </h3>
               <a [routerLink]="['/alertas']" class="text-xs font-semibold" style="color:rgb(var(--color-primary))">Ver todas →</a>
             </div>
@@ -158,8 +159,8 @@ interface DiaTendencia { etiqueta: string; total: number; }
       @if (esGerente()) {
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
           <div class="card space-y-3">
-            <h3 class="font-display font-semibold" style="color:rgb(var(--color-on-surface))">
-              📈 Tendencia de ventas (7 días)
+            <h3 class="font-display font-semibold inline-flex items-center gap-1.5" style="color:rgb(var(--color-on-surface))">
+              <iconify-icon icon="tabler:trending-up" width="18" height="18" style="color:currentColor"></iconify-icon> Tendencia de ventas (7 días)
             </h3>
             @if (cargandoBi()) {
               <div class="skeleton h-24 rounded-xl"></div>
@@ -178,8 +179,8 @@ interface DiaTendencia { etiqueta: string; total: number; }
           </div>
 
           <div class="card space-y-3">
-            <h3 class="font-display font-semibold" style="color:rgb(var(--color-on-surface))">
-              🍽️ Top productos de la semana
+            <h3 class="font-display font-semibold inline-flex items-center gap-1.5" style="color:rgb(var(--color-on-surface))">
+              <iconify-icon icon="tabler:tools-kitchen-2" width="18" height="18" style="color:currentColor"></iconify-icon> Top productos de la semana
             </h3>
             @if (cargandoBi()) {
               <div class="skeleton h-24 rounded-xl"></div>
@@ -211,9 +212,9 @@ interface DiaTendencia { etiqueta: string; total: number; }
       @if (listaCobros().length > 0) {
         <div class="card">
           <div class="flex items-center justify-between mb-4">
-            <h3 class="font-display font-semibold"
+            <h3 class="font-display font-semibold inline-flex items-center gap-1.5"
                 style="color: rgb(var(--color-on-surface))">
-              🧾 Cobros pendientes de este mes
+              <iconify-icon icon="tabler:receipt" width="18" height="18" style="color:currentColor"></iconify-icon> Cobros pendientes de este mes
             </h3>
             <a [routerLink]="['/cobros']"
                class="text-xs font-semibold"
@@ -282,14 +283,14 @@ export class DashboardComponent implements OnInit {
   maxTopProducto    = computed(() => Math.max(...this.topProductos().map(p => p.cantidadVendida), 1));
 
   accesosRapidos = [
-    { ruta: '/caja',             label: 'Nueva Venta',  emoji: '💳' },
-    { ruta: '/pensionados',      label: 'Pensionados',  emoji: '🏠' },
-    { ruta: '/clientes',         label: 'Clientes',     emoji: '👥' },
-    { ruta: '/cobros',           label: 'Cobros',       emoji: '🧾' },
-    { ruta: '/pedidos',          label: 'Pedidos',      emoji: '🛍️' },
-    { ruta: '/historial-ventas', label: 'Historial',    emoji: '📊' },
-    { ruta: '/reportes',         label: 'Reportes',     emoji: '📈' },
-    { ruta: '/alertas',          label: 'Alertas',      emoji: '🔔' },
+    { ruta: '/caja',             label: 'Nueva Venta',  icon: 'tabler:credit-card' },
+    { ruta: '/pensionados',      label: 'Pensionados',  icon: 'tabler:home' },
+    { ruta: '/clientes',         label: 'Clientes',     icon: 'tabler:users' },
+    { ruta: '/cobros',           label: 'Cobros',       icon: 'tabler:receipt' },
+    { ruta: '/pedidos',          label: 'Pedidos',      icon: 'tabler:shopping-bag' },
+    { ruta: '/historial-ventas', label: 'Historial',    icon: 'tabler:chart-bar' },
+    { ruta: '/reportes',         label: 'Reportes',     icon: 'tabler:trending-up' },
+    { ruta: '/alertas',          label: 'Alertas',      icon: 'tabler:bell' },
   ];
 
   constructor(

@@ -57,7 +57,7 @@ export class ComandaPrintService {
         </style>
       </head>
       <body>
-        <h1>🍳 COMANDA</h1>
+        <h1>COMANDA</h1>
         <div class="meta">Pedido #${pedido.id}</div>
         <div class="meta">${fechaStr}</div>
         <div class="meta">Sucursal: ${this.escapar(pedido.sucursal?.nombre ?? '—')}</div>

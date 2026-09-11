@@ -1,4 +1,4 @@
-import { Component, OnInit, signal, computed } from '@angular/core';
+import { Component, OnInit, signal, computed, CUSTOM_ELEMENTS_SCHEMA } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { KardexService, InsumoService, KardexResponse } from '../../core/services/api.service';
@@ -11,6 +11,7 @@ import { PaginationComponent } from '../../shared/components/pagination.componen
   selector: 'app-kardex',
   standalone: true,
   imports: [CommonModule, FormsModule, PaginationComponent],
+  schemas: [CUSTOM_ELEMENTS_SCHEMA],
   template: `
     <div class="space-y-5 animate-fade-up">
 
@@ -25,8 +26,9 @@ import { PaginationComponent } from '../../shared/components/pagination.componen
           </p>
         </div>
         @if (kardex()) {
-          <button (click)="descargarPdf()" class="btn-primary text-sm py-2 px-4">
-            📄 Descargar PDF
+          <button (click)="descargarPdf()" class="btn-primary text-sm py-2 px-4 inline-flex items-center gap-1.5">
+            <iconify-icon icon="tabler:file-text" width="16" height="16" style="color:currentColor"></iconify-icon>
+            Descargar PDF
           </button>
         }
       </div>
@@ -55,9 +57,14 @@ import { PaginationComponent } from '../../shared/components/pagination.componen
           </div>
         </div>
         <div class="flex gap-3 mt-4">
-          <button (click)="generar()" class="btn-primary text-sm py-2 px-5"
+          <button (click)="generar()" class="btn-primary text-sm py-2 px-5 inline-flex items-center gap-1.5"
             [disabled]="!filtro.insumoId || generando()">
-            {{ generando() ? 'Generando...' : '📊 Generar Kárdex' }}
+            @if (generando()) {
+              Generando...
+            } @else {
+              <iconify-icon icon="tabler:chart-bar" width="16" height="16" style="color:currentColor"></iconify-icon>
+              Generar Kárdex
+            }
           </button>
           @if (kardex()) {
             <button (click)="limpiar()" class="btn-secondary text-sm py-2 px-4">
@@ -285,7 +292,7 @@ import { PaginationComponent } from '../../shared/components/pagination.componen
       <!-- Estado vacío -->
       @if (!kardex() && !generando()) {
         <div class="card p-12 text-center">
-          <div class="text-5xl mb-4">📋</div>
+          <div class="mb-4 flex justify-center"><iconify-icon icon="tabler:clipboard-list" width="48" height="48" style="color:currentColor"></iconify-icon></div>
           <p class="text-lg font-semibold" style="color:rgb(var(--color-on-surface)/0.6)">
             Selecciona un insumo y un período para generar el Kárdex
           </p>
@@ -297,7 +304,7 @@ import { PaginationComponent } from '../../shared/components/pagination.componen
 
       @if (generando()) {
         <div class="card p-12 text-center">
-          <div class="text-5xl mb-4 animate-pulse">⏳</div>
+          <div class="mb-4 flex justify-center animate-pulse"><iconify-icon icon="tabler:hourglass" width="48" height="48" style="color:currentColor"></iconify-icon></div>
           <p class="text-sm" style="color:rgb(var(--color-on-surface)/0.5)">Generando Kárdex...</p>
         </div>
       }

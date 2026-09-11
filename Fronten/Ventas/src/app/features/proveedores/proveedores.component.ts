@@ -1,4 +1,4 @@
-import { Component, OnInit, signal, computed } from '@angular/core';
+import { Component, OnInit, signal, computed, CUSTOM_ELEMENTS_SCHEMA } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ProveedorService } from '../../core/services/api.service';
@@ -10,6 +10,7 @@ import { PaginationComponent } from '../../shared/components/pagination.componen
   selector: 'app-proveedores',
   standalone: true,
   imports: [CommonModule, FormsModule, PaginationComponent],
+  schemas: [CUSTOM_ELEMENTS_SCHEMA],
   template: `
     <div class="space-y-5 animate-slide-up">
 
@@ -26,7 +27,7 @@ import { PaginationComponent } from '../../shared/components/pagination.componen
         <div class="flex gap-2 w-full sm:w-auto">
           <input [(ngModel)]="busqueda" (ngModelChange)="pagina.set(1)"
                  class="input w-full sm:w-52 text-sm" maxlength="100"
-                 placeholder="🔍 Buscar proveedor...">
+                 placeholder="Buscar proveedor...">
           <button (click)="abrirModal()" class="btn-primary whitespace-nowrap">+ Nuevo</button>
         </div>
       </div>
@@ -99,15 +100,15 @@ import { PaginationComponent } from '../../shared/components/pagination.componen
                 <td>
                   <div class="flex gap-1.5">
                     <button (click)="abrirEditar(p)"
-                            class="text-xs py-1 px-2 rounded-lg border"
+                            class="text-xs py-1 px-2 rounded-lg border inline-flex items-center gap-1"
                             style="border-color:rgb(var(--color-border));background:rgb(var(--color-surface));color:rgb(var(--color-on-surface)/0.7)">
-                      ✏️ Editar
+                      <iconify-icon icon="line-md:edit" width="14" height="14" style="color:currentColor"></iconify-icon> Editar
                     </button>
                     @if (p.activo) {
                       <button (click)="desactivar(p)"
-                              class="text-xs py-1 px-2 rounded-lg"
+                              class="text-xs py-1 px-2 rounded-lg inline-flex items-center gap-1"
                               style="background:rgb(var(--color-danger)/0.1);color:rgb(var(--color-danger))">
-                        ✕ Baja
+                        <iconify-icon icon="tabler:x" width="14" height="14" style="color:currentColor"></iconify-icon> Baja
                       </button>
                     }
                   </div>
@@ -117,7 +118,7 @@ import { PaginationComponent } from '../../shared/components/pagination.componen
             @if (!cargando() && filtrados().length === 0) {
               <tr>
                 <td colspan="6" class="text-center py-12" style="color:rgb(var(--color-on-surface)/0.35)">
-                  <p class="text-3xl mb-2">🏭</p>
+                  <p class="mb-2 flex justify-center"><iconify-icon icon="tabler:building-warehouse" width="36" height="36" style="color:currentColor"></iconify-icon></p>
                   <p>No se encontraron proveedores</p>
                 </td>
               </tr>
@@ -138,8 +139,12 @@ import { PaginationComponent } from '../../shared/components/pagination.componen
            style="background:rgba(0,0,0,0.5)" (click)="cerrar()">
         <div class="card max-w-lg w-full space-y-4 animate-pop" (click)="$event.stopPropagation()">
 
-          <h3 class="font-display font-bold" style="color:rgb(var(--color-on-surface))">
-            {{ editandoId() ? '✏️ Editar Proveedor' : '🏭 Nuevo Proveedor' }}
+          <h3 class="font-display font-bold inline-flex items-center gap-1.5" style="color:rgb(var(--color-on-surface))">
+            @if (editandoId()) {
+              <iconify-icon icon="line-md:edit" width="18" height="18" style="color:currentColor"></iconify-icon> Editar Proveedor
+            } @else {
+              <iconify-icon icon="tabler:building-warehouse" width="18" height="18" style="color:currentColor"></iconify-icon> Nuevo Proveedor
+            }
           </h3>
 
           <div class="grid grid-cols-2 gap-3">
@@ -176,9 +181,9 @@ import { PaginationComponent } from '../../shared/components/pagination.componen
           </div>
 
           @if (error()) {
-            <p class="text-xs p-2 rounded-lg"
+            <p class="text-xs p-2 rounded-lg inline-flex items-center gap-1.5"
                style="background:rgb(var(--color-danger)/0.1);color:rgb(var(--color-danger))">
-              ⚠️ {{ error() }}
+              <iconify-icon icon="tabler:alert-triangle" width="14" height="14" style="color:currentColor"></iconify-icon> {{ error() }}
             </p>
           }
 
@@ -293,7 +298,7 @@ export class ProveedoresComponent implements OnInit {
         this.guardando.set(false);
         this.cerrar();
         this.proveedores.update(list => id ? list.map(x => x.id === id ? p : x) : [...list, p]);
-        this.toastSvc.success(id ? '✅ Proveedor actualizado' : '✅ Proveedor registrado');
+        this.toastSvc.success(id ? 'Proveedor actualizado' : 'Proveedor registrado');
       },
       error: err => {
         this.guardando.set(false);
@@ -307,9 +312,9 @@ export class ProveedoresComponent implements OnInit {
     this.svc.desactivar(p.id).subscribe({
       next: () => {
         this.proveedores.update(list => list.map(x => x.id === p.id ? { ...x, activo: false } : x));
-        this.toastSvc.success('✕ Proveedor dado de baja');
+        this.toastSvc.success('Proveedor dado de baja');
       },
-      error: () => this.toastSvc.error('❌ Error al dar de baja'),
+      error: () => this.toastSvc.error('Error al dar de baja'),
     });
   }
 }

@@ -1,4 +1,4 @@
-import { Component, OnInit, signal, computed } from '@angular/core';
+import { Component, OnInit, signal, computed, CUSTOM_ELEMENTS_SCHEMA } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { CategoriaService } from '../../core/services/api.service';
@@ -9,6 +9,7 @@ import { PaginationComponent } from '../../shared/components/pagination.componen
   selector: 'app-categorias-insumo',
   standalone: true,
   imports: [CommonModule, FormsModule, PaginationComponent],
+  schemas: [CUSTOM_ELEMENTS_SCHEMA],
   template: `
     <div class="space-y-5 animate-fade-up">
       <!-- Header -->
@@ -23,7 +24,7 @@ import { PaginationComponent } from '../../shared/components/pagination.componen
         </div>
         <div class="flex gap-2 w-full sm:w-auto">
           <input [(ngModel)]="busqueda" (ngModelChange)="pagina.set(1)"
-                 class="input w-full sm:w-48 text-sm" placeholder="🔍 Buscar categoría..."
+                 class="input w-full sm:w-48 text-sm" placeholder="Buscar categoría..."
                  maxlength="100">
           <button (click)="abrirCrearModal()" class="btn-primary text-sm py-2 px-3 whitespace-nowrap">
             + Nueva Categoría
@@ -77,16 +78,19 @@ import { PaginationComponent } from '../../shared/components/pagination.componen
                   </td>
                   <td>
                     <div class="flex gap-1.5">
-                      <button (click)="abrirEditarModal(cat)" class="text-xs py-1 px-2 rounded-lg border border-border bg-surface hover:border-primary/50 text-on-surface/75">
-                        ✏️ Editar
+                      <button (click)="abrirEditarModal(cat)" class="text-xs py-1 px-2 rounded-lg border border-border bg-surface hover:border-primary/50 text-on-surface/75 inline-flex items-center gap-1">
+                        <iconify-icon icon="line-md:edit" width="14" height="14" style="color:currentColor"></iconify-icon>
+                        Editar
                       </button>
                       @if (cat.activo) {
-                        <button (click)="desactivarCategoria(cat)" class="text-xs py-1 px-2 rounded-lg bg-danger/10 text-danger hover:bg-danger/20">
-                          ✕ Baja
+                        <button (click)="desactivarCategoria(cat)" class="text-xs py-1 px-2 rounded-lg bg-danger/10 text-danger hover:bg-danger/20 inline-flex items-center gap-1">
+                          <iconify-icon icon="line-md:minus-circle" width="14" height="14" style="color:currentColor"></iconify-icon>
+                          Baja
                         </button>
                       } @else {
-                        <button (click)="activarCategoria(cat)" class="text-xs py-1 px-2 rounded-lg bg-success/10 text-success border border-success/30 hover:bg-success/20">
-                          ✓ Alta
+                        <button (click)="activarCategoria(cat)" class="text-xs py-1 px-2 rounded-lg bg-success/10 text-success border border-success/30 hover:bg-success/20 inline-flex items-center gap-1">
+                          <iconify-icon icon="line-md:plus-circle" width="14" height="14" style="color:currentColor"></iconify-icon>
+                          Alta
                         </button>
                       }
                     </div>
@@ -97,7 +101,7 @@ import { PaginationComponent } from '../../shared/components/pagination.componen
               @if (!cargando() && categoriasFiltradas().length === 0) {
                 <tr>
                   <td colspan="5" class="text-center py-12 text-on-surface/40">
-                    <p class="text-3xl mb-2">🏷️</p>
+                    <iconify-icon icon="tabler:tag" width="30" height="30" class="mb-2 inline-block" style="color:currentColor"></iconify-icon>
                     <p>No se encontraron categorías de insumos</p>
                   </td>
                 </tr>
@@ -122,10 +126,13 @@ import { PaginationComponent } from '../../shared/components/pagination.componen
              (click)="$event.stopPropagation()">
 
           <div class="flex items-center justify-between">
-            <h3 class="font-display font-bold text-lg" style="color:rgb(var(--color-on-surface))">
-              {{ modoEditar() ? '✏️ Editar Categoría' : '🏷️ Registrar Nueva Categoría' }}
+            <h3 class="font-display font-bold text-lg inline-flex items-center gap-2" style="color:rgb(var(--color-on-surface))">
+              <iconify-icon [attr.icon]="modoEditar() ? 'line-md:edit' : 'tabler:tag'" width="20" height="20" style="color:currentColor"></iconify-icon>
+              {{ modoEditar() ? 'Editar Categoría' : 'Registrar Nueva Categoría' }}
             </h3>
-            <button (click)="cerrarModal()" class="btn-ghost p-1">✕</button>
+            <button (click)="cerrarModal()" class="btn-ghost p-1">
+              <iconify-icon icon="line-md:close" width="16" height="16" style="color:currentColor"></iconify-icon>
+            </button>
           </div>
 
           <div class="space-y-3">
@@ -150,8 +157,9 @@ import { PaginationComponent } from '../../shared/components/pagination.componen
           </div>
 
           @if (errorForm()) {
-            <p class="text-xs p-2.5 rounded-lg" style="background:rgb(var(--color-danger)/0.1);color:rgb(var(--color-danger))">
-              ⚠️ {{ errorForm() }}
+            <p class="text-xs p-2.5 rounded-lg inline-flex items-center gap-1.5" style="background:rgb(var(--color-danger)/0.1);color:rgb(var(--color-danger))">
+              <iconify-icon icon="tabler:alert-triangle" width="14" height="14" style="color:currentColor"></iconify-icon>
+              {{ errorForm() }}
             </p>
           }
 
@@ -299,7 +307,7 @@ export class CategoriasInsumoComponent implements OnInit {
       next: () => {
         this.guardando.set(false);
         this.cerrarModal();
-        this.toastSvc.success(this.modoEditar() ? '✅ Categoría actualizada exitosamente' : '✅ Categoría registrada exitosamente');
+        this.toastSvc.success(this.modoEditar() ? 'Categoría actualizada exitosamente' : 'Categoría registrada exitosamente');
         this.cargar();
       },
       error: (err: any) => {
@@ -319,10 +327,10 @@ export class CategoriasInsumoComponent implements OnInit {
     if (confirm(`¿Está seguro de dar de baja la categoría "${cat.nombre}"?`)) {
       this.categoriaService.desactivarCategoriaInsumo(cat.id).subscribe({
         next: () => {
-          this.toastSvc.success('✕ Categoría dada de baja correctamente');
+          this.toastSvc.success('Categoría dada de baja correctamente');
           this.cargar();
         },
-        error: () => this.toastSvc.error('❌ Error al dar de baja la categoría')
+        error: () => this.toastSvc.error('Error al dar de baja la categoría')
       });
     }
   }
@@ -334,10 +342,10 @@ export class CategoriasInsumoComponent implements OnInit {
       activo: true
     }).subscribe({
       next: () => {
-        this.toastSvc.success('✓ Categoría reactivada correctamente');
+        this.toastSvc.success('Categoría reactivada correctamente');
         this.cargar();
       },
-      error: () => this.toastSvc.error('❌ Error al reactivar la categoría')
+      error: () => this.toastSvc.error('Error al reactivar la categoría')
     });
   }
 }

@@ -1,4 +1,4 @@
-import { Component, OnInit, signal, computed } from '@angular/core';
+import { Component, OnInit, signal, computed, CUSTOM_ELEMENTS_SCHEMA } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { PensionadoService } from '../../core/services/api.service';
@@ -13,6 +13,7 @@ type Vista = 'lista' | 'asistencia' | 'cobros';
   selector: 'app-pensionados',
   standalone: true,
   imports: [CommonModule, FormsModule, PaginationComponent],
+  schemas: [CUSTOM_ELEMENTS_SCHEMA],
   template: `
     <div class="space-y-5 animate-slide-up">
 
@@ -28,7 +29,7 @@ type Vista = 'lista' | 'asistencia' | 'cobros';
         </div>
         <div class="flex gap-2">
           <input [(ngModel)]="busqueda" (ngModelChange)="pagina.set(1)" class="input w-44 text-sm"
-                 placeholder="🔍 Buscar..." maxlength="100">
+                 placeholder="Buscar..." maxlength="100">
           <button (click)="abrirRegistro()" class="btn-primary">+ Nuevo</button>
         </div>
       </div>
@@ -107,14 +108,16 @@ type Vista = 'lista' | 'asistencia' | 'cobros';
                 <td>
                   <div class="flex gap-1 flex-wrap">
                     <button (click)="verAsistencia(p)"
-                            class="text-xs py-1 px-2 rounded-lg"
+                            class="text-xs py-1 px-2 rounded-lg inline-flex items-center gap-1"
                             style="background:rgb(var(--color-success)/0.1);color:rgb(var(--color-success))">
-                      ✓ Asistencia
+                      <iconify-icon icon="tabler:user-check" width="14" height="14" style="color:currentColor"></iconify-icon>
+                      Asistencia
                     </button>
                     <button (click)="verCobros(p)"
-                            class="text-xs py-1 px-2 rounded-lg"
+                            class="text-xs py-1 px-2 rounded-lg inline-flex items-center gap-1"
                             style="background:rgb(var(--color-primary)/0.1);color:rgb(var(--color-primary))">
-                      🧾 Cobros
+                      <iconify-icon icon="tabler:receipt" width="14" height="14" style="color:currentColor"></iconify-icon>
+                      Cobros
                     </button>
                     @if (p.estado === 'ACTIVO' || p.estado === 'REACTIVADO') {
                       <button (click)="baja(p)"
@@ -136,7 +139,9 @@ type Vista = 'lista' | 'asistencia' | 'cobros';
             @if (!cargando() && filtrados().length === 0) {
               <tr>
                 <td colspan="6" class="text-center py-12" style="color:rgb(var(--color-on-surface)/0.35)">
-                  <p class="text-3xl mb-2">🏠</p>
+                  <p class="mb-2 flex justify-center">
+                    <iconify-icon icon="tabler:home" width="30" height="30" style="color:currentColor"></iconify-icon>
+                  </p>
                   <p>No hay pensionados registrados</p>
                 </td>
               </tr>
@@ -160,10 +165,13 @@ type Vista = 'lista' | 'asistencia' | 'cobros';
         <div class="card max-w-lg w-full space-y-4 animate-pop max-h-[90vh] overflow-y-auto"
              (click)="$event.stopPropagation()">
           <div class="flex items-center justify-between">
-            <h3 class="font-display font-bold text-lg" style="color:rgb(var(--color-on-surface))">
-              🏠 Nuevo Pensionado
+            <h3 class="font-display font-bold text-lg inline-flex items-center gap-1.5" style="color:rgb(var(--color-on-surface))">
+              <iconify-icon icon="tabler:home" width="18" height="18" style="color:currentColor"></iconify-icon>
+              Nuevo Pensionado
             </h3>
-            <button (click)="modalRegistro.set(false)" class="btn-ghost p-1">✕</button>
+            <button (click)="modalRegistro.set(false)" class="btn-ghost p-1">
+              <iconify-icon icon="line-md:close" width="16" height="16" style="color:currentColor"></iconify-icon>
+            </button>
           </div>
 
           <div class="grid grid-cols-2 gap-3">
@@ -221,9 +229,10 @@ type Vista = 'lista' | 'asistencia' | 'cobros';
           </div>
 
           @if (errorModal()) {
-            <p class="text-xs p-2.5 rounded-lg"
+            <p class="text-xs p-2.5 rounded-lg inline-flex items-center gap-1.5"
                style="background:rgb(var(--color-danger)/0.1);color:rgb(var(--color-danger))">
-              ⚠️ {{ errorModal() }}
+              <iconify-icon icon="tabler:alert-triangle" width="14" height="14" style="color:currentColor"></iconify-icon>
+              {{ errorModal() }}
             </p>
           }
           <div class="flex gap-2 pt-1">
@@ -247,14 +256,17 @@ type Vista = 'lista' | 'asistencia' | 'cobros';
 
           <div class="flex items-center justify-between p-5 border-b border-border">
             <div>
-              <h3 class="font-bold" style="color:rgb(var(--color-on-surface))">
-                ✓ Asistencia — {{ pensionadoActivo()!.nombre }} {{ pensionadoActivo()!.apellido }}
+              <h3 class="font-bold inline-flex items-center gap-1.5" style="color:rgb(var(--color-on-surface))">
+                <iconify-icon icon="tabler:calendar-check" width="18" height="18" style="color:currentColor"></iconify-icon>
+                Asistencia — {{ pensionadoActivo()!.nombre }} {{ pensionadoActivo()!.apellido }}
               </h3>
               <p class="text-xs" style="color:rgb(var(--color-on-surface)/0.45)">
                 Historial del mes actual
               </p>
             </div>
-            <button (click)="cerrarPanel()" class="btn-ghost p-1 text-lg">✕</button>
+            <button (click)="cerrarPanel()" class="btn-ghost p-1 text-lg">
+              <iconify-icon icon="line-md:close" width="18" height="18" style="color:currentColor"></iconify-icon>
+            </button>
           </div>
 
           <div class="p-5 space-y-4 flex-1">
@@ -265,7 +277,10 @@ type Vista = 'lista' | 'asistencia' | 'cobros';
               @if (guardando()) {
                 <span class="w-4 h-4 rounded-full border-2 border-white/30 border-t-white animate-spin inline-block"></span>
               } @else {
-                ✅ Marcar asistencia hoy
+                <span class="inline-flex items-center gap-1.5">
+                  <iconify-icon icon="line-md:confirm-circle" width="16" height="16" style="color:currentColor"></iconify-icon>
+                  Marcar asistencia hoy
+                </span>
               }
             </button>
 
@@ -287,9 +302,15 @@ type Vista = 'lista' | 'asistencia' | 'cobros';
                       <span class="text-sm font-mono" style="color:rgb(var(--color-on-surface)/0.75)">
                         {{ a.fecha }}
                       </span>
-                      <span class="text-xs font-semibold"
+                      <span class="text-xs font-semibold inline-flex items-center gap-1"
                             [style.color]="a.asistio ? 'rgb(var(--color-success))' : 'rgb(var(--color-danger))'">
-                        {{ a.asistio ? '✅ Presente' : '❌ Ausente' }}
+                        @if (a.asistio) {
+                          <iconify-icon icon="tabler:circle-check" width="14" height="14" style="color:currentColor"></iconify-icon>
+                          Presente
+                        } @else {
+                          <iconify-icon icon="tabler:x" width="14" height="14" style="color:currentColor"></iconify-icon>
+                          Ausente
+                        }
                       </span>
                     </div>
                   }
@@ -310,22 +331,26 @@ type Vista = 'lista' | 'asistencia' | 'cobros';
 
           <div class="flex items-center justify-between p-5 border-b border-border">
             <div>
-              <h3 class="font-bold" style="color:rgb(var(--color-on-surface))">
-                🧾 Cobros — {{ pensionadoActivo()!.nombre }} {{ pensionadoActivo()!.apellido }}
+              <h3 class="font-bold inline-flex items-center gap-1.5" style="color:rgb(var(--color-on-surface))">
+                <iconify-icon icon="tabler:receipt" width="18" height="18" style="color:currentColor"></iconify-icon>
+                Cobros — {{ pensionadoActivo()!.nombre }} {{ pensionadoActivo()!.apellido }}
               </h3>
               <p class="text-xs" style="color:rgb(var(--color-on-surface)/0.45)">
                 Plan: {{ pensionadoActivo()!.tipoAlmuerzo?.nombre }}
               </p>
             </div>
-            <button (click)="cerrarPanel()" class="btn-ghost p-1 text-lg">✕</button>
+            <button (click)="cerrarPanel()" class="btn-ghost p-1 text-lg">
+              <iconify-icon icon="line-md:close" width="18" height="18" style="color:currentColor"></iconify-icon>
+            </button>
           </div>
 
           <div class="p-5 space-y-4 flex-1">
             <!-- Generar cobro del mes -->
             <button (click)="generarCobroMes()"
-                    class="btn-secondary w-full justify-center"
+                    class="btn-secondary w-full justify-center inline-flex items-center gap-1.5"
                     [disabled]="guardando()">
-              🗓️ Generar cobro de este mes
+              <iconify-icon icon="tabler:calendar-check" width="16" height="16" style="color:currentColor"></iconify-icon>
+              Generar cobro de este mes
             </button>
 
             <!-- Lista de cobros -->
@@ -345,8 +370,14 @@ type Vista = 'lista' | 'asistencia' | 'cobros';
                       <span class="font-semibold text-sm" style="color:rgb(var(--color-on-surface))">
                         {{ mesNombre(c.mes) }} {{ c.anio }}
                       </span>
-                      <span [class]="c.pagado ? 'badge-success' : 'badge-warning'" class="text-[10px]">
-                        {{ c.pagado ? '✅ Pagado' : '⏳ Pendiente' }}
+                      <span [class]="c.pagado ? 'badge-success' : 'badge-warning'" class="text-[10px] inline-flex items-center gap-1">
+                        @if (c.pagado) {
+                          <iconify-icon icon="tabler:circle-check" width="12" height="12" style="color:currentColor"></iconify-icon>
+                          Pagado
+                        } @else {
+                          <iconify-icon icon="tabler:hourglass" width="12" height="12" style="color:currentColor"></iconify-icon>
+                          Pendiente
+                        }
                       </span>
                     </div>
                     <div class="grid grid-cols-2 gap-1 text-xs" style="color:rgb(var(--color-on-surface)/0.6)">
@@ -361,8 +392,9 @@ type Vista = 'lista' | 'asistencia' | 'cobros';
                     </div>
                     @if (!c.pagado) {
                       <button (click)="abrirPago(c)"
-                              class="btn-primary text-xs py-1.5 px-3 mt-1">
-                        💳 Registrar pago
+                              class="btn-primary text-xs py-1.5 px-3 mt-1 inline-flex items-center gap-1">
+                        <iconify-icon icon="tabler:credit-card" width="14" height="14" style="color:currentColor"></iconify-icon>
+                        Registrar pago
                       </button>
                     }
                   </div>
@@ -379,8 +411,9 @@ type Vista = 'lista' | 'asistencia' | 'cobros';
       <div class="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm"
            (click)="modalPago.set(false)">
         <div class="card max-w-sm w-full space-y-4 animate-pop" (click)="$event.stopPropagation()">
-          <h3 class="font-display font-bold" style="color:rgb(var(--color-on-surface))">
-            💳 Registrar Pago
+          <h3 class="font-display font-bold inline-flex items-center gap-1.5" style="color:rgb(var(--color-on-surface))">
+            <iconify-icon icon="tabler:credit-card" width="18" height="18" style="color:currentColor"></iconify-icon>
+            Registrar Pago
           </h3>
           <div class="rounded-xl p-3 space-y-1 text-sm"
                style="background:rgb(var(--color-surface-2))">
@@ -399,15 +432,16 @@ type Vista = 'lista' | 'asistencia' | 'cobros';
           <div>
             <label class="input-label">Forma de pago</label>
             <select [(ngModel)]="pagoForma" class="input text-sm">
-              <option value="EFECTIVO">💵 Efectivo</option>
-              <option value="QR">📱 QR</option>
-              <option value="MIXTO">🔀 Mixto</option>
+              <option value="EFECTIVO">Efectivo</option>
+              <option value="QR">QR</option>
+              <option value="MIXTO">Mixto</option>
             </select>
           </div>
           @if (errorModal()) {
-            <p class="text-xs p-2.5 rounded-lg"
+            <p class="text-xs p-2.5 rounded-lg inline-flex items-center gap-1.5"
                style="background:rgb(var(--color-danger)/0.1);color:rgb(var(--color-danger))">
-              ⚠️ {{ errorModal() }}
+              <iconify-icon icon="tabler:alert-triangle" width="14" height="14" style="color:currentColor"></iconify-icon>
+              {{ errorModal() }}
             </p>
           }
           <div class="flex gap-2">

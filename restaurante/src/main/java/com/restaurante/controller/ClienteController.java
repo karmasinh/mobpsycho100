@@ -38,14 +38,14 @@ public class ClienteController {
     @PreAuthorize("hasAnyRole('CAJERO','VENDEDOR','ADMIN') or @perm.tiene(authentication, 'MOD_CLIENTES')")
     @Operation(summary = "Registrar nuevo cliente")
     public ResponseEntity<Cliente> crear(@Valid @RequestBody ClienteRequest request) {
-        if (request.getTelefono() != null
-                && clienteRepository.existsByTelefono(request.getTelefono())) {
-            throw new DuplicadoException("Ya existe un cliente con teléfono: " + request.getTelefono());
+        String telefono = normalizar(request.getTelefono());
+        String correo = normalizar(request.getCorreo());
+
+        if (telefono != null && clienteRepository.existsByTelefono(telefono)) {
+            throw new DuplicadoException("Ya existe un cliente con teléfono: " + telefono);
         }
-        if (request.getCorreo() != null
-                && !request.getCorreo().isBlank()
-                && clienteRepository.existsByCorreo(request.getCorreo())) {
-            throw new DuplicadoException("Ya existe un cliente con correo: " + request.getCorreo());
+        if (correo != null && clienteRepository.existsByCorreo(correo)) {
+            throw new DuplicadoException("Ya existe un cliente con correo: " + correo);
         }
 
         var sucursal = request.getSucursalId() != null
@@ -54,8 +54,8 @@ public class ClienteController {
 
         Cliente cliente = Cliente.builder()
                 .nombre(request.getNombre())
-                .telefono(request.getTelefono())
-                .correo(request.getCorreo())
+                .telefono(telefono)
+                .correo(correo)
                 .sucursal(sucursal)
                 .fechaRegistro(LocalDate.now())
                 .estado(EstadoCliente.CLIENTE_NUEVO)
@@ -93,15 +93,18 @@ public class ClienteController {
         Cliente cliente = clienteRepository.findById(id)
                 .orElseThrow(() -> new RecursoNoEncontradoException("Cliente", id));
 
-        if (request.getTelefono() != null && !request.getTelefono().isBlank()
-                && !request.getTelefono().equals(cliente.getTelefono())
-                && clienteRepository.existsByTelefono(request.getTelefono())) {
-            throw new DuplicadoException("Ya existe un cliente con teléfono: " + request.getTelefono());
+        String telefono = normalizar(request.getTelefono());
+        String correo = normalizar(request.getCorreo());
+
+        if (telefono != null
+                && !telefono.equals(cliente.getTelefono())
+                && clienteRepository.existsByTelefono(telefono)) {
+            throw new DuplicadoException("Ya existe un cliente con teléfono: " + telefono);
         }
-        if (request.getCorreo() != null && !request.getCorreo().isBlank()
-                && !request.getCorreo().equals(cliente.getCorreo())
-                && clienteRepository.existsByCorreo(request.getCorreo())) {
-            throw new DuplicadoException("Ya existe un cliente con correo: " + request.getCorreo());
+        if (correo != null
+                && !correo.equals(cliente.getCorreo())
+                && clienteRepository.existsByCorreo(correo)) {
+            throw new DuplicadoException("Ya existe un cliente con correo: " + correo);
         }
 
         String valorAnterior = "nombre=" + cliente.getNombre()
@@ -109,8 +112,8 @@ public class ClienteController {
                 + ", correo=" + cliente.getCorreo();
 
         cliente.setNombre(request.getNombre());
-        cliente.setTelefono(request.getTelefono());
-        cliente.setCorreo(request.getCorreo());
+        cliente.setTelefono(telefono);
+        cliente.setCorreo(correo);
         if (request.getSucursalId() != null
                 && (cliente.getSucursal() == null || !Objects.equals(cliente.getSucursal().getId(), request.getSucursalId()))) {
             cliente.setSucursal(sucursalRepository.findById(request.getSucursalId()).orElse(cliente.getSucursal()));
@@ -133,5 +136,10 @@ public class ClienteController {
                 .build());
 
         return ResponseEntity.ok(actualizado);
+    }
+
+    /** telefono y correo tienen UNIQUE en BD — un "" (a diferencia de null) sí choca contra otro "". */
+    private String normalizar(String valor) {
+        return (valor == null || valor.isBlank()) ? null : valor;
     }
 }

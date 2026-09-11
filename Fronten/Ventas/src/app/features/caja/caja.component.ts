@@ -1,4 +1,4 @@
-import { Component, OnInit, signal, computed } from '@angular/core';
+import { Component, OnInit, signal, computed, CUSTOM_ELEMENTS_SCHEMA } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { forkJoin } from 'rxjs';
@@ -17,6 +17,7 @@ interface ItemCarrito {
   selector: 'app-caja',
   standalone: true,
   imports: [CommonModule, FormsModule],
+  schemas: [CUSTOM_ELEMENTS_SCHEMA],
   template: `
     <div class="h-full grid grid-cols-1 lg:grid-cols-[1fr_380px] gap-5 animate-slide-up">
 
@@ -30,7 +31,7 @@ interface ItemCarrito {
               Caja — Nueva Venta
             </h1>
           </div>
-          <input [(ngModel)]="busqueda" class="input w-48 text-sm" placeholder="🔍 Buscar plato..." maxlength="100">
+          <input [(ngModel)]="busqueda" class="input w-48 text-sm" placeholder="Buscar plato..." maxlength="100">
         </div>
 
         <!-- Filtros por tipo -->
@@ -43,7 +44,14 @@ interface ItemCarrito {
                     [style.color]="tipoSeleccionado() === tipo.valor
                       ? 'rgb(var(--color-on-primary))' : 'rgb(var(--color-on-surface)/0.6)'"
                     [style.border]="'1px solid rgb(var(--color-border))'">
-              {{ tipo.emoji }} {{ tipo.label }}
+              <span class="inline-flex items-center gap-1">
+                @if (tipo.icon) {
+                  <iconify-icon [attr.icon]="tipo.icon" width="14" height="14" style="color:currentColor"></iconify-icon>
+                } @else {
+                  {{ tipo.emoji }}
+                }
+                {{ tipo.label }}
+              </span>
             </button>
           }
         </div>
@@ -62,7 +70,13 @@ interface ItemCarrito {
               <button (click)="onClickPlato(plato)"
                       class="card text-left transition-all duration-200 hover:shadow-card-lg
                              active:scale-95 hover:border-primary/40 group relative">
-                <div class="text-2xl mb-2">{{ getTipoEmoji(plato.tipo) }}</div>
+                <div class="mb-2">
+                  @if (getTipoIcon(plato.tipo)) {
+                    <iconify-icon [attr.icon]="getTipoIcon(plato.tipo)" width="24" height="24" style="color:currentColor"></iconify-icon>
+                  } @else {
+                    <span class="text-2xl">{{ getTipoEmoji(plato.tipo) }}</span>
+                  }
+                </div>
                 <p class="font-semibold text-sm leading-snug mb-1"
                    style="color: rgb(var(--color-on-surface))">
                   {{ plato.nombre }}
@@ -95,8 +109,9 @@ interface ItemCarrito {
         <div class="card flex flex-col gap-4 h-full overflow-hidden">
 
           <div class="flex items-center justify-between">
-            <h2 class="font-display font-bold" style="color: rgb(var(--color-on-surface))">
-              🛒 Carrito
+            <h2 class="font-display font-bold inline-flex items-center gap-1.5" style="color: rgb(var(--color-on-surface))">
+              <iconify-icon icon="tabler:shopping-cart" width="18" height="18" style="color:currentColor"></iconify-icon>
+              Carrito
             </h2>
             @if (carrito().length > 0) {
               <button (click)="limpiarCarrito()" class="btn-ghost text-xs text-danger">
@@ -116,7 +131,7 @@ interface ItemCarrito {
           <div class="flex-1 overflow-y-auto space-y-2 min-h-0">
             @if (carrito().length === 0) {
               <div class="flex flex-col items-center justify-center py-12 text-center">
-                <span class="text-5xl mb-3 opacity-20">🛒</span>
+                <span class="mb-3 opacity-20"><iconify-icon icon="tabler:shopping-cart" width="44" height="44" style="color:currentColor"></iconify-icon></span>
                 <p class="text-sm" style="color: rgb(var(--color-on-surface)/0.4)">
                   Selecciona platos del menú
                 </p>
@@ -126,7 +141,11 @@ interface ItemCarrito {
             @for (item of carrito(); track item.plato.id) {
               <div class="flex items-start gap-3 p-3 rounded-xl"
                    style="background: rgb(var(--color-surface)); border: 1px solid rgb(var(--color-border))">
-                <span class="text-xl mt-0.5">{{ getTipoEmoji(item.plato.tipo) }}</span>
+                @if (getTipoIcon(item.plato.tipo)) {
+                  <iconify-icon [attr.icon]="getTipoIcon(item.plato.tipo)" width="20" height="20" class="mt-0.5" style="color:currentColor"></iconify-icon>
+                } @else {
+                  <span class="text-xl mt-0.5">{{ getTipoEmoji(item.plato.tipo) }}</span>
+                }
                 <div class="flex-1 min-w-0">
                   <p class="text-sm font-semibold truncate" style="color: rgb(var(--color-on-surface))">
                     {{ item.plato.nombre }}
@@ -183,7 +202,10 @@ interface ItemCarrito {
                           ? 'rgb(var(--color-primary))' : 'rgb(var(--color-on-surface)/0.5)'"
                         [style.outline]="formaPago() === fp.valor
                           ? '2px solid rgb(var(--color-primary)/0.5)' : '1px solid rgb(var(--color-border))'">
-                  {{ fp.emoji }} {{ fp.label }}
+                  <span class="inline-flex items-center gap-1">
+                    <iconify-icon [attr.icon]="fp.icon" width="14" height="14" style="color:currentColor"></iconify-icon>
+                    {{ fp.label }}
+                  </span>
                 </button>
               }
             </div>
@@ -219,7 +241,10 @@ interface ItemCarrito {
               <span class="w-4 h-4 rounded-full border-2 border-white/30 border-t-white animate-spin inline-block"></span>
               Procesando...
             } @else {
-              💳 Cobrar Bs {{ total().toFixed(2) }}
+              <span class="inline-flex items-center gap-1.5">
+                <iconify-icon icon="tabler:credit-card" width="18" height="18" style="color:currentColor"></iconify-icon>
+                Cobrar Bs {{ total().toFixed(2) }}
+              </span>
             }
           </button>
 
@@ -232,7 +257,7 @@ interface ItemCarrito {
       <div class="fixed inset-0 z-50 flex items-center justify-center p-4"
            style="background: rgb(0 0 0 / 0.5)">
         <div class="card max-w-sm w-full text-center animate-pop">
-          <div class="text-6xl mb-4">✅</div>
+          <div class="mb-4 flex justify-center"><iconify-icon icon="line-md:confirm-circle" width="56" height="56" style="color:currentColor"></iconify-icon></div>
           <h3 class="font-display text-xl font-bold mb-1">¡Venta registrada!</h3>
           <p class="text-sm mb-1" style="color: rgb(var(--color-on-surface)/0.6)">
             Total: <strong>Bs {{ ventaExitosa()?.totalCobrado?.toFixed(2) }}</strong>
@@ -257,20 +282,24 @@ interface ItemCarrito {
 
           <div class="flex items-center justify-between">
             <div>
-              <h3 class="font-display text-lg font-bold" style="color: rgb(var(--color-on-surface))">
-                🍲 {{ platoAlmuerzoSeleccionado()?.nombre }}
+              <h3 class="font-display text-lg font-bold inline-flex items-center gap-1.5" style="color: rgb(var(--color-on-surface))">
+                <iconify-icon icon="tabler:soup" width="18" height="18" style="color:currentColor"></iconify-icon>
+                {{ platoAlmuerzoSeleccionado()?.nombre }}
               </h3>
               <p class="text-xs mt-0.5" style="color: rgb(var(--color-on-surface)/0.5)">
                 Elige sopa y segundo del día
               </p>
             </div>
-            <button (click)="cerrarPicker()" class="btn-ghost text-lg leading-none">✕</button>
+            <button (click)="cerrarPicker()" class="btn-ghost text-lg leading-none">
+              <iconify-icon icon="line-md:close" width="18" height="18" style="color:currentColor"></iconify-icon>
+            </button>
           </div>
 
           <!-- Sopas -->
           <div>
-            <p class="text-sm font-semibold mb-2" style="color: rgb(var(--color-on-surface)/0.7)">
-              🍵 Sopa (elige una)
+            <p class="text-sm font-semibold mb-2 inline-flex items-center gap-1.5" style="color: rgb(var(--color-on-surface)/0.7)">
+              <iconify-icon icon="tabler:cup" width="16" height="16" style="color:currentColor"></iconify-icon>
+              Sopa (elige una)
             </p>
             @if (cargandoDisponibles()) {
               <div class="skeleton h-16 rounded-xl"></div>
@@ -288,7 +317,7 @@ interface ItemCarrito {
                             ? '2px solid rgb(var(--color-primary))' : '1px solid rgb(var(--color-border))'"
                           [style.background]="sopaElegida()?.id === s.id
                             ? 'rgb(var(--color-primary)/0.08)' : 'rgb(var(--color-surface))'">
-                    <span class="text-xl">🍵</span>
+                    <iconify-icon icon="tabler:cup" width="20" height="20" style="color:currentColor"></iconify-icon>
                     <div class="flex-1">
                       <p class="text-sm font-semibold" style="color: rgb(var(--color-on-surface))">
                         {{ s.plato.nombre }}
@@ -298,7 +327,7 @@ interface ItemCarrito {
                       </p>
                     </div>
                     @if (sopaElegida()?.id === s.id) {
-                      <span style="color: rgb(var(--color-primary))">✓</span>
+                      <iconify-icon icon="tabler:check" width="16" height="16" style="color:rgb(var(--color-primary))"></iconify-icon>
                     }
                   </button>
                 }
@@ -308,8 +337,9 @@ interface ItemCarrito {
 
           <!-- Segundos -->
           <div>
-            <p class="text-sm font-semibold mb-2" style="color: rgb(var(--color-on-surface)/0.7)">
-              🍽️ Segundo (elige uno)
+            <p class="text-sm font-semibold mb-2 inline-flex items-center gap-1.5" style="color: rgb(var(--color-on-surface)/0.7)">
+              <iconify-icon icon="tabler:tools-kitchen-2" width="16" height="16" style="color:currentColor"></iconify-icon>
+              Segundo (elige uno)
             </p>
             @if (cargandoDisponibles()) {
               <div class="skeleton h-16 rounded-xl"></div>
@@ -327,7 +357,7 @@ interface ItemCarrito {
                             ? '2px solid rgb(var(--color-primary))' : '1px solid rgb(var(--color-border))'"
                           [style.background]="segundoElegido()?.id === s.id
                             ? 'rgb(var(--color-primary)/0.08)' : 'rgb(var(--color-surface))'">
-                    <span class="text-xl">🍽️</span>
+                    <iconify-icon icon="tabler:tools-kitchen-2" width="20" height="20" style="color:currentColor"></iconify-icon>
                     <div class="flex-1">
                       <p class="text-sm font-semibold" style="color: rgb(var(--color-on-surface))">
                         {{ s.plato.nombre }}
@@ -337,7 +367,7 @@ interface ItemCarrito {
                       </p>
                     </div>
                     @if (segundoElegido()?.id === s.id) {
-                      <span style="color: rgb(var(--color-primary))">✓</span>
+                      <iconify-icon icon="tabler:check" width="16" height="16" style="color:rgb(var(--color-primary))"></iconify-icon>
                     }
                   </button>
                 }
@@ -395,23 +425,23 @@ export class CajaComponent implements OnInit {
   // IDs de platos de tipo SOPA/SEGUNDO en producción hoy (para badge "Hoy")
   platosEnProduccionHoy     = signal<Set<number>>(new Set());
 
-  tiposDisponibles = [
-    { valor: 'TODOS',     label: 'Todos',      emoji: '🍽️' },
-    { valor: 'ALMUERZO',  label: 'Almuerzos',  emoji: '🍲' },
-    { valor: 'SOPA',      label: 'Solo sopa',  emoji: '🍵' },
-    { valor: 'SEGUNDO',   label: 'Solo segundo', emoji: '🥘' },
+  tiposDisponibles: { valor: string; label: string; icon?: string; emoji?: string }[] = [
+    { valor: 'TODOS',     label: 'Todos',      icon: 'tabler:tools-kitchen-2' },
+    { valor: 'ALMUERZO',  label: 'Almuerzos',  icon: 'tabler:soup' },
+    { valor: 'SOPA',      label: 'Solo sopa',  icon: 'tabler:cup' },
+    { valor: 'SEGUNDO',   label: 'Solo segundo', icon: 'tabler:bowl' },
     { valor: 'EMPANADA',  label: 'Empanadas',  emoji: '🥟' },
     { valor: 'TUCUMANA',  label: 'Tucumanas',  emoji: '🫔' },
     { valor: 'LICUADO',   label: 'Licuados',   emoji: '🥤' },
     { valor: 'REFRESCO',  label: 'Refrescos',  emoji: '🧃' },
-    { valor: 'ESPECIAL',  label: 'Especiales', emoji: '⭐' },
+    { valor: 'ESPECIAL',  label: 'Especiales', icon: 'tabler:star' },
   ];
 
   formasPago = [
-    { valor: 'EFECTIVO',       label: 'Efectivo', emoji: '💵' },
-    { valor: 'QR',             label: 'QR',       emoji: '📱' },
-    { valor: 'MIXTO',          label: 'Mixto',    emoji: '💳' },
-    { valor: 'CREDITO_CUENTA', label: 'Cuenta',   emoji: '📋' },
+    { valor: 'EFECTIVO',       label: 'Efectivo', icon: 'tabler:currency-dollar' },
+    { valor: 'QR',             label: 'QR',       icon: 'tabler:phone' },
+    { valor: 'MIXTO',          label: 'Mixto',    icon: 'tabler:credit-card' },
+    { valor: 'CREDITO_CUENTA', label: 'Cuenta',   icon: 'tabler:clipboard-list' },
   ];
 
   platosFiltrados = computed(() => {
@@ -633,10 +663,19 @@ export class CajaComponent implements OnInit {
 
   getTipoEmoji(tipo: string): string {
     const map: Record<string, string> = {
-      ALMUERZO: '🍲', SOPA: '🍵', SEGUNDO: '🥘',
       EMPANADA: '🥟', TUCUMANA: '🫔',
-      LICUADO: '🥤', REFRESCO: '🧃', ESPECIAL: '⭐',
+      LICUADO: '🥤', REFRESCO: '🧃',
     };
-    return map[tipo] ?? '🍽️';
+    return map[tipo] ?? '';
+  }
+
+  getTipoIcon(tipo: string): string | null {
+    const iconMap: Record<string, string> = {
+      ALMUERZO: 'tabler:soup', SOPA: 'tabler:cup', SEGUNDO: 'tabler:bowl',
+      ESPECIAL: 'tabler:star',
+    };
+    if (iconMap[tipo]) return iconMap[tipo];
+    if (this.getTipoEmoji(tipo)) return null; // sin icono en whitelist, usar fallback de emoji
+    return 'tabler:tools-kitchen-2';
   }
 }

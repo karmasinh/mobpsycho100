@@ -1,7 +1,6 @@
-import { Component, OnInit, signal, computed } from '@angular/core';
+import { Component, OnInit, signal, computed, CUSTOM_ELEMENTS_SCHEMA } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { LucideDynamicIcon } from '@lucide/angular';
 import { ModuloMenuService } from '../../core/services/api.service';
 import { ModuloMenuDto } from '../../core/models';
 import { ToastService } from '../../core/services/toast.service';
@@ -11,7 +10,8 @@ import { ICONOS_DISPONIBLES } from '../../core/icons/app-icons.provider';
 @Component({
   selector: 'app-modulos',
   standalone: true,
-  imports: [CommonModule, FormsModule, PaginationComponent, LucideDynamicIcon],
+  imports: [CommonModule, FormsModule, PaginationComponent],
+  schemas: [CUSTOM_ELEMENTS_SCHEMA],
   template: `
     <div class="space-y-5 animate-fade-up">
       <!-- Header -->
@@ -26,7 +26,7 @@ import { ICONOS_DISPONIBLES } from '../../core/icons/app-icons.provider';
         </div>
         <div class="flex gap-2 w-full sm:w-auto">
           <input [(ngModel)]="busqueda" (ngModelChange)="pagina.set(1)"
-                 class="input w-full sm:w-48 text-sm" placeholder="🔍 Buscar módulo..."
+                 class="input w-full sm:w-48 text-sm" placeholder="Buscar módulo..."
                  maxlength="100">
           <button (click)="abrirCrearModal()" class="btn-primary text-sm py-2 px-3 whitespace-nowrap">
             + Nuevo Módulo
@@ -84,9 +84,9 @@ import { ICONOS_DISPONIBLES } from '../../core/icons/app-icons.provider';
                   </td>
                   <td class="text-sm text-center">
                     @if (iconoValido(mod.icono)) {
-                      <svg [lucideIcon]="mod.icono" [title]="mod.icono" class="w-5 h-5 inline-block" [strokeWidth]="1.75"></svg>
+                      <iconify-icon [attr.icon]="mod.icono" [attr.title]="mod.icono" width="20" height="20" class="inline-block" style="color:currentColor"></iconify-icon>
                     } @else {
-                      <svg lucideIcon="tag" [title]="mod.icono + ' (no reconocido)'" class="w-5 h-5 inline-block opacity-40" [strokeWidth]="1.75"></svg>
+                      <iconify-icon icon="tabler:tag" [attr.title]="mod.icono + ' (no reconocido)'" width="20" height="20" class="inline-block opacity-40" style="color:currentColor"></iconify-icon>
                     }
                   </td>
                   <td class="font-mono text-xs">{{ mod.ruta || '—' }}</td>
@@ -111,16 +111,16 @@ import { ICONOS_DISPONIBLES } from '../../core/icons/app-icons.provider';
                   </td>
                   <td>
                     <div class="flex gap-1.5">
-                      <button (click)="abrirEditarModal(mod)" class="text-xs py-1 px-2 rounded-lg border border-border bg-surface hover:border-primary/50 text-on-surface/75">
-                        ✏️ Editar
+                      <button (click)="abrirEditarModal(mod)" class="text-xs py-1 px-2 rounded-lg border border-border bg-surface hover:border-primary/50 text-on-surface/75 inline-flex items-center gap-1">
+                        <iconify-icon icon="line-md:edit" width="14" height="14" style="color:currentColor"></iconify-icon> Editar
                       </button>
                       @if (mod.activo) {
-                        <button (click)="desactivarModulo(mod)" class="text-xs py-1 px-2 rounded-lg bg-danger/10 text-danger hover:bg-danger/20">
-                          ✕ Baja
+                        <button (click)="desactivarModulo(mod)" class="text-xs py-1 px-2 rounded-lg bg-danger/10 text-danger hover:bg-danger/20 inline-flex items-center gap-1">
+                          <iconify-icon icon="line-md:close" width="14" height="14" style="color:currentColor"></iconify-icon> Baja
                         </button>
                       } @else {
-                        <button (click)="activarModulo(mod)" class="text-xs py-1 px-2 rounded-lg bg-success/10 text-success border border-success/30 hover:bg-success/20">
-                          ✓ Alta
+                        <button (click)="activarModulo(mod)" class="text-xs py-1 px-2 rounded-lg bg-success/10 text-success border border-success/30 hover:bg-success/20 inline-flex items-center gap-1">
+                          <iconify-icon icon="line-md:confirm-circle" width="14" height="14" style="color:currentColor"></iconify-icon> Alta
                         </button>
                       }
                     </div>
@@ -131,7 +131,7 @@ import { ICONOS_DISPONIBLES } from '../../core/icons/app-icons.provider';
               @if (!cargando() && modulosFiltrados().length === 0) {
                 <tr>
                   <td colspan="10" class="text-center py-12 text-on-surface/40">
-                    <p class="text-3xl mb-2">⚙️</p>
+                    <iconify-icon icon="tabler:settings" width="36" height="36" class="inline-block mb-2 opacity-60" style="color:currentColor"></iconify-icon>
                     <p>No se encontraron módulos de menú</p>
                   </td>
                 </tr>
@@ -156,10 +156,13 @@ import { ICONOS_DISPONIBLES } from '../../core/icons/app-icons.provider';
              (click)="$event.stopPropagation()">
 
           <div class="flex items-center justify-between">
-            <h3 class="font-display font-bold text-lg" style="color:rgb(var(--color-on-surface))">
-              {{ modoEditar() ? '✏️ Editar Módulo' : '⚙️ Registrar Nuevo Módulo' }}
+            <h3 class="font-display font-bold text-lg inline-flex items-center gap-2" style="color:rgb(var(--color-on-surface))">
+              <iconify-icon [attr.icon]="modoEditar() ? 'line-md:edit' : 'tabler:settings'" width="20" height="20" style="color:currentColor"></iconify-icon>
+              {{ modoEditar() ? 'Editar Módulo' : 'Registrar Nuevo Módulo' }}
             </h3>
-            <button (click)="cerrarModal()" class="btn-ghost p-1">✕</button>
+            <button (click)="cerrarModal()" class="btn-ghost p-1">
+              <iconify-icon icon="line-md:close" width="16" height="16" style="color:currentColor"></iconify-icon>
+            </button>
           </div>
 
           <div class="space-y-3">
@@ -183,9 +186,9 @@ import { ICONOS_DISPONIBLES } from '../../core/icons/app-icons.provider';
                        placeholder="Ej: /admin/reportes" maxlength="200">
               </div>
               <div>
-                <label class="input-label">Nombre del Icono (lucide.dev/icons)</label>
+                <label class="input-label">Ícono (icon-sets.iconify.design)</label>
                 <input [(ngModel)]="formMod.icono" class="input text-sm"
-                       placeholder="Ej: bar-chart" maxlength="50">
+                       placeholder="Ej: tabler:chart-bar" maxlength="50">
               </div>
             </div>
 
@@ -224,8 +227,8 @@ import { ICONOS_DISPONIBLES } from '../../core/icons/app-icons.provider';
           </div>
 
           @if (errorForm()) {
-            <p class="text-xs p-2.5 rounded-lg" style="background:rgb(var(--color-danger)/0.1);color:rgb(var(--color-danger))">
-              ⚠️ {{ errorForm() }}
+            <p class="text-xs p-2.5 rounded-lg inline-flex items-center gap-1.5" style="background:rgb(var(--color-danger)/0.1);color:rgb(var(--color-danger))">
+              <iconify-icon icon="tabler:alert-triangle" width="14" height="14" style="color:currentColor"></iconify-icon> {{ errorForm() }}
             </p>
           }
 
@@ -415,7 +418,7 @@ export class ModulosComponent implements OnInit {
       next: () => {
         this.guardando.set(false);
         this.cerrarModal();
-        this.toastSvc.success(this.modoEditar() ? '✅ Módulo actualizado exitosamente' : '✅ Módulo registrado exitosamente');
+        this.toastSvc.success(this.modoEditar() ? 'Módulo actualizado exitosamente' : 'Módulo registrado exitosamente');
         this.cargar();
       },
       error: (err: any) => {
@@ -435,10 +438,10 @@ export class ModulosComponent implements OnInit {
     if (confirm(`¿Está seguro de dar de baja al módulo "${mod.nombre}"?`)) {
       this.moduloService.desactivar(mod.id).subscribe({
         next: () => {
-          this.toastSvc.success('✕ Módulo dado de baja correctamente');
+          this.toastSvc.success('Módulo dado de baja correctamente');
           this.cargar();
         },
-        error: () => this.toastSvc.error('❌ Error al dar de baja el módulo')
+        error: () => this.toastSvc.error('Error al dar de baja el módulo')
       });
     }
   }
@@ -457,10 +460,10 @@ export class ModulosComponent implements OnInit {
 
     this.moduloService.actualizar(mod.id, body).subscribe({
       next: () => {
-        this.toastSvc.success('✓ Módulo reactivado correctamente');
+        this.toastSvc.success('Módulo reactivado correctamente');
         this.cargar();
       },
-      error: () => this.toastSvc.error('❌ Error al reactivar el módulo')
+      error: () => this.toastSvc.error('Error al reactivar el módulo')
     });
   }
 }

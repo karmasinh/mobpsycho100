@@ -1,4 +1,4 @@
-import { Component, OnInit, signal, computed } from '@angular/core';
+import { Component, OnInit, signal, computed, CUSTOM_ELEMENTS_SCHEMA } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { forkJoin } from 'rxjs';
@@ -26,6 +26,7 @@ interface VentaDiaria {
   selector: 'app-reportes',
   standalone: true,
   imports: [CommonModule, FormsModule],
+  schemas: [CUSTOM_ELEMENTS_SCHEMA],
   template: `
     <div class="space-y-5 animate-slide-up">
 
@@ -44,11 +45,11 @@ interface VentaDiaria {
         <div class="flex gap-1 p-1 rounded-xl overflow-x-auto" style="background:rgb(var(--color-surface-2))">
           @for (s of seccionesVisibles(); track s.id) {
             <button (click)="seccion.set(s.id)"
-                    class="px-3 py-2 rounded-lg text-xs font-semibold whitespace-nowrap transition-all flex-shrink-0"
+                    class="px-3 py-2 rounded-lg text-xs font-semibold whitespace-nowrap transition-all flex-shrink-0 inline-flex items-center gap-1"
                     [style.background]="seccion() === s.id ? 'rgb(var(--color-surface))' : 'transparent'"
                     [style.color]="seccion() === s.id ? 'rgb(var(--color-primary))' : 'rgb(var(--color-on-surface)/0.5)'"
                     [style.boxShadow]="seccion() === s.id ? '0 1px 3px rgb(0 0 0/0.1)' : 'none'">
-              {{ s.emoji }} {{ s.label }}
+              <iconify-icon [attr.icon]="s.icon" width="14" height="14" style="color:currentColor"></iconify-icon> {{ s.label }}
             </button>
           }
         </div>
@@ -56,7 +57,7 @@ interface VentaDiaria {
         @if (auth.sucursalFija() == null && seccion() !== 'sucursales') {
           <select [(ngModel)]="sucursalFiltro" (ngModelChange)="onCambioSucursalFiltro()"
                   class="input text-xs py-2 ml-auto" style="width:auto">
-            <option [ngValue]="null">🏪 Todas las sucursales</option>
+            <option [ngValue]="null">Todas las sucursales</option>
             @for (s of sucursales(); track s.id) {
               <option [ngValue]="s.id">{{ s.nombre }}</option>
             }
@@ -83,7 +84,7 @@ interface VentaDiaria {
           </div>
 
           <!-- Stats del mes -->
-          <div class="grid grid-cols-3 gap-3">
+          <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
             <div class="rounded-xl p-3 text-center" style="background:rgb(var(--color-surface-2))">
               <p class="text-xs" style="color:rgb(var(--color-on-surface)/0.5)">Total mes</p>
               <p class="font-bold font-mono mt-1" style="color:rgb(var(--color-primary))">
@@ -191,7 +192,7 @@ interface VentaDiaria {
 
           @if (ventasDiarias().length > 0) {
             <!-- Resumen -->
-            <div class="grid grid-cols-3 gap-3">
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
               <div class="rounded-xl p-3 text-center" style="background:rgb(var(--color-surface-2))">
                 <p class="text-xs" style="color:rgb(var(--color-on-surface)/0.5)">Total recaudado</p>
                 <p class="font-bold font-mono mt-1" style="color:rgb(var(--color-primary))">
@@ -267,7 +268,7 @@ interface VentaDiaria {
             </div>
           } @else if (!cargandoVentas()) {
             <div class="text-center py-10">
-              <p class="text-3xl opacity-20 mb-2">📊</p>
+              <p class="opacity-20 mb-2 flex justify-center"><iconify-icon icon="tabler:chart-bar" width="32" height="32" style="color:currentColor"></iconify-icon></p>
               <p class="text-sm" style="color:rgb(var(--color-on-surface)/0.4)">
                 Selecciona un rango de fechas y consultá
               </p>
@@ -303,7 +304,7 @@ interface VentaDiaria {
             </div>
           } @else if (cobros().length > 0) {
             <!-- Barra comparativa -->
-            <div class="grid grid-cols-3 gap-3">
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
               <div class="rounded-xl p-3 text-center" style="background:rgb(var(--color-success)/0.1)">
                 <p class="text-xs" style="color:rgb(var(--color-on-surface)/0.5)">Pagados</p>
                 <p class="font-bold text-2xl mt-1" style="color:rgb(var(--color-success))">
@@ -398,7 +399,7 @@ interface VentaDiaria {
             </div>
           } @else {
             <div class="text-center py-10">
-              <p class="text-3xl opacity-20 mb-2">🧾</p>
+              <p class="opacity-20 mb-2 flex justify-center"><iconify-icon icon="tabler:receipt" width="32" height="32" style="color:currentColor"></iconify-icon></p>
               <p class="text-sm" style="color:rgb(var(--color-on-surface)/0.4)">
                 No hay cobros generados para {{ mesLabel(cobroMes, cobroAnio) }}
               </p>
@@ -473,7 +474,7 @@ interface VentaDiaria {
             </p>
           } @else if (!cargandoProd()) {
             <div class="text-center py-10">
-              <p class="text-3xl opacity-20 mb-2">🍽️</p>
+              <p class="opacity-20 mb-2 flex justify-center"><iconify-icon icon="tabler:tools-kitchen-2" width="32" height="32" style="color:currentColor"></iconify-icon></p>
               <p class="text-sm" style="color:rgb(var(--color-on-surface)/0.4)">
                 Seleccioná un rango y consultá los productos más vendidos
               </p>
@@ -509,7 +510,7 @@ interface VentaDiaria {
             </div>
           } @else {
             <!-- Stats -->
-            <div class="grid grid-cols-3 gap-3">
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
               <div class="rounded-xl p-3 text-center" style="background:rgb(var(--color-primary)/0.1)">
                 <p class="text-xs" style="color:rgb(var(--color-on-surface)/0.5)">Total cobros</p>
                 <p class="font-bold text-2xl mt-1" style="color:rgb(var(--color-primary))">
@@ -561,9 +562,9 @@ interface VentaDiaria {
                         </td>
                         <td>
                           @if (c.pagado) {
-                            <span class="text-xs px-2 py-0.5 rounded-full font-semibold"
+                            <span class="text-xs px-2 py-0.5 rounded-full font-semibold inline-flex items-center gap-1"
                                   style="background:rgb(var(--color-success)/0.15);color:rgb(var(--color-success))">
-                              ✓ Pagado
+                              <iconify-icon icon="tabler:check" width="12" height="12" style="color:currentColor"></iconify-icon> Pagado
                             </span>
                           } @else {
                             <span class="text-xs px-2 py-0.5 rounded-full font-semibold"
@@ -579,7 +580,7 @@ interface VentaDiaria {
               </div>
             } @else {
               <div class="text-center py-10">
-                <p class="text-3xl opacity-20 mb-2">🏠</p>
+                <p class="opacity-20 mb-2 flex justify-center"><iconify-icon icon="tabler:home" width="32" height="32" style="color:currentColor"></iconify-icon></p>
                 <p class="text-sm" style="color:rgb(var(--color-on-surface)/0.4)">
                   No hay cobros para {{ mesLabel(pensMes, pensAnio) }}
                 </p>
@@ -619,7 +620,7 @@ interface VentaDiaria {
           </p>
 
           @if (rentabilidad().length > 0) {
-            <div class="grid grid-cols-3 gap-3">
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
               <div class="rounded-xl p-3 text-center" style="background:rgb(var(--color-surface-2))">
                 <p class="text-xs" style="color:rgb(var(--color-on-surface)/0.5)">Ingresos</p>
                 <p class="font-bold font-mono mt-1" style="color:rgb(var(--color-primary))">
@@ -671,7 +672,7 @@ interface VentaDiaria {
             </div>
           } @else if (!cargandoRent()) {
             <div class="text-center py-10">
-              <p class="text-3xl opacity-20 mb-2">📈</p>
+              <p class="opacity-20 mb-2 flex justify-center"><iconify-icon icon="tabler:trending-up" width="32" height="32" style="color:currentColor"></iconify-icon></p>
               <p class="text-sm" style="color:rgb(var(--color-on-surface)/0.4)">
                 Seleccioná un rango y consultá la rentabilidad por plato
               </p>
@@ -710,8 +711,8 @@ interface VentaDiaria {
               @for (c of comparativo(); track c.sucursalId) {
                 <div class="flex items-center gap-3 p-3 rounded-xl" style="background:rgb(var(--color-surface-2))">
                   <div class="flex-1 min-w-0">
-                    <p class="font-semibold text-sm" style="color:rgb(var(--color-on-surface))">
-                      🏪 {{ c.sucursalNombre }}
+                    <p class="font-semibold text-sm inline-flex items-center gap-1" style="color:rgb(var(--color-on-surface))">
+                      <iconify-icon icon="tabler:building-store" width="16" height="16" style="color:currentColor"></iconify-icon> {{ c.sucursalNombre }}
                     </p>
                     <div class="mt-1 h-1.5 rounded-full overflow-hidden" style="background:rgb(var(--color-surface))">
                       <div class="h-full rounded-full"
@@ -733,7 +734,7 @@ interface VentaDiaria {
             </div>
           } @else if (!cargandoSuc()) {
             <div class="text-center py-10">
-              <p class="text-3xl opacity-20 mb-2">🏪</p>
+              <p class="opacity-20 mb-2 flex justify-center"><iconify-icon icon="tabler:building-store" width="32" height="32" style="color:currentColor"></iconify-icon></p>
               <p class="text-sm" style="color:rgb(var(--color-on-surface)/0.4)">
                 Seleccioná un rango y consultá el comparativo entre sucursales
               </p>
@@ -750,13 +751,13 @@ export class ReportesComponent implements OnInit {
   seccion = signal<Seccion>('calendario');
 
   secciones = [
-    { id: 'calendario' as Seccion, label: 'Calendario',    emoji: '📅' },
-    { id: 'ventas'     as Seccion, label: 'Ventas',        emoji: '📊' },
-    { id: 'cobros'     as Seccion, label: 'Cobros',        emoji: '🧾' },
-    { id: 'productos'  as Seccion, label: 'Productos',     emoji: '🍽️' },
-    { id: 'pensionados' as Seccion, label: 'Pensionados',  emoji: '🏠' },
-    { id: 'rentabilidad' as Seccion, label: 'Rentabilidad', emoji: '📈' },
-    { id: 'sucursales' as Seccion, label: 'Sucursales',    emoji: '🏪' },
+    { id: 'calendario' as Seccion, label: 'Calendario',    icon: 'tabler:calendar-check' },
+    { id: 'ventas'     as Seccion, label: 'Ventas',        icon: 'tabler:chart-bar' },
+    { id: 'cobros'     as Seccion, label: 'Cobros',        icon: 'tabler:receipt' },
+    { id: 'productos'  as Seccion, label: 'Productos',     icon: 'tabler:tools-kitchen-2' },
+    { id: 'pensionados' as Seccion, label: 'Pensionados',  icon: 'tabler:home' },
+    { id: 'rentabilidad' as Seccion, label: 'Rentabilidad', icon: 'tabler:trending-up' },
+    { id: 'sucursales' as Seccion, label: 'Sucursales',    icon: 'tabler:building-store' },
   ];
 
   // El comparativo entre sucursales es alcance global (RN-A-014): solo ADMIN lo consulta en el backend

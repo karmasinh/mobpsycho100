@@ -1,4 +1,5 @@
 import { Injectable, signal, effect } from '@angular/core';
+import { Preferences } from '@capacitor/preferences';
 import { Theme, ThemeName } from '../models';
 
 // Actualizar ThemeName en models.ts:
@@ -20,17 +21,27 @@ export class ThemeService {
   // Temas oscuros
   private readonly DARK_THEMES: ThemeName[] = ['fuego', 'nocturno', 'aurora', 'rosa', 'carbon'];
 
+  private readonly THEME_KEY = 'restaurante-cocina-theme';
+
   currentTheme = signal<ThemeName>(this.cargarTemaGuardado());
 
   constructor() {
     effect(() => {
       this.aplicarTema(this.currentTheme());
     });
+    // Rehidrata desde Preferences por si localStorage fue purgado en nativo (iOS).
+    Preferences.get({ key: this.THEME_KEY }).then(({ value }) => {
+      const valid = this.THEMES.map(t => t.id);
+      if (value && valid.includes(value as ThemeName) && value !== this.currentTheme()) {
+        this.currentTheme.set(value as ThemeName);
+      }
+    });
   }
 
   setTheme(theme: ThemeName): void {
     this.currentTheme.set(theme);
-    localStorage.setItem('restaurante-cocina-theme', theme);
+    localStorage.setItem(this.THEME_KEY, theme);
+    Preferences.set({ key: this.THEME_KEY, value: theme });
   }
 
   getThemeInfo(id: ThemeName): Theme {
@@ -42,7 +53,7 @@ export class ThemeService {
   }
 
   private cargarTemaGuardado(): ThemeName {
-    const saved = localStorage.getItem('restaurante-cocina-theme') as ThemeName;
+    const saved = localStorage.getItem(this.THEME_KEY) as ThemeName;
     const valid = this.THEMES.map(t => t.id);
     return valid.includes(saved) ? saved : 'entrerriana';
   }
@@ -51,11 +62,8 @@ export class ThemeService {
     const html = document.documentElement;
     this.THEMES.forEach(t => html.classList.remove(`theme-${t.id}`));
     html.classList.add(`theme-${theme}`);
-
-    if (theme === 'nube') {
-      html.classList.remove('dark');
-    } else {
-      html.classList.add('dark');
-    }
+    // Misma fuente de verdad que isDark() — antes esto solo excluía 'nube' a mano
+    // y dejaba 'entrerriana' (tema claro) marcado como oscuro por error.
+    html.classList.toggle('dark', this.DARK_THEMES.includes(theme));
   }
 }

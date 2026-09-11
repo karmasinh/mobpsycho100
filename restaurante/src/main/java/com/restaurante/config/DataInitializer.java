@@ -81,47 +81,47 @@ public class DataInitializer implements CommandLineRunner {
         log.info("[Init] Cargando módulos del sistema...");
 
         // ── COCINA ────────────────────────────────────────────────
-        ModuloMenu cocina = guardarModulo("MOD_COCINA", "Cocina", "chef-hat", "/cocina", null, 1, "COCINA");
+        ModuloMenu cocina = guardarModulo("MOD_COCINA", "Cocina", "tabler:chef-hat", "/cocina", null, 1, "COCINA");
 
-        guardarModulo("MOD_PEDIDOS_COCINA",    "Pedidos en cola",    "clipboard-list",  "/cocina/pedidos",     cocina, 2,  "COCINA");
-        guardarModulo("MOD_PRODUCCION",        "Producción del día", "flame",           "/cocina/produccion",  cocina, 3,  "COCINA");
-        guardarModulo("MOD_RECETAS",           "Recetas",            "book-open",       "/cocina/recetas",     cocina, 4,  "COCINA");
-        guardarModulo("MOD_PLATOS",            "Platos",             "utensils",        "/cocina/platos",      cocina, 5,  "COCINA");
-        guardarModulo("MOD_INVENTARIO",        "Inventario",         "package",         "/cocina/inventario",  cocina, 6,  "COCINA");
-        guardarModulo("MOD_INSUMOS",           "Insumos",            "database",        "/cocina/insumos",     cocina, 7,  "COCINA");
-        guardarModulo("MOD_PROVEEDORES",       "Proveedores",        "truck",           "/cocina/proveedores", cocina, 8,  "COCINA");
-        guardarModulo("MOD_ALERTAS_INV",       "Alertas inventario", "bell",            "/cocina/alertas",     cocina, 9,  "COCINA");
-        guardarModulo("MOD_CATEGORIAS_INSUMO", "Categorías de insumo", "tag",           "/cocina/categorias-insumo", cocina, 10, "COCINA");
-        guardarModulo("MOD_MERMAS",            "Mermas",               "trash-2",       "/cocina/mermas",            cocina, 11, "COCINA");
-        guardarModulo("MOD_KARDEX",            "Kárdex",               "bar-chart-2",   "/cocina/kardex",            cocina, 12, "COCINA");
-        guardarModulo("MOD_AUDITORIA_COCINA",  "Auditoría",            "file-text",     "/cocina/auditoria",         cocina, 13, "COCINA");
+        guardarModulo("MOD_PEDIDOS_COCINA",    "Pedidos en cola",    "tabler:clipboard-list",  "/cocina/pedidos",     cocina, 2,  "COCINA");
+        guardarModulo("MOD_PRODUCCION",        "Producción del día", "tabler:flame",           "/cocina/produccion",  cocina, 3,  "COCINA");
+        guardarModulo("MOD_RECETAS",           "Recetas",            "tabler:book-2",       "/cocina/recetas",     cocina, 4,  "COCINA");
+        guardarModulo("MOD_PLATOS",            "Platos",             "tabler:tools-kitchen-2",        "/cocina/platos",      cocina, 5,  "COCINA");
+        guardarModulo("MOD_INVENTARIO",        "Inventario",         "tabler:package",         "/cocina/inventario",  cocina, 6,  "COCINA");
+        guardarModulo("MOD_INSUMOS",           "Insumos",            "tabler:database",        "/cocina/insumos",     cocina, 7,  "COCINA");
+        guardarModulo("MOD_PROVEEDORES",       "Proveedores",        "tabler:truck",           "/cocina/proveedores", cocina, 8,  "COCINA");
+        guardarModulo("MOD_ALERTAS_INV",       "Alertas inventario", "tabler:bell",            "/cocina/alertas",     cocina, 9,  "COCINA");
+        guardarModulo("MOD_CATEGORIAS_INSUMO", "Categorías de insumo", "tabler:tag",           "/cocina/categorias-insumo", cocina, 10, "COCINA");
+        guardarModulo("MOD_MERMAS",            "Mermas",               "tabler:trash",       "/cocina/mermas",            cocina, 11, "COCINA");
+        guardarModulo("MOD_KARDEX",            "Kárdex",               "tabler:chart-bar",   "/cocina/kardex",            cocina, 12, "COCINA");
+        guardarModulo("MOD_AUDITORIA_COCINA",  "Auditoría",            "tabler:file-text",     "/cocina/auditoria",         cocina, 13, "COCINA");
 
         // ── VENTAS ────────────────────────────────────────────────
-        ModuloMenu ventas = guardarModulo("MOD_VENTAS", "Ventas", "dollar-sign", "/ventas", null, 10, "VENTAS");
+        ModuloMenu ventas = guardarModulo("MOD_VENTAS", "Ventas", "tabler:currency-dollar", "/ventas", null, 10, "VENTAS");
 
-        guardarModulo("MOD_CAJA",              "Caja / Nueva venta", "wallet",          "/ventas/caja",        ventas, 11, "VENTAS");
-        guardarModulo("MOD_PEDIDOS_VENTAS",    "Pedidos",            "shopping-bag",    "/ventas/pedidos",     ventas, 12, "VENTAS");
-        guardarModulo("MOD_CLIENTES",          "Clientes",           "users",           "/ventas/clientes",    ventas, 13, "VENTAS");
-        guardarModulo("MOD_PENSIONADOS",       "Pensionados",        "user-check",      "/ventas/pensionados", ventas, 14, "VENTAS");
-        guardarModulo("MOD_COBROS",            "Cobros mensuales",   "credit-card",     "/ventas/cobros",      ventas, 15, "VENTAS");
-        guardarModulo("MOD_ASISTENCIA",        "Asistencia",         "calendar-check",  "/ventas/asistencia",  ventas, 16, "VENTAS");
-        guardarModulo("MOD_TIPOS_ALMUERZO",    "Tipos de almuerzo",  "utensils",        "/ventas/almuerzos",   ventas, 17, "VENTAS");
-        guardarModulo("MOD_CATEGORIAS_PLATO",  "Categorías de plato","tag",             "/ventas/categorias",      ventas, 18, "VENTAS");
-        guardarModulo("MOD_HISTORIAL_VENTAS",  "Historial de ventas","history",          "/ventas/historial-ventas", ventas, 19, "VENTAS");
-        guardarModulo("MOD_ALERTAS_VENTAS",    "Centro de alertas",  "bell",             "/ventas/alertas",          ventas, 20, "VENTAS");
-        guardarModulo("MOD_REPORTES",          "Reportes",           "bar-chart",        "/ventas/reportes",         ventas, 21, "VENTAS");
-        guardarModulo("MOD_APROBACIONES",      "Aprobaciones",       "circle-check",     "/ventas/aprobaciones",     ventas, 22, "VENTAS");
+        guardarModulo("MOD_CAJA",              "Caja / Nueva venta", "tabler:wallet",          "/ventas/caja",        ventas, 11, "VENTAS");
+        guardarModulo("MOD_PEDIDOS_VENTAS",    "Pedidos",            "tabler:shopping-bag",    "/ventas/pedidos",     ventas, 12, "VENTAS");
+        guardarModulo("MOD_CLIENTES",          "Clientes",           "tabler:users",           "/ventas/clientes",    ventas, 13, "VENTAS");
+        guardarModulo("MOD_PENSIONADOS",       "Pensionados",        "tabler:user-check",      "/ventas/pensionados", ventas, 14, "VENTAS");
+        guardarModulo("MOD_COBROS",            "Cobros mensuales",   "tabler:credit-card",     "/ventas/cobros",      ventas, 15, "VENTAS");
+        guardarModulo("MOD_ASISTENCIA",        "Asistencia",         "tabler:calendar-check",  "/ventas/asistencia",  ventas, 16, "VENTAS");
+        guardarModulo("MOD_TIPOS_ALMUERZO",    "Tipos de almuerzo",  "tabler:tools-kitchen-2",        "/ventas/almuerzos",   ventas, 17, "VENTAS");
+        guardarModulo("MOD_CATEGORIAS_PLATO",  "Categorías de plato","tabler:tag",             "/ventas/categorias",      ventas, 18, "VENTAS");
+        guardarModulo("MOD_HISTORIAL_VENTAS",  "Historial de ventas","tabler:history",          "/ventas/historial-ventas", ventas, 19, "VENTAS");
+        guardarModulo("MOD_ALERTAS_VENTAS",    "Centro de alertas",  "tabler:bell",             "/ventas/alertas",          ventas, 20, "VENTAS");
+        guardarModulo("MOD_REPORTES",          "Reportes",           "tabler:chart-bar",        "/ventas/reportes",         ventas, 21, "VENTAS");
+        guardarModulo("MOD_APROBACIONES",      "Aprobaciones",       "tabler:circle-check",     "/ventas/aprobaciones",     ventas, 22, "VENTAS");
 
         // ── ADMIN ─────────────────────────────────────────────────
-        ModuloMenu admin = guardarModulo("MOD_ADMIN", "Administración", "settings", "/admin", null, 20, "ADMIN");
+        ModuloMenu admin = guardarModulo("MOD_ADMIN", "Administración", "tabler:settings", "/admin", null, 20, "ADMIN");
 
-        guardarModulo("MOD_EMPLEADOS",         "Empleados",          "id-card",         "/admin/empleados",    admin, 21, "ADMIN");
-        guardarModulo("MOD_ROLES",             "Roles y permisos",   "shield",          "/admin/roles",        admin, 22, "ADMIN");
-        guardarModulo("MOD_USUARIOS",          "Usuarios",           "user-cog",        "/admin/usuarios",     admin, 23, "ADMIN");
-        guardarModulo("MOD_SUCURSALES",        "Sucursales",         "building",        "/admin/sucursales",   admin, 24, "ADMIN");
-        guardarModulo("MOD_AUDITORIA",         "Auditoría",          "file-text",       "/admin/auditoria",    admin, 25, "ADMIN");
-        guardarModulo("MOD_ALERTAS_SISTEMA",   "Alertas del sistema","alert-triangle",  "/admin/alertas",      admin, 26, "ADMIN");
-        guardarModulo("MOD_MODULOS",           "Módulos y Menús",    "layout",          "/admin/modulos",      admin, 27, "ADMIN");
+        guardarModulo("MOD_EMPLEADOS",         "Empleados",          "tabler:id-badge",         "/admin/empleados",    admin, 21, "ADMIN");
+        guardarModulo("MOD_ROLES",             "Roles y permisos",   "tabler:shield",          "/admin/roles",        admin, 22, "ADMIN");
+        guardarModulo("MOD_USUARIOS",          "Usuarios",           "tabler:user-cog",        "/admin/usuarios",     admin, 23, "ADMIN");
+        guardarModulo("MOD_SUCURSALES",        "Sucursales",         "tabler:building",        "/admin/sucursales",   admin, 24, "ADMIN");
+        guardarModulo("MOD_AUDITORIA",         "Auditoría",          "tabler:file-text",       "/admin/auditoria",    admin, 25, "ADMIN");
+        guardarModulo("MOD_ALERTAS_SISTEMA",   "Alertas del sistema","tabler:alert-triangle",  "/admin/alertas",      admin, 26, "ADMIN");
+        guardarModulo("MOD_MODULOS",           "Módulos y Menús",    "tabler:layout-grid",          "/admin/modulos",      admin, 27, "ADMIN");
 
         log.info("[Init] Módulos cargados correctamente.");
     }

@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Solo para builds debug: permite tráfico HTTP sin cifrar hacia el backend
+  de desarrollo. 10.0.2.2 es el alias fijo del emulador de Android Studio
+  hacia el localhost de la PC anfitriona (usado para verificar este bloque).
+  Para probar en un dispositivo físico contra la IP LAN de la PC, agregar
+  esa IP concreta acá (Android no matchea rangos CIDR en este archivo, solo
+  hosts/dominios exactos). Un build de producción firmado debe usar HTTPS
+  real y NO debe incluir este archivo (por eso vive en src/debug, no en src/main).
+-->
+<network-security-config>
+    <domain-config cleartextTrafficPermitted="true">
+        <domain includeSubdomains="false">10.0.2.2</domain>
+        <domain includeSubdomains="false">localhost</domain>
+    </domain-config>
+</network-security-config>

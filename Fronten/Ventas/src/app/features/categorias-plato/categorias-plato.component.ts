@@ -1,4 +1,4 @@
-import { Component, OnInit, signal, computed } from '@angular/core';
+import { Component, OnInit, signal, computed, CUSTOM_ELEMENTS_SCHEMA } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { CategoriaPlatoService } from '../../core/services/api.service';
@@ -10,6 +10,7 @@ import { PaginationComponent } from '../../shared/components/pagination.componen
   selector: 'app-categorias-plato',
   standalone: true,
   imports: [CommonModule, FormsModule, PaginationComponent],
+  schemas: [CUSTOM_ELEMENTS_SCHEMA],
   template: `
     <div class="space-y-5 animate-slide-up">
 
@@ -26,7 +27,7 @@ import { PaginationComponent } from '../../shared/components/pagination.componen
         <div class="flex gap-2 w-full sm:w-auto">
           <input [(ngModel)]="busqueda" (ngModelChange)="pagina.set(1)"
                  class="input w-full sm:w-48 text-sm" maxlength="100"
-                 placeholder="🔍 Buscar categoría...">
+                 placeholder="Buscar categoría...">
           <button (click)="abrirModal()" class="btn-primary whitespace-nowrap">+ Nueva</button>
         </div>
       </div>
@@ -42,7 +43,7 @@ import { PaginationComponent } from '../../shared/components/pagination.componen
           <div class="card flex flex-col gap-2" [style.opacity]="cat.activo ? '1' : '0.5'">
             <div class="flex items-start justify-between gap-2">
               <div class="flex items-center gap-2">
-                <span class="text-2xl">🏷️</span>
+                <iconify-icon icon="tabler:tag" width="22" height="22" style="color:currentColor"></iconify-icon>
                 <div>
                   <p class="font-bold text-sm" style="color:rgb(var(--color-on-surface))">{{ cat.nombre }}</p>
                   <p class="text-[11px]" style="color:rgb(var(--color-on-surface)/0.45)">
@@ -58,21 +59,21 @@ import { PaginationComponent } from '../../shared/components/pagination.componen
             </div>
             <div class="flex gap-1.5 mt-1">
               <button (click)="abrirEditar(cat)"
-                      class="flex-1 text-xs py-1.5 rounded-lg border text-center"
+                      class="flex-1 text-xs py-1.5 rounded-lg border text-center inline-flex items-center justify-center gap-1"
                       style="border-color:rgb(var(--color-border));color:rgb(var(--color-on-surface)/0.7)">
-                ✏️ Editar
+                <iconify-icon icon="line-md:edit" width="14" height="14" style="color:currentColor"></iconify-icon> Editar
               </button>
               @if (cat.activo) {
                 <button (click)="desactivar(cat)"
-                        class="flex-1 text-xs py-1.5 rounded-lg text-center"
+                        class="flex-1 text-xs py-1.5 rounded-lg text-center inline-flex items-center justify-center gap-1"
                         style="background:rgb(var(--color-danger)/0.1);color:rgb(var(--color-danger))">
-                  ✕ Baja
+                  <iconify-icon icon="line-md:close" width="14" height="14" style="color:currentColor"></iconify-icon> Baja
                 </button>
               } @else {
                 <button (click)="activar(cat)"
-                        class="flex-1 text-xs py-1.5 rounded-lg text-center"
+                        class="flex-1 text-xs py-1.5 rounded-lg text-center inline-flex items-center justify-center gap-1"
                         style="background:rgb(var(--color-success)/0.1);color:rgb(var(--color-success))">
-                  ✓ Alta
+                  <iconify-icon icon="tabler:check" width="14" height="14" style="color:currentColor"></iconify-icon> Alta
                 </button>
               }
             </div>
@@ -80,7 +81,7 @@ import { PaginationComponent } from '../../shared/components/pagination.componen
         }
         @if (!cargando() && filtradas().length === 0) {
           <div class="card col-span-full text-center py-12" style="color:rgb(var(--color-on-surface)/0.35)">
-            <p class="text-3xl mb-2">🏷️</p>
+            <p class="mb-2 flex justify-center"><iconify-icon icon="tabler:tag" width="30" height="30" style="color:currentColor"></iconify-icon></p>
             <p>No se encontraron categorías</p>
           </div>
         }
@@ -99,8 +100,14 @@ import { PaginationComponent } from '../../shared/components/pagination.componen
            style="background:rgba(0,0,0,0.5)" (click)="cerrar()">
         <div class="card max-w-sm w-full space-y-4 animate-pop" (click)="$event.stopPropagation()">
 
-          <h3 class="font-display font-bold" style="color:rgb(var(--color-on-surface))">
-            {{ editandoId() ? '✏️ Editar Categoría' : '🏷️ Nueva Categoría de Plato' }}
+          <h3 class="font-display font-bold inline-flex items-center gap-1.5" style="color:rgb(var(--color-on-surface))">
+            @if (editandoId()) {
+              <iconify-icon icon="line-md:edit" width="18" height="18" style="color:currentColor"></iconify-icon>
+              Editar Categoría
+            } @else {
+              <iconify-icon icon="tabler:tag" width="18" height="18" style="color:currentColor"></iconify-icon>
+              Nueva Categoría de Plato
+            }
           </h3>
 
           <div class="space-y-3">
@@ -124,9 +131,10 @@ import { PaginationComponent } from '../../shared/components/pagination.componen
           </div>
 
           @if (error()) {
-            <p class="text-xs p-2 rounded-lg"
+            <p class="text-xs p-2 rounded-lg inline-flex items-center gap-1.5"
                style="background:rgb(var(--color-danger)/0.1);color:rgb(var(--color-danger))">
-              ⚠️ {{ error() }}
+              <iconify-icon icon="tabler:alert-triangle" width="14" height="14" style="color:currentColor"></iconify-icon>
+              {{ error() }}
             </p>
           }
 
@@ -233,7 +241,7 @@ export class CategoriasplatoComponent implements OnInit {
         this.guardando.set(false);
         this.cerrar();
         this.categorias.update(list => id ? list.map(x => x.id === id ? c : x) : [...list, c]);
-        this.toastSvc.success(id ? '✅ Categoría actualizada' : '✅ Categoría creada');
+        this.toastSvc.success(id ? 'Categoría actualizada' : 'Categoría creada');
       },
       error: err => {
         this.guardando.set(false);
@@ -247,9 +255,9 @@ export class CategoriasplatoComponent implements OnInit {
     this.svc.desactivar(cat.id).subscribe({
       next: () => {
         this.categorias.update(list => list.map(x => x.id === cat.id ? { ...x, activo: false } : x));
-        this.toastSvc.success('✕ Categoría dada de baja');
+        this.toastSvc.success('Categoría dada de baja');
       },
-      error: () => this.toastSvc.error('❌ Error al dar de baja'),
+      error: () => this.toastSvc.error('Error al dar de baja'),
     });
   }
 
@@ -257,9 +265,9 @@ export class CategoriasplatoComponent implements OnInit {
     this.svc.actualizar(cat.id, { nombre: cat.nombre, descripcion: cat.descripcion, activo: true }).subscribe({
       next: c => {
         this.categorias.update(list => list.map(x => x.id === cat.id ? c : x));
-        this.toastSvc.success('✓ Categoría reactivada');
+        this.toastSvc.success('Categoría reactivada');
       },
-      error: () => this.toastSvc.error('❌ Error al reactivar'),
+      error: () => this.toastSvc.error('Error al reactivar'),
     });
   }
 }

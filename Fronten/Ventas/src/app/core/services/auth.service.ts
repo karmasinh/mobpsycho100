@@ -2,6 +2,7 @@ import { Injectable, signal, computed } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Router } from '@angular/router';
 import { tap, catchError, throwError } from 'rxjs';
+import { Preferences } from '@capacitor/preferences';
 import { LoginRequest, LoginResponse, ModuloMenuDto } from '../models';
 import { environment } from '../../../environments/environment';
 
@@ -10,6 +11,9 @@ export class AuthService {
   private readonly TOKEN_KEY = 'restaurante_ventas_token';
   private readonly USER_KEY  = 'restaurante_ventas_user';
   private readonly SUCURSAL_KEY = 'restaurante_ventas_sucursal_activa';
+
+  /** Cache en memoria del token para lectura síncrona (ej. interceptor HTTP). */
+  private tokenCache: string | null = localStorage.getItem(this.TOKEN_KEY);
 
   currentUser = signal<LoginResponse | null>(this.cargarUsuario());
   isLoggedIn  = computed(() => !!this.currentUser());
@@ -22,7 +26,12 @@ export class AuthService {
   /** Sucursal con la que se opera: siempre la fija si existe; si no, la elegida manualmente */
   sucursalActiva = signal<number | null>(this.resolverSucursalActivaInicial());
 
-  constructor(private http: HttpClient, private router: Router) {}
+  constructor(private http: HttpClient, private router: Router) {
+    // localStorage es la fuente rápida y síncrona al arrancar (funciona igual en web).
+    // Preferences es la fuente robusta en nativo (Capacitor) — si difiere (ej. localStorage
+    // fue purgado por el sistema operativo en iOS), se rehidrata la sesión de forma async.
+    this.hidratarDesdePreferences();
+  }
 
   login(request: LoginRequest) {
     return this.http
@@ -34,8 +43,11 @@ export class AuthService {
               `Acceso denegado. Este sistema es para el módulo de Ventas. Su sistema: ${response.sistema}`
             );
           }
+          this.tokenCache = response.token;
           localStorage.setItem(this.TOKEN_KEY, response.token);
           localStorage.setItem(this.USER_KEY, JSON.stringify(response));
+          Preferences.set({ key: this.TOKEN_KEY, value: response.token });
+          Preferences.set({ key: this.USER_KEY, value: JSON.stringify(response) });
           this.currentUser.set(response);
           this.sucursalActiva.set(this.resolverSucursalActivaInicial());
         }),
@@ -52,12 +64,13 @@ export class AuthService {
     this.router.navigate(['/login']);
   }
 
-  getToken(): string | null { return localStorage.getItem(this.TOKEN_KEY); }
+  getToken(): string | null { return this.tokenCache; }
 
   /** Solo aplica cuando el usuario no tiene sucursal fija (admin/multi-sucursal) */
   elegirSucursal(sucursalId: number): void {
     if (this.sucursalFija() != null) return;
     localStorage.setItem(this.SUCURSAL_KEY, String(sucursalId));
+    Preferences.set({ key: this.SUCURSAL_KEY, value: String(sucursalId) });
     this.sucursalActiva.set(sucursalId);
   }
 
@@ -91,13 +104,42 @@ export class AuthService {
   }
 
   private limpiarSesion(): void {
+    this.tokenCache = null;
     localStorage.removeItem(this.TOKEN_KEY);
     localStorage.removeItem(this.USER_KEY);
+    Preferences.remove({ key: this.TOKEN_KEY });
+    Preferences.remove({ key: this.USER_KEY });
     this.currentUser.set(null);
   }
 
   private cargarUsuario(): LoginResponse | null {
     try { return JSON.parse(localStorage.getItem(this.USER_KEY) ?? 'null'); }
     catch { return null; }
+  }
+
+  /** Rehidrata sesión/token/sucursal desde Preferences si difieren de lo que ya cargó localStorage. */
+  private async hidratarDesdePreferences(): Promise<void> {
+    const [{ value: token }, { value: userRaw }, { value: sucursalRaw }] = await Promise.all([
+      Preferences.get({ key: this.TOKEN_KEY }),
+      Preferences.get({ key: this.USER_KEY }),
+      Preferences.get({ key: this.SUCURSAL_KEY }),
+    ]);
+
+    if (token && !this.tokenCache) {
+      this.tokenCache = token;
+      localStorage.setItem(this.TOKEN_KEY, token);
+    }
+    if (userRaw && !this.currentUser()) {
+      try {
+        const user: LoginResponse = JSON.parse(userRaw);
+        localStorage.setItem(this.USER_KEY, userRaw);
+        this.currentUser.set(user);
+        this.sucursalActiva.set(this.resolverSucursalActivaInicial());
+      } catch { /* dato corrupto, se ignora */ }
+    }
+    if (sucursalRaw && this.sucursalActiva() == null && this.sucursalFija() == null) {
+      localStorage.setItem(this.SUCURSAL_KEY, sucursalRaw);
+      this.sucursalActiva.set(Number(sucursalRaw));
+    }
   }
 }

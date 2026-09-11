@@ -1,4 +1,4 @@
-import { Component, OnInit, signal, computed } from '@angular/core';
+import { Component, OnInit, signal, computed, CUSTOM_ELEMENTS_SCHEMA } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { AlertaService } from '../../core/services/api.service';
 import { ToastService } from '../../core/services/toast.service';
@@ -8,6 +8,7 @@ import { AlertaSistema } from '../../core/models';
   selector: 'app-alertas',
   standalone: true,
   imports: [CommonModule],
+  schemas: [CUSTOM_ELEMENTS_SCHEMA],
   template: `
     <div class="space-y-5 animate-slide-up">
 
@@ -23,8 +24,9 @@ import { AlertaSistema } from '../../core/models';
         </div>
         @if (alertas().length > 0) {
           <button (click)="marcarTodas()" [disabled]="procesando()"
-                  class="btn-secondary text-sm">
-            ✓ Marcar todas como leídas
+                  class="btn-secondary text-sm inline-flex items-center gap-1.5">
+            <iconify-icon icon="line-md:confirm-circle" width="16" height="16" style="color:currentColor"></iconify-icon>
+            Marcar todas como leídas
           </button>
         }
       </div>
@@ -36,14 +38,14 @@ import { AlertaSistema } from '../../core/models';
                [style.outline]="filtroTipo() === grupo.tipo
                  ? '2px solid rgb(var(--color-primary))' : 'none'"
                (click)="toggleFiltro(grupo.tipo)">
-            <span class="text-2xl">{{ tipoEmoji(grupo.tipo) }}</span>
+            <iconify-icon [attr.icon]="tipoIcono(grupo.tipo)" width="24" height="24" style="color:currentColor"></iconify-icon>
             <p class="stat-value mt-1">{{ grupo.cantidad }}</p>
             <p class="stat-label">{{ tipoLabel(grupo.tipo) }}</p>
           </div>
         }
         @if (grupos().length === 0 && !cargando()) {
           <div class="col-span-4 text-center py-8">
-            <p class="text-4xl mb-2">🔔</p>
+            <iconify-icon icon="tabler:bell" width="36" height="36" class="mb-2 inline-block" style="color:currentColor;opacity:0.3"></iconify-icon>
             <p style="color:rgb(var(--color-on-surface)/0.4)" class="text-sm">
               No hay alertas pendientes
             </p>
@@ -61,7 +63,10 @@ import { AlertaSistema } from '../../core/models';
             </p>
             @if (filtroTipo()) {
               <button (click)="filtroTipo.set(null)"
-                      class="text-xs btn-ghost">✕ Quitar filtro</button>
+                      class="text-xs btn-ghost inline-flex items-center gap-1">
+                <iconify-icon icon="line-md:close" width="14" height="14" style="color:currentColor"></iconify-icon>
+                Quitar filtro
+              </button>
             }
           </div>
 
@@ -69,7 +74,7 @@ import { AlertaSistema } from '../../core/models';
             <div class="flex items-start gap-3 p-3 rounded-xl transition-all"
                  style="background:rgb(var(--color-surface-2));
                         border:1px solid rgb(var(--color-border)/0.5)">
-              <span class="text-xl flex-shrink-0 mt-0.5">{{ tipoEmoji(a.tipo) }}</span>
+              <iconify-icon [attr.icon]="tipoIcono(a.tipo)" width="20" height="20" class="flex-shrink-0 mt-0.5" style="color:currentColor"></iconify-icon>
               <div class="flex-1 min-w-0">
                 <p class="text-sm font-medium" style="color:rgb(var(--color-on-surface))">
                   {{ a.mensaje }}
@@ -90,7 +95,7 @@ import { AlertaSistema } from '../../core/models';
                       class="btn-ghost text-xs px-2 py-1 flex-shrink-0"
                       title="Marcar como leída"
                       style="color:rgb(var(--color-on-surface)/0.4)">
-                ✕
+                <iconify-icon icon="line-md:close" width="14" height="14" style="color:currentColor"></iconify-icon>
               </button>
             </div>
           }
@@ -179,15 +184,15 @@ export class AlertasComponent implements OnInit {
     });
   }
 
-  tipoEmoji(tipo: string): string {
-    if (tipo.includes('VENCIMIENTO_3'))  return '🔴';
-    if (tipo.includes('VENCIMIENTO_7'))  return '🟠';
-    if (tipo.includes('VENCIMIENTO_15')) return '🟡';
-    if (tipo.includes('STOCK'))          return '📦';
-    if (tipo.includes('CLIENTE'))        return '👥';
-    if (tipo.includes('PENSIONADO'))     return '🏠';
-    if (tipo.includes('LOGIN'))          return '🔒';
-    return '🔔';
+  tipoIcono(tipo: string): string {
+    if (tipo.includes('VENCIMIENTO_3'))  return 'tabler:alert-triangle';
+    if (tipo.includes('VENCIMIENTO_7'))  return 'tabler:clock';
+    if (tipo.includes('VENCIMIENTO_15')) return 'tabler:calendar-check';
+    if (tipo.includes('STOCK'))          return 'tabler:package';
+    if (tipo.includes('CLIENTE'))        return 'tabler:users';
+    if (tipo.includes('PENSIONADO'))     return 'tabler:home';
+    if (tipo.includes('LOGIN'))          return 'tabler:lock';
+    return 'tabler:bell';
   }
 
   tipoLabel(tipo: string): string {

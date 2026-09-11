@@ -1,10 +1,9 @@
-import { Component, signal, computed, HostListener } from '@angular/core';
+import { Component, signal, computed, HostListener, CUSTOM_ELEMENTS_SCHEMA } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { RouterModule, RouterOutlet, ActivatedRoute, NavigationEnd, Router } from '@angular/router';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { filter, map, startWith } from 'rxjs';
-import { LucideDynamicIcon } from '@lucide/angular';
 import { AuthService } from '../core/services/auth.service';
 import { ThemeService } from '../core/services/theme.service';
 import { AlertaService, SucursalService } from '../core/services/api.service';
@@ -15,7 +14,8 @@ import { ICONOS_DISPONIBLES } from '../core/icons/app-icons.provider';
 @Component({
   selector: 'app-shell',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterOutlet, RouterModule, ToastContainerComponent, LucideDynamicIcon],
+  imports: [CommonModule, FormsModule, RouterOutlet, RouterModule, ToastContainerComponent],
+  schemas: [CUSTOM_ELEMENTS_SCHEMA],
   template: `
     <div class="app-shell" [style.background]="'rgb(var(--color-surface))'">
 
@@ -83,7 +83,7 @@ import { ICONOS_DISPONIBLES } from '../core/icons/app-icons.provider';
                routerLinkActive="active"
                class="nav-item"
                (click)="closeSidebar()">
-              <svg [lucideIcon]="iconoSeguro(modulo.icono)" class="w-[18px] h-[18px] flex-shrink-0" [strokeWidth]="1.75"></svg>
+              <iconify-icon [attr.icon]="iconoSeguro(modulo.icono)" width="18" height="18" class="flex-shrink-0" style="color:currentColor"></iconify-icon>
               <span class="flex-1 truncate">{{ modulo.nombre }}</span>
             </a>
           }
@@ -259,6 +259,16 @@ import { ICONOS_DISPONIBLES } from '../core/icons/app-icons.provider';
 
     <!-- TOAST GLOBAL -->
     <app-toast-container />
+
+    <!-- BOTTOM NAV (solo mobile, ver @media en styles.css) -->
+    <nav class="bottom-nav">
+      @for (item of bottomNavItems(); track item.id) {
+        <a [routerLink]="item.ruta" routerLinkActive="active" class="bottom-nav-item">
+          <iconify-icon [attr.icon]="iconoSeguro(item.icono)" class="bottom-nav-icon" style="color:currentColor"></iconify-icon>
+          <span>{{ item.nombre | slice:0:8 }}</span>
+        </a>
+      }
+    </nav>
   `,
   styles: [`
     :host { display: contents; }
@@ -286,7 +296,8 @@ export class ShellComponent {
     { initialValue: '' },
   );
 
-  menuItems = computed(() => this.authService.getMenuTree());
+  menuItems      = computed(() => this.authService.getMenuTree());
+  bottomNavItems = computed(() => this.menuItems().slice(0, 5));
 
   userInitial = computed(() => {
     const u = this.authService.currentUser()?.username ?? '?';
@@ -363,11 +374,12 @@ export class ShellComponent {
 
   /**
    * Un módulo creado a mano desde "Módulos y Menús" puede traer un `icono` que no está
-   * registrado en `provideAppIcons()` — `LucideDynamicIcon` lanza una excepción en ese caso,
-   * así que se cae a un ícono neutro ("tag") en vez de romper el menú.
+   * bundleado (ver `registrarIconosUsados()`) — `<iconify-icon>` no rompe con un ícono
+   * desconocido, pero no muestra nada, así que se cae a un ícono neutro en vez de dejar el
+   * menú con un hueco vacío.
    */
   iconoSeguro(icono: string): string {
-    return ICONOS_DISPONIBLES.has(icono) ? icono : 'tag';
+    return ICONOS_DISPONIBLES.has(icono) ? icono : 'tabler:tag';
   }
 
   private cargarAlertCount(): void {

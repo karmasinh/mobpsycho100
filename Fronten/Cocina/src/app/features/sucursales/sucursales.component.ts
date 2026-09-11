@@ -1,4 +1,4 @@
-import { Component, OnInit, signal, computed } from '@angular/core';
+import { Component, OnInit, signal, computed, CUSTOM_ELEMENTS_SCHEMA } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { SucursalService } from '../../core/services/api.service';
@@ -10,6 +10,7 @@ import { PaginationComponent } from '../../shared/components/pagination.componen
   selector: 'app-sucursales',
   standalone: true,
   imports: [CommonModule, FormsModule, PaginationComponent],
+  schemas: [CUSTOM_ELEMENTS_SCHEMA],
   template: `
     <div class="space-y-5 animate-slide-up">
 
@@ -25,7 +26,7 @@ import { PaginationComponent } from '../../shared/components/pagination.componen
         </div>
         <div class="flex gap-2 items-center flex-wrap">
           <input [(ngModel)]="busqueda" (ngModelChange)="pagina.set(1)"
-                 class="input w-48 text-sm" placeholder="🔍 Buscar sucursal..." maxlength="100">
+                 class="input w-48 text-sm" placeholder="Buscar sucursal..." maxlength="100">
           <button (click)="abrirModal()" class="btn-primary">+ Nueva sucursal</button>
         </div>
       </div>
@@ -42,7 +43,9 @@ import { PaginationComponent } from '../../shared/components/pagination.componen
             <div class="flex items-start justify-between gap-2">
               <div class="flex items-center gap-3">
                 <div class="w-10 h-10 rounded-xl flex items-center justify-center text-xl flex-shrink-0"
-                     style="background:rgb(var(--color-primary)/0.12)">🏪</div>
+                     style="background:rgb(var(--color-primary)/0.12)">
+                  <iconify-icon icon="tabler:building" width="20" height="20" style="color:currentColor"></iconify-icon>
+                </div>
                 <div>
                   <p class="font-bold text-sm" style="color:rgb(var(--color-on-surface))">{{ s.nombre }}</p>
                   <p class="text-xs" style="color:rgb(var(--color-on-surface)/0.45)">{{ s.direccion || 'Sin dirección' }}</p>
@@ -53,19 +56,19 @@ import { PaginationComponent } from '../../shared/components/pagination.componen
               </span>
             </div>
             @if (s.telefono) {
-              <p class="mt-3 text-xs" style="color:rgb(var(--color-on-surface)/0.5)">
-                📞 {{ s.telefono }}
+              <p class="mt-3 text-xs inline-flex items-center gap-1" style="color:rgb(var(--color-on-surface)/0.5)">
+                <iconify-icon icon="tabler:phone" width="12" height="12" style="color:currentColor"></iconify-icon> {{ s.telefono }}
               </p>
             }
             <div class="mt-3 flex gap-2">
               <button (click)="abrirEditar(s)"
-                      class="text-xs py-1 px-2 rounded-lg border border-border bg-surface hover:border-primary/50 text-on-surface/75">
-                ✏️ Editar
+                      class="text-xs py-1 px-2 rounded-lg border border-border bg-surface hover:border-primary/50 text-on-surface/75 inline-flex items-center gap-1">
+                <iconify-icon icon="line-md:edit" width="14" height="14" style="color:currentColor"></iconify-icon> Editar
               </button>
               @if (s.activo) {
                 <button (click)="desactivar(s)"
-                        class="text-xs py-1 px-2 rounded-lg bg-danger/10 text-danger hover:bg-danger/20">
-                  ✕ Desactivar
+                        class="text-xs py-1 px-2 rounded-lg bg-danger/10 text-danger hover:bg-danger/20 inline-flex items-center gap-1">
+                  <iconify-icon icon="tabler:x" width="14" height="14" style="color:currentColor"></iconify-icon> Desactivar
                 </button>
               }
             </div>
@@ -73,7 +76,7 @@ import { PaginationComponent } from '../../shared/components/pagination.componen
         }
         @if (!cargando() && sucursalesFiltradas().length === 0) {
           <div class="card text-center py-12 md:col-span-3" style="color:rgb(var(--color-on-surface)/0.35)">
-            <p class="text-3xl mb-2">🏪</p>
+            <iconify-icon icon="tabler:building" width="32" height="32" style="color:currentColor" class="mb-2 inline-block"></iconify-icon>
             <p>No hay sucursales registradas</p>
           </div>
         }
@@ -92,10 +95,16 @@ import { PaginationComponent } from '../../shared/components/pagination.componen
            (click)="cerrar()">
         <div class="card max-w-md w-full space-y-4 animate-pop" (click)="$event.stopPropagation()">
           <div class="flex items-center justify-between">
-            <h3 class="font-display font-bold text-lg" style="color:rgb(var(--color-on-surface))">
-              {{ editandoId() ? '✏️ Editar Sucursal' : '🏪 Nueva Sucursal' }}
+            <h3 class="font-display font-bold text-lg inline-flex items-center gap-1.5" style="color:rgb(var(--color-on-surface))">
+              @if (editandoId()) {
+                <iconify-icon icon="line-md:edit" width="18" height="18" style="color:currentColor"></iconify-icon> Editar Sucursal
+              } @else {
+                <iconify-icon icon="tabler:building" width="18" height="18" style="color:currentColor"></iconify-icon> Nueva Sucursal
+              }
             </h3>
-            <button (click)="cerrar()" class="btn-ghost p-1">✕</button>
+            <button (click)="cerrar()" class="btn-ghost p-1">
+              <iconify-icon icon="tabler:x" width="16" height="16" style="color:currentColor"></iconify-icon>
+            </button>
           </div>
 
           <div class="space-y-3">
@@ -117,9 +126,9 @@ import { PaginationComponent } from '../../shared/components/pagination.componen
           </div>
 
           @if (error()) {
-            <p class="text-xs p-2.5 rounded-lg"
+            <p class="text-xs p-2.5 rounded-lg inline-flex items-center gap-1.5"
                style="background:rgb(var(--color-danger)/0.1);color:rgb(var(--color-danger))">
-              ⚠️ {{ error() }}
+              <iconify-icon icon="tabler:alert-triangle" width="14" height="14" style="color:currentColor"></iconify-icon> {{ error() }}
             </p>
           }
 
@@ -230,7 +239,7 @@ export class SucursalesComponent implements OnInit {
         this.guardando.set(false);
         this.cerrar();
         this.sucursales.update(list => id ? list.map(x => x.id === id ? s : x) : [...list, s]);
-        this.toastSvc.success(id ? '✅ Sucursal actualizada' : '✅ Sucursal creada');
+        this.toastSvc.success(id ? 'Sucursal actualizada' : 'Sucursal creada');
       },
       error: err => {
         this.guardando.set(false);

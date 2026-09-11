@@ -1,4 +1,4 @@
-import { Component, OnInit, signal, computed } from '@angular/core';
+import { Component, OnInit, signal, computed, CUSTOM_ELEMENTS_SCHEMA } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { AlertaService } from '../../core/services/api.service';
 import { ToastService } from '../../core/services/toast.service';
@@ -8,6 +8,7 @@ import { AlertaSistema } from '../../core/models';
   selector: 'app-alertas',
   standalone: true,
   imports: [CommonModule],
+  schemas: [CUSTOM_ELEMENTS_SCHEMA],
   template: `
     <div class="space-y-5 animate-slide-up">
 
@@ -36,14 +37,14 @@ import { AlertaSistema } from '../../core/models';
                [style.outline]="filtroTipo() === grupo.tipo
                  ? '2px solid rgb(var(--color-primary))' : 'none'"
                (click)="toggleFiltro(grupo.tipo)">
-            <span class="text-2xl">{{ tipoEmoji(grupo.tipo) }}</span>
+            <iconify-icon [attr.icon]="tipoIcon(grupo.tipo)" width="24" height="24" style="color:currentColor"></iconify-icon>
             <p class="stat-value mt-1">{{ grupo.cantidad }}</p>
             <p class="stat-label">{{ tipoLabel(grupo.tipo) }}</p>
           </div>
         }
         @if (grupos().length === 0 && !cargando()) {
           <div class="col-span-4 text-center py-8">
-            <p class="text-4xl mb-2">🔔</p>
+            <iconify-icon icon="tabler:bell" width="40" height="40" class="mb-2" style="color:currentColor"></iconify-icon>
             <p style="color:rgb(var(--color-on-surface)/0.4)" class="text-sm">
               No hay alertas pendientes
             </p>
@@ -69,7 +70,7 @@ import { AlertaSistema } from '../../core/models';
             <div class="flex items-start gap-3 p-3 rounded-xl transition-all"
                  style="background:rgb(var(--color-surface-2));
                         border:1px solid rgb(var(--color-border)/0.5)">
-              <span class="text-xl flex-shrink-0 mt-0.5">{{ tipoEmoji(a.tipo) }}</span>
+              <iconify-icon [attr.icon]="tipoIcon(a.tipo)" width="20" height="20" class="flex-shrink-0 mt-0.5" style="color:currentColor"></iconify-icon>
               <div class="flex-1 min-w-0">
                 <p class="text-sm font-medium" style="color:rgb(var(--color-on-surface))">
                   {{ a.mensaje }}
@@ -179,15 +180,15 @@ export class AlertasComponent implements OnInit {
     });
   }
 
-  tipoEmoji(tipo: string): string {
-    if (tipo.includes('VENCIMIENTO_3'))  return '🔴';
-    if (tipo.includes('VENCIMIENTO_7'))  return '🟠';
-    if (tipo.includes('VENCIMIENTO_15')) return '🟡';
-    if (tipo.includes('STOCK'))          return '📦';
-    if (tipo.includes('CLIENTE'))        return '👥';
-    if (tipo.includes('PENSIONADO'))     return '🏠';
-    if (tipo.includes('LOGIN'))          return '🔒';
-    return '🔔';
+  tipoIcon(tipo: string): string {
+    if (tipo.includes('VENCIMIENTO_3'))  return 'tabler:alert-triangle';
+    if (tipo.includes('VENCIMIENTO_7'))  return 'tabler:clock';
+    if (tipo.includes('VENCIMIENTO_15')) return 'tabler:hourglass';
+    if (tipo.includes('STOCK'))          return 'tabler:package';
+    if (tipo.includes('CLIENTE'))        return 'tabler:users';
+    if (tipo.includes('PENSIONADO'))     return 'tabler:home';
+    if (tipo.includes('LOGIN'))          return 'tabler:lock';
+    return 'tabler:bell';
   }
 
   tipoLabel(tipo: string): string {

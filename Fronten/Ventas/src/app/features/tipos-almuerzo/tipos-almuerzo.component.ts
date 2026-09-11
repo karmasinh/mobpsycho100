@@ -1,4 +1,4 @@
-import { Component, OnInit, signal, computed } from '@angular/core';
+import { Component, OnInit, signal, computed, CUSTOM_ELEMENTS_SCHEMA } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { TipoAlmuerzoPensionadosService } from '../../core/services/api.service';
@@ -20,6 +20,7 @@ const DIAS_SEMANA = [
   selector: 'app-tipos-almuerzo',
   standalone: true,
   imports: [CommonModule, FormsModule, PaginationComponent],
+  schemas: [CUSTOM_ELEMENTS_SCHEMA],
   template: `
     <div class="space-y-5 animate-slide-up">
 
@@ -36,7 +37,7 @@ const DIAS_SEMANA = [
         <div class="flex gap-2 w-full sm:w-auto">
           <input [(ngModel)]="busqueda" (ngModelChange)="pagina.set(1)"
                  class="input w-full sm:w-48 text-sm" maxlength="100"
-                 placeholder="🔍 Buscar plan...">
+                 placeholder="Buscar plan...">
           <button (click)="abrirCrear()" class="btn-primary whitespace-nowrap">+ Nuevo plan</button>
         </div>
       </div>
@@ -55,7 +56,9 @@ const DIAS_SEMANA = [
             <div class="flex items-start justify-between gap-2">
               <div class="flex items-center gap-3">
                 <div class="w-10 h-10 rounded-xl flex items-center justify-center text-xl flex-shrink-0"
-                     style="background:rgb(var(--color-primary)/0.12)">🍲</div>
+                     style="background:rgb(var(--color-primary)/0.12);color:rgb(var(--color-primary))">
+                  <iconify-icon icon="tabler:soup" width="22" height="22" style="color:currentColor"></iconify-icon>
+                </div>
                 <div>
                   <p class="font-bold text-sm leading-snug" style="color:rgb(var(--color-on-surface))">
                     {{ t.nombre }}
@@ -93,15 +96,15 @@ const DIAS_SEMANA = [
             <!-- Acciones -->
             <div class="flex gap-2 pt-1">
               <button (click)="abrirEditar(t)"
-                      class="text-xs py-1 px-2 rounded-lg border"
+                      class="text-xs py-1 px-2 rounded-lg border inline-flex items-center gap-1"
                       style="border-color:rgb(var(--color-border));color:rgb(var(--color-on-surface)/0.7)">
-                ✏️ Editar
+                <iconify-icon icon="line-md:edit" width="14" height="14" style="color:currentColor"></iconify-icon> Editar
               </button>
               @if (t.activo) {
                 <button (click)="desactivar(t)"
-                        class="text-xs py-1 px-2 rounded-lg"
+                        class="text-xs py-1 px-2 rounded-lg inline-flex items-center gap-1"
                         style="background:rgb(var(--color-danger)/0.1);color:rgb(var(--color-danger))">
-                  ✕ Desactivar
+                  <iconify-icon icon="tabler:x" width="14" height="14" style="color:currentColor"></iconify-icon> Desactivar
                 </button>
               }
             </div>
@@ -111,7 +114,7 @@ const DIAS_SEMANA = [
         @if (!cargando() && listaFiltrada().length === 0) {
           <div class="card text-center py-14 sm:col-span-2 lg:col-span-3"
                style="color:rgb(var(--color-on-surface)/0.35)">
-            <p class="text-3xl mb-2">🍲</p>
+            <p class="mb-2 flex justify-center"><iconify-icon icon="tabler:soup" width="36" height="36" style="color:currentColor"></iconify-icon></p>
             <p>No hay planes de almuerzo registrados</p>
           </div>
         }
@@ -132,10 +135,16 @@ const DIAS_SEMANA = [
              (click)="$event.stopPropagation()">
 
           <div class="flex items-center justify-between">
-            <h3 class="font-display font-bold text-lg" style="color:rgb(var(--color-on-surface))">
-              {{ editandoId() ? '✏️ Editar plan' : '🍲 Nuevo plan de almuerzo' }}
+            <h3 class="font-display font-bold text-lg inline-flex items-center gap-1.5" style="color:rgb(var(--color-on-surface))">
+              @if (editandoId()) {
+                <iconify-icon icon="line-md:edit" width="18" height="18" style="color:currentColor"></iconify-icon> Editar plan
+              } @else {
+                <iconify-icon icon="tabler:soup" width="18" height="18" style="color:currentColor"></iconify-icon> Nuevo plan de almuerzo
+              }
             </h3>
-            <button (click)="cerrar()" class="btn-ghost p-1">✕</button>
+            <button (click)="cerrar()" class="btn-ghost p-1">
+              <iconify-icon icon="line-md:close" width="16" height="16" style="color:currentColor"></iconify-icon>
+            </button>
           </div>
 
           <div class="space-y-3">
@@ -178,9 +187,9 @@ const DIAS_SEMANA = [
           </div>
 
           @if (errorModal()) {
-            <p class="text-xs p-2.5 rounded-lg"
+            <p class="text-xs p-2.5 rounded-lg inline-flex items-center gap-1.5"
                style="background:rgb(var(--color-danger)/0.1);color:rgb(var(--color-danger))">
-              ⚠️ {{ errorModal() }}
+              <iconify-icon icon="tabler:alert-triangle" width="14" height="14" style="color:currentColor"></iconify-icon> {{ errorModal() }}
             </p>
           }
 
@@ -339,7 +348,7 @@ export class TiposAlmuerzoPensionadosComponent implements OnInit {
         this.lista.update(list =>
           id ? list.map(x => x.id === id ? t : x) : [...list, t]
         );
-        this.toastSvc.success(id ? '✅ Plan actualizado' : '✅ Plan creado');
+        this.toastSvc.success(id ? 'Plan actualizado' : 'Plan creado');
       },
       error: err => {
         this.guardando.set(false);

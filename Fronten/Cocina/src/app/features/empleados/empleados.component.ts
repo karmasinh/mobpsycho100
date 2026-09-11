@@ -1,4 +1,4 @@
-import { Component, OnInit, signal, computed } from '@angular/core';
+import { Component, OnInit, signal, computed, CUSTOM_ELEMENTS_SCHEMA } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { HttpClient } from '@angular/common/http';
@@ -27,6 +27,7 @@ interface EmpleadoForm {
   selector: 'app-empleados',
   standalone: true,
   imports: [CommonModule, FormsModule, PaginationComponent],
+  schemas: [CUSTOM_ELEMENTS_SCHEMA],
   template: `
     <div class="space-y-5 animate-fade-up">
 
@@ -48,13 +49,13 @@ interface EmpleadoForm {
       <!-- Filtros -->
       <div class="flex gap-3 flex-wrap">
         <input [(ngModel)]="busqueda" (ngModelChange)="pagina.set(1)" class="input w-48 text-sm"
-               placeholder="🔍 Buscar nombre o CI..." maxlength="100">
+               placeholder="Buscar nombre o CI..." maxlength="100">
         <select [(ngModel)]="filtroTurno" (ngModelChange)="pagina.set(1)" class="input w-40 text-sm">
           <option value="">Todos los turnos</option>
-          <option value="MANANA">🌅 Mañana</option>
-          <option value="TARDE">🌆 Tarde</option>
-          <option value="NOCHE">🌙 Noche</option>
-          <option value="COMPLETO">📅 Completo</option>
+          <option value="MANANA">Mañana</option>
+          <option value="TARDE">Tarde</option>
+          <option value="NOCHE">Noche</option>
+          <option value="COMPLETO">Completo</option>
         </select>
       </div>
 
@@ -179,11 +180,14 @@ interface EmpleadoForm {
              (click)="$event.stopPropagation()">
 
           <div class="flex items-center justify-between mb-5">
-            <h3 class="font-display font-bold text-lg"
+            <h3 class="font-display font-bold text-lg inline-flex items-center gap-2"
                 style="color:rgb(var(--color-on-surface))">
-              {{ editando() ? '✏️ Editar empleado' : '👤 Nuevo empleado' }}
+              <iconify-icon [attr.icon]="editando() ? 'line-md:edit' : 'tabler:id-badge'" width="20" height="20" style="color:currentColor"></iconify-icon>
+              {{ editando() ? 'Editar empleado' : 'Nuevo empleado' }}
             </h3>
-            <button (click)="cerrarModal()" class="btn-ghost p-1 text-xl">✕</button>
+            <button (click)="cerrarModal()" class="btn-ghost p-1 text-xl">
+              <iconify-icon icon="line-md:close" width="18" height="18" style="color:currentColor"></iconify-icon>
+            </button>
           </div>
 
           <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -230,10 +234,10 @@ interface EmpleadoForm {
             <div>
               <label class="input-label">Turno *</label>
               <select [(ngModel)]="form.turno" class="input text-sm">
-                <option value="MANANA">🌅 Mañana</option>
-                <option value="TARDE">🌆 Tarde</option>
-                <option value="NOCHE">🌙 Noche</option>
-                <option value="COMPLETO">📅 Completo</option>
+                <option value="MANANA">Mañana</option>
+                <option value="TARDE">Tarde</option>
+                <option value="NOCHE">Noche</option>
+                <option value="COMPLETO">Completo</option>
               </select>
             </div>
 
@@ -341,9 +345,10 @@ interface EmpleadoForm {
            (click)="modalRol.set(false)">
         <div class="card max-w-sm w-full animate-fade-up"
              (click)="$event.stopPropagation()">
-          <h3 class="font-display font-bold mb-4"
+          <h3 class="font-display font-bold mb-4 inline-flex items-center gap-2"
               style="color:rgb(var(--color-on-surface))">
-            🛡️ Cambiar rol — {{ empleadoSeleccionado()?.nombre }}
+            <iconify-icon icon="tabler:shield" width="18" height="18" style="color:currentColor"></iconify-icon>
+            Cambiar rol — {{ empleadoSeleccionado()?.nombre }}
             {{ empleadoSeleccionado()?.apellido }}
           </h3>
           <div class="space-y-2 mb-4">
@@ -532,8 +537,8 @@ export class EmpleadosComponent implements OnInit {
         this.modal.set(false);
         this.toastSvc.success(
           this.editando()
-            ? '✅ Empleado actualizado'
-            : `✅ Empleado creado · Usuario: ${this.previewUsername()}`
+            ? 'Empleado actualizado'
+            : `Empleado creado · Usuario: ${this.previewUsername()}`
         );
         this.cargarDatos();
       },
@@ -563,7 +568,7 @@ export class EmpleadosComponent implements OnInit {
     ).subscribe({
       next: () => {
         this.modalRol.set(false);
-        this.toastSvc.success('✅ Rol actualizado correctamente');
+        this.toastSvc.success('Rol actualizado correctamente');
         this.cargarDatos();
       },
       error: err => {
@@ -591,8 +596,8 @@ export class EmpleadosComponent implements OnInit {
 
   getTurnoLabel(turno: string): string {
     const map: Record<string, string> = {
-      MANANA: '🌅 Mañana', TARDE: '🌆 Tarde',
-      NOCHE: '🌙 Noche', COMPLETO: '📅 Completo',
+      MANANA: 'Mañana', TARDE: 'Tarde',
+      NOCHE: 'Noche', COMPLETO: 'Completo',
     };
     return map[turno] ?? turno;
   }

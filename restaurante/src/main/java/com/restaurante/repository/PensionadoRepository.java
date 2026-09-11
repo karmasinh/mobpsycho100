@@ -14,6 +14,8 @@ import java.util.Optional;
 public interface PensionadoRepository extends JpaRepository<Pensionado, Long> {
     Optional<Pensionado> findByCedula(String cedula);
     boolean existsByCedula(String cedula);
+    boolean existsByTelefono(String telefono);
+    boolean existsByCorreo(String correo);
     List<Pensionado> findByEstado(EstadoPensionado estado);
     List<Pensionado> findByEstadoIn(List<EstadoPensionado> estados);
 

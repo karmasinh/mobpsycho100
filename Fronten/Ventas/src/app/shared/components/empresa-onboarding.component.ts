@@ -156,7 +156,7 @@ export class EmpresaOnboardingComponent implements OnInit {
   }
 
   private finalizar(): void {
-    this.toastSvc.success('✅ Negocio configurado correctamente');
+    this.toastSvc.success('Negocio configurado correctamente');
     this.completado.emit();
   }
 }

@@ -1,4 +1,4 @@
-import { Component, signal } from '@angular/core';
+import { Component, signal, CUSTOM_ELEMENTS_SCHEMA } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router, ActivatedRoute } from '@angular/router';
@@ -10,8 +10,34 @@ import { environment } from '../../../environments/environment';
   selector: 'app-login',
   standalone: true,
   imports: [CommonModule, FormsModule],
+  schemas: [CUSTOM_ELEMENTS_SCHEMA],
   template: `
     <div class="ent-login">
+
+      <!-- Selector de tema flotante (esquina superior izquierda) -->
+      <div class="ent-theme-fab-wrapper">
+        <button (click)="themeMenuOpen.set(!themeMenuOpen())"
+                class="ent-theme-fab" [class.open]="themeMenuOpen()"
+                aria-label="Cambiar apariencia" [attr.aria-expanded]="themeMenuOpen()">
+          <iconify-icon icon="tabler:palette" width="18" height="18" style="color:currentColor"></iconify-icon>
+        </button>
+        @if (themeMenuOpen()) {
+          <div class="ent-theme-fab-backdrop" (click)="themeMenuOpen.set(false)"></div>
+          <div class="ent-theme-fab-menu">
+            @for (theme of themeService.THEMES; track theme.id) {
+              <button (click)="themeService.setTheme(theme.id); themeMenuOpen.set(false)"
+                      class="ent-theme-fab-option"
+                      [class.active]="themeService.currentTheme() === theme.id">
+                <span class="ent-theme-swatch" [style.background]="swatchColor(theme.id)"></span>
+                <span class="flex-1 text-left">{{ theme.nombre }}</span>
+                @if (themeService.currentTheme() === theme.id) {
+                  <iconify-icon icon="tabler:check" width="14" height="14" style="color:currentColor"></iconify-icon>
+                }
+              </button>
+            }
+          </div>
+        }
+      </div>
 
       <!-- ── PANEL IZQUIERDO — identidad de marca ─────────────── -->
       <div class="ent-panel-left">
@@ -70,7 +96,7 @@ import { environment } from '../../../environments/environment';
 
           @if (bloqueado()) {
             <div class="ent-alert-blocked">
-              <span>🔒</span>
+              <span class="inline-flex items-center"><iconify-icon icon="tabler:lock" width="20" height="20" style="color:currentColor"></iconify-icon></span>
               <div>
                 <p class="ent-alert-title">Usuario bloqueado</p>
                 <p class="ent-alert-sub">Contacta al administrador para desbloquear.</p>
@@ -120,8 +146,8 @@ import { environment } from '../../../environments/environment';
             </div>
 
             @if (error()) {
-              <div class="ent-error">
-                <span>⚠️</span> {{ error() }}
+              <div class="ent-error inline-flex items-center gap-1">
+                <iconify-icon icon="tabler:alert-triangle" width="16" height="16" style="color:currentColor"></iconify-icon> {{ error() }}
               </div>
             }
 
@@ -148,22 +174,6 @@ import { environment } from '../../../environments/environment';
 
           <p class="ent-quote">Sabor casero, tradición entrerriana.</p>
 
-          <!-- Selector de tema -->
-          <div class="ent-themes-section">
-            <p class="ent-themes-label">Apariencia</p>
-            <div class="ent-themes-grid">
-              @for (theme of themeService.THEMES; track theme.id) {
-                <button (click)="themeService.setTheme(theme.id)"
-                        [title]="theme.descripcion"
-                        class="ent-theme-btn"
-                        [class.ent-theme-active]="themeService.currentTheme() === theme.id">
-                  <span>{{ theme.emoji }}</span>
-                  <span>{{ theme.nombre }}</span>
-                </button>
-              }
-            </div>
-          </div>
-
           <!-- Switch sistema -->
           <a [href]="ventasUrl" class="ent-switch-link">
             <svg style="width:0.9rem;height:0.9rem;flex-shrink:0"
@@ -183,6 +193,7 @@ export class LoginComponent {
   error        = signal('');
   showPwd      = signal(false);
   bloqueado    = signal(false);
+  themeMenuOpen = signal(false);
   ventasUrl    = (environment as any).ventasUrl ?? 'http://localhost:4200';
 
   features = [
@@ -190,6 +201,21 @@ export class LoginComponent {
     { icon: '🌿', label: 'INGREDIENTES FRESCOS'  },
     { icon: '❤️', label: 'HECHO CON PASIÓN'      },
   ];
+
+  /** Color primario (--color-primary) de cada tema, para el cuadradito del selector de apariencia. */
+  private readonly themeColors: Record<string, string> = {
+    entrerriana: '#C49A5A',
+    fuego: '#EA580C',
+    nocturno: '#6366F1',
+    aurora: '#34D399',
+    nube: '#6366F1',
+    rosa: '#F43F5E',
+    carbon: '#FAFAFA',
+  };
+
+  swatchColor(themeId: string): string {
+    return this.themeColors[themeId] ?? '#999';
+  }
 
   constructor(
     private authService: AuthService,

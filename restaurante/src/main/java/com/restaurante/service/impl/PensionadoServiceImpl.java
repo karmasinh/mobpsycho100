@@ -41,6 +41,17 @@ public class PensionadoServiceImpl implements PensionadoService {
             throw new DuplicadoException("Ya existe un pensionado con cédula: " + request.getCedula());
         }
 
+        // El correo/teléfono son UNIQUE en BD — un "" (a diferencia de null) sí choca
+        // contra otro "", así que se normaliza antes de validar y de persistir.
+        String telefono = normalizarOpcional(request.getTelefono());
+        String correo = normalizarOpcional(request.getCorreo());
+        if (telefono != null && pensionadoRepository.existsByTelefono(telefono)) {
+            throw new DuplicadoException("Ya existe un pensionado con teléfono: " + telefono);
+        }
+        if (correo != null && pensionadoRepository.existsByCorreo(correo)) {
+            throw new DuplicadoException("Ya existe un pensionado con correo: " + correo);
+        }
+
         TipoAlmuerzo tipoAlmuerzo = tipoAlmuerzoRepository.findById(request.getTipoAlmuerzoId())
                 .orElseThrow(() -> new RecursoNoEncontradoException("TipoAlmuerzo", request.getTipoAlmuerzoId()));
 
@@ -48,8 +59,8 @@ public class PensionadoServiceImpl implements PensionadoService {
                 .nombre(request.getNombre())
                 .apellido(request.getApellido())
                 .cedula(request.getCedula())
-                .telefono(request.getTelefono())
-                .correo(request.getCorreo())
+                .telefono(telefono)
+                .correo(correo)
                 .tipoAlmuerzo(tipoAlmuerzo)
                 .fechaInscripcion(request.getFechaInscripcion())
                 .estado(EstadoPensionado.ACTIVO)
@@ -272,5 +283,10 @@ public class PensionadoServiceImpl implements PensionadoService {
                     + "' ya está en uso. Use el campo usernamePersonalizado.");
         }
         return username;
+    }
+
+    /** El correo/teléfono tienen UNIQUE en BD — "" (a diferencia de null) sí choca con otro "". */
+    private String normalizarOpcional(String valor) {
+        return (valor == null || valor.isBlank()) ? null : valor;
     }
 }

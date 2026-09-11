@@ -1,4 +1,4 @@
-import { Component, OnInit, signal, computed } from '@angular/core';
+import { Component, OnInit, signal, computed, CUSTOM_ELEMENTS_SCHEMA } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { EmpleadoAdminService, RolService } from '../../core/services/api.service';
@@ -10,6 +10,7 @@ import { PaginationComponent } from '../../shared/components/pagination.componen
   selector: 'app-usuarios',
   standalone: true,
   imports: [CommonModule, FormsModule, PaginationComponent],
+  schemas: [CUSTOM_ELEMENTS_SCHEMA],
   template: `
     <div class="space-y-5 animate-slide-up">
 
@@ -25,7 +26,7 @@ import { PaginationComponent } from '../../shared/components/pagination.componen
         </div>
         <input [(ngModel)]="busqueda" (ngModelChange)="pagina.set(1)"
                class="input w-full sm:w-52 text-sm" maxlength="100"
-               placeholder="🔍 Buscar usuario...">
+               placeholder="Buscar usuario...">
       </div>
 
       <!-- Stats rápidos -->
@@ -116,14 +117,14 @@ import { PaginationComponent } from '../../shared/components/pagination.componen
                   <div class="flex gap-1 flex-wrap">
                     @if (e.usuarioId) {
                       <button (click)="abrirCambiarRol(e)"
-                              class="text-xs py-1 px-2 rounded-lg border"
+                              class="text-xs py-1 px-2 rounded-lg border inline-flex items-center gap-1"
                               style="border-color:rgb(var(--color-border));color:rgb(var(--color-on-surface)/0.7)">
-                        🛡️ Rol
+                        <iconify-icon icon="tabler:shield" width="14" height="14" style="color:currentColor"></iconify-icon> Rol
                       </button>
                       <button (click)="abrirPassword(e)"
-                              class="text-xs py-1 px-2 rounded-lg border"
+                              class="text-xs py-1 px-2 rounded-lg border inline-flex items-center gap-1"
                               style="border-color:rgb(var(--color-border));color:rgb(var(--color-on-surface)/0.7)">
-                        🔑 Pass
+                        <iconify-icon icon="tabler:lock" width="14" height="14" style="color:currentColor"></iconify-icon> Pass
                       </button>
                       @if (e.estado === 'BLOQUEADO') {
                         <button (click)="desbloquear(e)"
@@ -140,7 +141,7 @@ import { PaginationComponent } from '../../shared/components/pagination.componen
             @if (!cargando() && filtrados().length === 0) {
               <tr>
                 <td colspan="6" class="text-center py-12" style="color:rgb(var(--color-on-surface)/0.35)">
-                  <p class="text-3xl mb-2">👤</p>
+                  <p class="mb-2 flex justify-center"><iconify-icon icon="tabler:users" width="36" height="36" style="color:currentColor"></iconify-icon></p>
                   <p>No se encontraron usuarios</p>
                 </td>
               </tr>
@@ -160,8 +161,8 @@ import { PaginationComponent } from '../../shared/components/pagination.componen
       <div class="fixed inset-0 z-50 flex items-center justify-center p-4"
            style="background:rgba(0,0,0,0.5)" (click)="modalRol.set(false)">
         <div class="card max-w-sm w-full space-y-4 animate-pop" (click)="$event.stopPropagation()">
-          <h3 class="font-display font-bold" style="color:rgb(var(--color-on-surface))">
-            🛡️ Cambiar Rol — {{ empleadoActivo()?.nombre }}
+          <h3 class="font-display font-bold inline-flex items-center gap-1.5" style="color:rgb(var(--color-on-surface))">
+            <iconify-icon icon="tabler:shield" width="18" height="18" style="color:currentColor"></iconify-icon> Cambiar Rol — {{ empleadoActivo()?.nombre }}
           </h3>
           <div>
             <label class="input-label">Nuevo rol</label>
@@ -173,9 +174,9 @@ import { PaginationComponent } from '../../shared/components/pagination.componen
             </select>
           </div>
           @if (errorModal()) {
-            <p class="text-xs p-2 rounded-lg"
+            <p class="text-xs p-2 rounded-lg inline-flex items-center gap-1.5"
                style="background:rgb(var(--color-danger)/0.1);color:rgb(var(--color-danger))">
-              ⚠️ {{ errorModal() }}
+              <iconify-icon icon="tabler:alert-triangle" width="14" height="14" style="color:currentColor"></iconify-icon> {{ errorModal() }}
             </p>
           }
           <div class="flex gap-2">
@@ -195,8 +196,8 @@ import { PaginationComponent } from '../../shared/components/pagination.componen
       <div class="fixed inset-0 z-50 flex items-center justify-center p-4"
            style="background:rgba(0,0,0,0.5)" (click)="modalPass.set(false)">
         <div class="card max-w-sm w-full space-y-4 animate-pop" (click)="$event.stopPropagation()">
-          <h3 class="font-display font-bold" style="color:rgb(var(--color-on-surface))">
-            🔑 Cambiar Contraseña — {{ empleadoActivo()?.username }}
+          <h3 class="font-display font-bold inline-flex items-center gap-1.5" style="color:rgb(var(--color-on-surface))">
+            <iconify-icon icon="tabler:lock" width="18" height="18" style="color:currentColor"></iconify-icon> Cambiar Contraseña — {{ empleadoActivo()?.username }}
           </h3>
           <div>
             <label class="input-label">Nueva contraseña *</label>
@@ -204,9 +205,9 @@ import { PaginationComponent } from '../../shared/components/pagination.componen
                    placeholder="Mínimo 8 caracteres" maxlength="100">
           </div>
           @if (errorModal()) {
-            <p class="text-xs p-2 rounded-lg"
+            <p class="text-xs p-2 rounded-lg inline-flex items-center gap-1.5"
                style="background:rgb(var(--color-danger)/0.1);color:rgb(var(--color-danger))">
-              ⚠️ {{ errorModal() }}
+              <iconify-icon icon="tabler:alert-triangle" width="14" height="14" style="color:currentColor"></iconify-icon> {{ errorModal() }}
             </p>
           }
           <div class="flex gap-2">
@@ -318,7 +319,7 @@ export class UsuariosComponent implements OnInit {
         this.empleados.update(list => list.map(x => x.id === e.id ? { ...x, rolNombre } : x));
         this.guardando.set(false);
         this.modalRol.set(false);
-        this.toastSvc.success('✅ Rol actualizado');
+        this.toastSvc.success('Rol actualizado');
       },
       error: err => { this.guardando.set(false); this.errorModal.set(err?.error?.mensaje ?? 'Error'); },
     });
@@ -335,7 +336,7 @@ export class UsuariosComponent implements OnInit {
       next: () => {
         this.guardando.set(false);
         this.modalPass.set(false);
-        this.toastSvc.success('✅ Contraseña actualizada');
+        this.toastSvc.success('Contraseña actualizada');
       },
       error: err => { this.guardando.set(false); this.errorModal.set(err?.error?.mensaje ?? 'Error'); },
     });
@@ -345,9 +346,9 @@ export class UsuariosComponent implements OnInit {
     this.empSvc.desbloquear(e.usuarioId!).subscribe({
       next: () => {
         this.empleados.update(list => list.map(x => x.id === e.id ? { ...x, estado: 'ACTIVO' as any } : x));
-        this.toastSvc.success('🔓 Usuario desbloqueado');
+        this.toastSvc.success('Usuario desbloqueado');
       },
-      error: () => this.toastSvc.error('❌ Error al desbloquear'),
+      error: () => this.toastSvc.error('Error al desbloquear'),
     });
   }
 
@@ -361,8 +362,8 @@ export class UsuariosComponent implements OnInit {
 
   estadoLabel(estado: string): string {
     const m: Record<string, string> = {
-      ACTIVO: '✅ Activo', INACTIVO: '😴 Inactivo',
-      BLOQUEADO: '🔒 Bloqueado', ELIMINADO: '🗑️ Eliminado',
+      ACTIVO: 'Activo', INACTIVO: 'Inactivo',
+      BLOQUEADO: 'Bloqueado', ELIMINADO: 'Eliminado',
     };
     return m[estado] ?? estado;
   }

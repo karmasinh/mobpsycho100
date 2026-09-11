@@ -1,4 +1,4 @@
-import { Component, OnInit, signal, computed } from '@angular/core';
+import { Component, OnInit, signal, computed, CUSTOM_ELEMENTS_SCHEMA } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { PensionadoService } from '../../core/services/api.service';
@@ -14,6 +14,7 @@ interface PensionadoAsistencia extends Pensionado {
   selector: 'app-asistencia',
   standalone: true,
   imports: [CommonModule, FormsModule],
+  schemas: [CUSTOM_ELEMENTS_SCHEMA],
   template: `
     <div class="space-y-5 animate-slide-up">
 
@@ -27,11 +28,11 @@ interface PensionadoAsistencia extends Pensionado {
           </p>
         </div>
         <div class="flex gap-2 items-center">
-          <span class="badge-success text-sm px-3 py-1.5">
-            ✅ {{ asistieron() }} asistieron
+          <span class="badge-success text-sm px-3 py-1.5 inline-flex items-center gap-1">
+            <iconify-icon icon="tabler:circle-check" width="16" height="16" style="color:currentColor"></iconify-icon> {{ asistieron() }} asistieron
           </span>
-          <span class="badge-warning text-sm px-3 py-1.5">
-            ⏳ {{ pensionados().length - asistieron() }} pendientes
+          <span class="badge-warning text-sm px-3 py-1.5 inline-flex items-center gap-1">
+            <iconify-icon icon="tabler:hourglass" width="16" height="16" style="color:currentColor"></iconify-icon> {{ pensionados().length - asistieron() }} pendientes
           </span>
           <button (click)="marcarTodos()" class="btn-secondary text-sm"
                   [disabled]="pendientes().length === 0">
@@ -59,7 +60,7 @@ interface PensionadoAsistencia extends Pensionado {
 
       <!-- Búsqueda -->
       <input [(ngModel)]="busqueda" class="input max-w-xs text-sm"
-             placeholder="🔍 Buscar pensionado...">
+             placeholder="Buscar pensionado...">
 
       <!-- Grid de pensionados -->
       @if (cargando()) {

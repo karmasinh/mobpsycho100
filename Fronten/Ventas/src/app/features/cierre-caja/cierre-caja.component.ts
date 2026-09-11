@@ -1,4 +1,4 @@
-import { Component, OnInit, signal, WritableSignal } from '@angular/core';
+import { Component, OnInit, signal, WritableSignal, CUSTOM_ELEMENTS_SCHEMA } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { CierreCajaService, SolicitudAprobacionService } from '../../core/services/api.service';
@@ -10,6 +10,7 @@ import { CierreCaja, MovimientoCaja, TipoMovimientoCaja } from '../../core/model
   selector: 'app-cierre-caja',
   standalone: true,
   imports: [CommonModule, FormsModule],
+  schemas: [CUSTOM_ELEMENTS_SCHEMA],
   template: `
     <div class="max-w-lg mx-auto space-y-5 animate-slide-up">
       <div>
@@ -50,8 +51,9 @@ import { CierreCaja, MovimientoCaja, TipoMovimientoCaja } from '../../core/model
         <!-- Turno abierto -->
         <div class="card space-y-4">
           <div class="flex items-center justify-between">
-            <h2 class="font-display font-bold" style="color:rgb(var(--color-on-surface))">
-              🔒 Turno abierto
+            <h2 class="font-display font-bold inline-flex items-center gap-1.5" style="color:rgb(var(--color-on-surface))">
+              <iconify-icon icon="tabler:lock" width="18" height="18" style="color:currentColor"></iconify-icon>
+              Turno abierto
             </h2>
             <span class="badge-success">En curso</span>
           </div>
@@ -94,23 +96,25 @@ import { CierreCaja, MovimientoCaja, TipoMovimientoCaja } from '../../core/model
               </div>
             }
 
-            <div class="flex gap-2 items-end">
-              <div class="w-28">
-                <label class="input-label">Tipo</label>
-                <select [(ngModel)]="movTipo" class="input text-sm">
-                  <option value="INGRESO">Ingreso</option>
-                  <option value="RETIRO">Retiro</option>
-                </select>
-              </div>
-              <div class="w-24">
-                <label class="input-label">Monto</label>
-                <input [(ngModel)]="movMonto" type="number" min="0.01" class="input text-sm" placeholder="0.00">
+            <div class="flex flex-col sm:flex-row gap-2 sm:items-end">
+              <div class="grid grid-cols-2 gap-2 sm:contents">
+                <div class="sm:w-28">
+                  <label class="input-label">Tipo</label>
+                  <select [(ngModel)]="movTipo" class="input text-sm">
+                    <option value="INGRESO">Ingreso</option>
+                    <option value="RETIRO">Retiro</option>
+                  </select>
+                </div>
+                <div class="sm:w-24">
+                  <label class="input-label">Monto</label>
+                  <input [(ngModel)]="movMonto" type="number" min="0.01" class="input text-sm" placeholder="0.00">
+                </div>
               </div>
               <div class="flex-1">
                 <label class="input-label">Motivo</label>
                 <input [(ngModel)]="movMotivo" class="input text-sm" maxlength="255" placeholder="Opcional">
               </div>
-              <button (click)="registrarMovimiento()" [disabled]="procesandoMov()" class="btn-secondary text-sm py-2">
+              <button (click)="registrarMovimiento()" [disabled]="procesandoMov()" class="btn-secondary text-sm py-2 w-full sm:w-auto justify-center">
                 Registrar
               </button>
             </div>
@@ -154,8 +158,9 @@ import { CierreCaja, MovimientoCaja, TipoMovimientoCaja } from '../../core/model
       <!-- ADMIN: revertir movimientos de cualquier turno abierto de la sucursal -->
       @if (esAdmin()) {
         <div class="card space-y-4 mt-6">
-          <h2 class="font-display font-bold" style="color:rgb(var(--color-on-surface))">
-            🛡️ Administrar movimientos (ADMIN)
+          <h2 class="font-display font-bold inline-flex items-center gap-1.5" style="color:rgb(var(--color-on-surface))">
+            <iconify-icon icon="tabler:shield" width="18" height="18" style="color:currentColor"></iconify-icon>
+            Administrar movimientos (ADMIN)
           </h2>
           <div>
             <label class="input-label">Turno abierto</label>
@@ -248,8 +253,9 @@ import { CierreCaja, MovimientoCaja, TipoMovimientoCaja } from '../../core/model
         <div class="fixed inset-0 z-50 flex items-center justify-center p-4"
              style="background:rgba(0,0,0,0.6)">
           <div class="card max-w-sm w-full space-y-3 animate-pop">
-            <h3 class="font-display font-bold text-lg" style="color:rgb(var(--color-on-surface))">
-              ✅ Turno cerrado
+            <h3 class="font-display font-bold text-lg inline-flex items-center gap-1.5" style="color:rgb(var(--color-on-surface))">
+              <iconify-icon icon="line-md:confirm-circle" width="20" height="20" style="color:currentColor"></iconify-icon>
+              Turno cerrado
             </h3>
             <div class="space-y-1 text-sm" style="color:rgb(var(--color-on-surface)/0.7)">
               <div class="flex justify-between"><span>Ventas en efectivo</span><span class="font-mono">Bs {{ resultadoCierre()!.totalVentasEfectivo | number:'1.2-2' }}</span></div>
@@ -399,7 +405,7 @@ export class CierreCajaComponent implements OnInit {
       next: () => {
         this.procesandoRevertir.set(false);
         this.modalRevertir.set(null);
-        this.toastSvc.success('✅ Movimiento revertido — se registró en auditoría');
+        this.toastSvc.success('Movimiento revertido — se registró en auditoría');
         if (this.turnoAdminId != null) this.seleccionarTurnoAdmin(this.turnoAdminId);
       },
       error: err => {

@@ -48,7 +48,11 @@ class ProduccionServiceImplTest {
     }
 
     private LineaProduccion lineaConPlanificada(int planificada, int producidaActual) {
-        ProduccionDia produccion = ProduccionDia.builder().id(1L).sucursal(sucursal).build();
+        return lineaEnEstado(planificada, producidaActual, EstadoProduccion.EN_CURSO);
+    }
+
+    private LineaProduccion lineaEnEstado(int planificada, int producidaActual, EstadoProduccion estadoDia) {
+        ProduccionDia produccion = ProduccionDia.builder().id(1L).sucursal(sucursal).estado(estadoDia).build();
         return LineaProduccion.builder().id(1L).produccion(produccion).plato(plato)
                 .cantidadPlanificada(planificada).cantidadProducida(producidaActual).build();
     }
@@ -57,6 +61,28 @@ class ProduccionServiceImplTest {
         RecetaIngrediente ingrediente = RecetaIngrediente.builder()
                 .insumo(insumo).cantidad(cantidad).unidadMedida(unidadIngrediente).build();
         return Receta.builder().id(1L).plato(plato).activa(true).ingredientes(List.of(ingrediente)).build();
+    }
+
+    // ── Hallazgo (2026-09-10, revisión de tesis): actualizarProducida no validaba
+    // el estado del día antes de descontar insumos — se podía registrar producción
+    // sobre un día PLANIFICADO (aún no iniciado) o CERRADO (ya finalizado). ──
+
+    @Test
+    void actualizarProducida_rechazaSiElDiaEstaPlanificado() {
+        LineaProduccion linea = lineaEnEstado(10, 0, EstadoProduccion.PLANIFICADO);
+        when(lineaRepo.findById(1L)).thenReturn(Optional.of(linea));
+
+        assertThrows(NegocioException.class, () -> service.actualizarProducida(1L, 5, 99L));
+        verify(inventarioService, never()).consumirStock(any(), any(), any(), any(), any(), any());
+    }
+
+    @Test
+    void actualizarProducida_rechazaSiElDiaEstaCerrado() {
+        LineaProduccion linea = lineaEnEstado(10, 5, EstadoProduccion.CERRADO);
+        when(lineaRepo.findById(1L)).thenReturn(Optional.of(linea));
+
+        assertThrows(NegocioException.class, () -> service.actualizarProducida(1L, 8, 99L));
+        verify(inventarioService, never()).consumirStock(any(), any(), any(), any(), any(), any());
     }
 
     // ── AUD-L-004: no producir más de lo planificado ────────────────

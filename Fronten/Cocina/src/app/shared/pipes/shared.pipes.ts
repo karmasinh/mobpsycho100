@@ -16,8 +16,8 @@ export class MesNombrePipe implements PipeTransform {
 export class TurnoLabelPipe implements PipeTransform {
   transform(turno: string): string {
     const map: Record<string, string> = {
-      MANANA: '🌅 Mañana', TARDE: '🌆 Tarde',
-      NOCHE: '🌙 Noche', COMPLETO: '📅 Completo',
+      MANANA: 'Mañana', TARDE: 'Tarde',
+      NOCHE: 'Noche', COMPLETO: 'Completo',
     };
     return map[turno] ?? turno;
   }
@@ -27,8 +27,8 @@ export class TurnoLabelPipe implements PipeTransform {
 export class EstadoEmpleadoLabelPipe implements PipeTransform {
   transform(estado: string): string {
     const map: Record<string, string> = {
-      ACTIVO: '✅ Activo', INACTIVO: '😴 Inactivo',
-      BLOQUEADO: '🔒 Bloqueado', ELIMINADO: '🗑️ Eliminado',
+      ACTIVO: 'Activo', INACTIVO: 'Inactivo',
+      BLOQUEADO: 'Bloqueado', ELIMINADO: 'Eliminado',
     };
     return map[estado] ?? estado;
   }

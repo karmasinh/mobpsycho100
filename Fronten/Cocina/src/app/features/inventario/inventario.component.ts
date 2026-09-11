@@ -1,4 +1,4 @@
-import { Component, OnInit, signal, computed } from '@angular/core';
+import { Component, OnInit, signal, computed, CUSTOM_ELEMENTS_SCHEMA } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { InventarioService, InsumoService, ProveedorService } from '../../core/services/api.service';
@@ -11,6 +11,7 @@ import { PaginationComponent } from '../../shared/components/pagination.componen
   selector: 'app-inventario',
   standalone: true,
   imports: [CommonModule, FormsModule, PaginationComponent],
+  schemas: [CUSTOM_ELEMENTS_SCHEMA],
   template: `
     <div class="space-y-5 animate-fade-up">
 
@@ -26,16 +27,18 @@ import { PaginationComponent } from '../../shared/components/pagination.componen
         </div>
         <div class="flex gap-2">
           <button (click)="vistaActiva.set('stock')"
-                  class="btn text-sm py-2 px-3"
+                  class="btn text-sm py-2 px-3 inline-flex items-center gap-1.5"
                   [class.btn-primary]="vistaActiva()==='stock'"
                   [class.btn-secondary]="vistaActiva()!=='stock'">
-            📦 Stock
+            <iconify-icon icon="tabler:package" width="16" height="16" style="color:currentColor"></iconify-icon>
+            Stock
           </button>
           <button (click)="vistaActiva.set('vencimientos')"
-                  class="btn text-sm py-2 px-3"
+                  class="btn text-sm py-2 px-3 inline-flex items-center gap-1.5"
                   [class.btn-primary]="vistaActiva()==='vencimientos'"
                   [class.btn-secondary]="vistaActiva()!=='vencimientos'">
-            ⚠️ Vencimientos
+            <iconify-icon icon="tabler:alert-triangle" width="16" height="16" style="color:currentColor"></iconify-icon>
+            Vencimientos
           </button>
           <button (click)="abrirIngresoModal()"
                   class="btn-primary text-sm py-2 px-3">
@@ -46,16 +49,16 @@ import { PaginationComponent } from '../../shared/components/pagination.componen
 
       @if (!auth.sucursalActiva()) {
         <div class="card text-center py-8">
-          <p class="text-3xl mb-2">🏪</p>
+          <p class="mb-2 flex justify-center"><iconify-icon icon="tabler:building-store" width="32" height="32" style="color:currentColor"></iconify-icon></p>
           <p style="color:rgb(var(--color-on-surface)/0.5)">Selecciona una sucursal antes de ver el inventario.</p>
         </div>
       } @else {
 
       <!-- Stats rápidas -->
-      <div class="grid grid-cols-3 gap-4">
+      <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
         <div class="stat-card">
           <div class="flex items-center justify-between">
-            <span class="text-xl">📦</span>
+            <span class="text-xl"><iconify-icon icon="tabler:package" width="22" height="22" style="color:currentColor"></iconify-icon></span>
             <span class="badge-neutral">Total</span>
           </div>
           <p class="stat-value mt-2">{{ stockList().length }}</p>
@@ -63,7 +66,7 @@ import { PaginationComponent } from '../../shared/components/pagination.componen
         </div>
         <div class="stat-card">
           <div class="flex items-center justify-between">
-            <span class="text-xl">🔴</span>
+            <span class="text-xl" style="color:rgb(var(--color-danger))"><iconify-icon icon="tabler:alert-triangle" width="22" height="22" style="color:currentColor"></iconify-icon></span>
             @if (stockBajo().length > 0) {
               <span class="badge-danger">Alerta</span>
             }
@@ -76,7 +79,7 @@ import { PaginationComponent } from '../../shared/components/pagination.componen
         </div>
         <div class="stat-card">
           <div class="flex items-center justify-between">
-            <span class="text-xl">📅</span>
+            <span class="text-xl"><iconify-icon icon="tabler:calendar-check" width="22" height="22" style="color:currentColor"></iconify-icon></span>
             @if (lotesPorVencer().length > 0) {
               <span class="badge-warning">{{ lotesPorVencer().length }}</span>
             }
@@ -95,7 +98,7 @@ import { PaginationComponent } from '../../shared/components/pagination.componen
           <!-- Search -->
           <div class="p-4" style="border-bottom:1px solid rgb(var(--color-border))">
             <input [(ngModel)]="busqueda" (ngModelChange)="pagina.set(1)" maxlength="100" class="input max-w-xs text-sm"
-                   placeholder="🔍 Buscar insumo...">
+                   placeholder="Buscar insumo...">
           </div>
 
           <div class="table-wrapper" style="border:none;border-radius:0">
@@ -210,7 +213,7 @@ import { PaginationComponent } from '../../shared/components/pagination.componen
               <div class="w-12 h-12 rounded-xl flex items-center justify-center text-xl flex-shrink-0"
                    [style.background]="getDiasColor(lote.fechaVencimiento!, 'bg')"
                    [style.color]="getDiasColor(lote.fechaVencimiento!, 'text')">
-                📅
+                <iconify-icon icon="tabler:calendar-check" width="22" height="22" style="color:currentColor"></iconify-icon>
               </div>
               <div class="flex-1 min-w-0">
                 <p class="font-semibold text-sm" style="color:rgb(var(--color-on-surface))">
@@ -236,7 +239,7 @@ import { PaginationComponent } from '../../shared/components/pagination.componen
           }
           @if (lotesPorVencer().length === 0) {
             <div class="card text-center py-12">
-              <p class="text-4xl mb-3">✅</p>
+              <p class="mb-3 flex justify-center"><iconify-icon icon="tabler:circle-check" width="36" height="36" style="color:currentColor"></iconify-icon></p>
               <p style="color:rgb(var(--color-on-surface)/0.4)">
                 Sin lotes próximos a vencer en los próximos 15 días
               </p>
@@ -254,10 +257,11 @@ import { PaginationComponent } from '../../shared/components/pagination.componen
         <div class="card max-w-md w-full space-y-4 animate-fade-up"
              (click)="$event.stopPropagation()">
           <div class="flex items-center justify-between">
-            <h3 class="font-display font-bold" style="color:rgb(var(--color-on-surface))">
-              📦 Ingresar Lote de Insumo
+            <h3 class="font-display font-bold inline-flex items-center gap-1.5" style="color:rgb(var(--color-on-surface))">
+              <iconify-icon icon="tabler:package" width="18" height="18" style="color:currentColor"></iconify-icon>
+              Ingresar Lote de Insumo
             </h3>
-            <button (click)="cerrarModal()" class="btn-ghost p-1">✕</button>
+            <button (click)="cerrarModal()" class="btn-ghost p-1"><iconify-icon icon="line-md:close" width="16" height="16" style="color:currentColor"></iconify-icon></button>
           </div>
 
           <div class="space-y-3">
@@ -332,8 +336,9 @@ import { PaginationComponent } from '../../shared/components/pagination.componen
            style="background:rgba(0,0,0,0.6)" (click)="cerrarModal()">
         <div class="card max-w-sm w-full space-y-4 animate-fade-up"
              (click)="$event.stopPropagation()">
-          <h3 class="font-display font-bold" style="color:rgb(var(--color-on-surface))">
-            🍳 Consumir Stock
+          <h3 class="font-display font-bold inline-flex items-center gap-1.5" style="color:rgb(var(--color-on-surface))">
+            <iconify-icon icon="tabler:flame" width="18" height="18" style="color:currentColor"></iconify-icon>
+            Consumir Stock
           </h3>
           <p class="text-sm" style="color:rgb(var(--color-on-surface)/0.6)">
             Insumo: <strong>{{ itemSeleccionado()?.nombre }}</strong> ·
@@ -377,8 +382,9 @@ import { PaginationComponent } from '../../shared/components/pagination.componen
            style="background:rgba(0,0,0,0.6)" (click)="cerrarModal()">
         <div class="card max-w-sm w-full space-y-4 animate-fade-up"
              (click)="$event.stopPropagation()">
-          <h3 class="font-display font-bold" style="color:rgb(var(--color-on-surface))">
-            📦 Ajuste físico de inventario
+          <h3 class="font-display font-bold inline-flex items-center gap-1.5" style="color:rgb(var(--color-on-surface))">
+            <iconify-icon icon="tabler:package" width="18" height="18" style="color:currentColor"></iconify-icon>
+            Ajuste físico de inventario
           </h3>
           <p class="text-sm" style="color:rgb(var(--color-on-surface)/0.6)">
             Insumo: <strong>{{ itemSeleccionado()?.nombre }}</strong> ·
@@ -422,8 +428,9 @@ import { PaginationComponent } from '../../shared/components/pagination.componen
            style="background:rgba(0,0,0,0.6)" (click)="cerrarModal()">
         <div class="card max-w-sm w-full space-y-4 animate-fade-up"
              (click)="$event.stopPropagation()">
-          <h3 class="font-display font-bold" style="color:rgb(var(--color-on-surface))">
-            🎚️ Ajustar Stock Mínimo
+          <h3 class="font-display font-bold inline-flex items-center gap-1.5" style="color:rgb(var(--color-on-surface))">
+            <iconify-icon icon="tabler:scale" width="18" height="18" style="color:currentColor"></iconify-icon>
+            Ajustar Stock Mínimo
           </h3>
           <p class="text-sm" style="color:rgb(var(--color-on-surface)/0.6)">
             Insumo: <strong>{{ itemSeleccionado()?.nombre }}</strong> en esta sucursal
@@ -600,7 +607,7 @@ export class InventarioComponent implements OnInit {
       next: () => {
         this.guardando.set(false);
         this.cerrarModal();
-        this.toastSvc.success('✅ Lote ingresado correctamente');
+        this.toastSvc.success('Lote ingresado correctamente');
         this.cargar();
       },
       error: err => {
@@ -623,7 +630,7 @@ export class InventarioComponent implements OnInit {
       next: () => {
         this.guardando.set(false);
         this.cerrarModal();
-        this.toastSvc.success(`✅ Consumo registrado — ${item.nombre}`);
+        this.toastSvc.success(`Consumo registrado — ${item.nombre}`);
         this.cargar();
       },
       error: err => {
@@ -646,7 +653,7 @@ export class InventarioComponent implements OnInit {
       next: () => {
         this.guardando.set(false);
         this.cerrarModal();
-        this.toastSvc.success(`✅ Stock mínimo actualizado — ${item.nombre}`);
+        this.toastSvc.success(`Stock mínimo actualizado — ${item.nombre}`);
         this.cargar();
       },
       error: err => {
@@ -673,7 +680,7 @@ export class InventarioComponent implements OnInit {
       next: () => {
         this.guardando.set(false);
         this.cerrarModal();
-        this.toastSvc.success(`✅ Stock ajustado — ${item.nombre}`);
+        this.toastSvc.success(`Stock ajustado — ${item.nombre}`);
         this.cargar();
       },
       error: err => {
@@ -712,8 +719,8 @@ export class InventarioComponent implements OnInit {
 
   getVencimientoLabel(fecha: string): string {
     const d = this.getDiasRestantes(fecha);
-    if (d <= 3)  return '🔴 Urgente';
-    if (d <= 7)  return '🟡 Pronto';
-    return '🔵 Próximo';
+    if (d <= 3)  return 'Urgente';
+    if (d <= 7)  return 'Pronto';
+    return 'Próximo';
   }
 }

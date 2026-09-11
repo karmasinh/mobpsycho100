@@ -1,4 +1,4 @@
-import { Component, OnInit, signal, computed } from '@angular/core';
+import { Component, OnInit, signal, computed, CUSTOM_ELEMENTS_SCHEMA } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { AuditoriaService } from '../../core/services/api.service';
@@ -12,6 +12,7 @@ type SortCol = 'fecha' | 'usuario' | 'entidad' | 'accion';
   selector: 'app-auditoria',
   standalone: true,
   imports: [CommonModule, FormsModule, PaginationComponent],
+  schemas: [CUSTOM_ELEMENTS_SCHEMA],
   template: `
     <div class="space-y-5 animate-slide-up">
 
@@ -45,7 +46,7 @@ type SortCol = 'fecha' | 'usuario' | 'entidad' | 'accion';
         <button (click)="buscar()" [disabled]="cargando()" class="btn-primary">
           @if (cargando()) {
             <span class="w-4 h-4 rounded-full border-2 border-white/30 border-t-white animate-spin inline-block"></span>
-          } @else { 🔍 }
+          } @else { <iconify-icon icon="line-md:search" width="16" height="16" style="color:currentColor"></iconify-icon> }
           Filtrar
         </button>
         <button (click)="limpiar()" class="btn-secondary text-sm">Limpiar</button>
@@ -67,7 +68,7 @@ type SortCol = 'fecha' | 'usuario' | 'entidad' | 'accion';
       <div class="card space-y-3">
         <div class="flex items-center gap-3">
           <input [(ngModel)]="busqueda" class="input w-56 text-sm"
-                 placeholder="🔍 Buscar en registros..." maxlength="100">
+                 placeholder="Buscar en registros..." maxlength="100">
           <span class="text-xs ml-auto" style="color:rgb(var(--color-on-surface)/0.4)">
             {{ filtrados().length }} registro{{ filtrados().length !== 1 ? 's' : '' }}
           </span>
@@ -106,7 +107,7 @@ type SortCol = 'fecha' | 'usuario' | 'entidad' | 'accion';
               } @else if (paginados().length === 0) {
                 <tr>
                   <td colspan="7" class="text-center py-12">
-                    <p class="text-4xl mb-2 opacity-20">📄</p>
+                    <p class="mb-2 opacity-20 flex justify-center"><iconify-icon icon="tabler:file-text" width="40" height="40" style="color:currentColor"></iconify-icon></p>
                     <p class="text-sm" style="color:rgb(var(--color-on-surface)/0.4)">
                       {{ buscado() ? 'No se encontraron registros' : 'Aplicá un filtro para ver los registros' }}
                     </p>

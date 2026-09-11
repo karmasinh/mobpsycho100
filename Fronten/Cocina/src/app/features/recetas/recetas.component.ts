@@ -1,4 +1,4 @@
-import { Component, OnInit, signal, computed } from '@angular/core';
+import { Component, OnInit, signal, computed, CUSTOM_ELEMENTS_SCHEMA } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import {
@@ -23,6 +23,7 @@ interface IngredienteForm {
   selector: 'app-recetas',
   standalone: true,
   imports: [CommonModule, FormsModule, PaginationComponent],
+  schemas: [CUSTOM_ELEMENTS_SCHEMA],
   template: `
     <div class="flex flex-col gap-5 h-full animate-slide-up">
 
@@ -39,14 +40,14 @@ interface IngredienteForm {
         <input [(ngModel)]="busquedaPlato" (ngModelChange)="pagina.set(1)"
                maxlength="100"
                class="input text-sm w-56"
-               placeholder="🔍 Buscar plato...">
+               placeholder="Buscar plato...">
       </div>
 
       <!-- ── Layout: lista + panel ────────────────────────────── -->
-      <div class="flex gap-4 flex-1 min-h-0">
+      <div class="flex flex-col md:flex-row gap-4 flex-1 min-h-0">
 
         <!-- Lista de platos -->
-        <div [class]="panelAbierto() ? 'w-96 flex-shrink-0 flex flex-col gap-2 overflow-y-auto' : 'flex-1 overflow-y-auto'">
+        <div [class]="panelAbierto() ? 'w-full md:w-96 flex-shrink-0 flex flex-col gap-2 overflow-y-auto' : 'flex-1 overflow-y-auto'">
 
           @if (cargando()) {
             @for (i of [1,2,3,4,5]; track i) {
@@ -102,7 +103,7 @@ interface IngredienteForm {
 
           @if (!cargando() && platosFiltrados().length === 0) {
             <div class="card text-center py-12" style="color:rgb(var(--color-on-surface)/0.35)">
-              <p class="text-3xl mb-2">🍽️</p>
+              <iconify-icon icon="tabler:tools-kitchen-2" width="32" height="32" style="color:currentColor" class="mb-2 inline-block"></iconify-icon>
               <p>No hay platos</p>
             </div>
           }
@@ -146,7 +147,9 @@ interface IngredienteForm {
                 @if (recetaActiva()) {
                   <span class="badge-success text-xs">v{{ recetaActiva()!.version }} activa</span>
                 }
-                <button (click)="cerrarEditor()" class="btn-ghost p-1.5 text-sm">✕</button>
+                <button (click)="cerrarEditor()" class="btn-ghost p-1.5 text-sm">
+                  <iconify-icon icon="tabler:x" width="14" height="14" style="color:currentColor"></iconify-icon>
+                </button>
               </div>
             </div>
 
@@ -157,7 +160,9 @@ interface IngredienteForm {
                       class="px-4 py-1.5 rounded-lg text-sm font-medium transition-all"
                       [style.background]="tab() === 'ingredientes' ? 'rgb(var(--color-surface-3))' : 'transparent'"
                       [style.color]="tab() === 'ingredientes' ? 'rgb(var(--color-on-surface))' : 'rgb(var(--color-on-surface)/0.5)'">
-                🥕 Ingredientes
+                <span class="inline-flex items-center gap-1.5">
+                  <iconify-icon icon="tabler:tools-kitchen-2" width="15" height="15" style="color:currentColor"></iconify-icon> Ingredientes
+                </span>
               </button>
               <button (click)="tab.set('gemini')"
                       class="px-4 py-1.5 rounded-lg text-sm font-medium transition-all"
@@ -169,17 +174,17 @@ interface IngredienteForm {
 
             <!-- ── Tab Ingredientes ────────────────────────── -->
             @if (tab() === 'ingredientes') {
-              <div class="flex gap-4 flex-1 min-h-0">
+              <div class="flex flex-col md:flex-row gap-4 flex-1 min-h-0">
 
                 <!-- Selector de insumos -->
-                <div class="w-72 flex-shrink-0 card flex flex-col gap-3">
+                <div class="w-full md:w-72 flex-shrink-0 card flex flex-col gap-3">
                   <p class="font-semibold text-sm" style="color:rgb(var(--color-on-surface))">
                     Insumos disponibles
                   </p>
                   <input [(ngModel)]="busquedaInsumo"
                          maxlength="100"
                          class="input text-xs"
-                         placeholder="🔍 Buscar insumo...">
+                         placeholder="Buscar insumo...">
                   <div class="flex-1 overflow-y-auto space-y-1" style="max-height:350px">
                     @if (cargandoInsumos()) {
                       <div class="text-xs text-center py-6" style="color:rgb(var(--color-on-surface)/0.35)">
@@ -197,7 +202,9 @@ interface IngredienteForm {
                           Bs {{ ins.precioUnitario | number:'1.2-2' }}/{{ ins.unidadMedida }}
                         </span>
                         @if (yaEstaEnForm(ins.id)) {
-                          <span class="block text-[10px] mt-0.5" style="color:rgb(var(--color-primary)/0.7)">✓ Agregado</span>
+                          <span class="block text-[10px] mt-0.5 inline-flex items-center gap-1" style="color:rgb(var(--color-primary)/0.7)">
+                            <iconify-icon icon="tabler:check" width="12" height="12" style="color:currentColor"></iconify-icon> Agregado
+                          </span>
                         }
                       </button>
                     }
@@ -223,12 +230,12 @@ interface IngredienteForm {
                   @if (ingredientesForm().length === 0) {
                     <div class="flex-1 flex flex-col items-center justify-center py-8"
                          style="color:rgb(var(--color-on-surface)/0.3)">
-                      <p class="text-3xl mb-2">🥣</p>
+                      <iconify-icon icon="tabler:bowl" width="32" height="32" style="color:currentColor" class="mb-2 inline-block"></iconify-icon>
                       <p class="text-sm">Selecciona insumos del panel izquierdo</p>
                     </div>
                   } @else {
-                    <div class="overflow-y-auto flex-1">
-                      <table class="w-full text-xs">
+                    <div class="overflow-y-auto overflow-x-auto flex-1">
+                      <table class="w-full text-xs" style="min-width:420px">
                         <thead>
                           <tr style="color:rgb(var(--color-on-surface)/0.45)">
                             <th class="text-left pb-2 font-medium">Ingrediente</th>
@@ -270,7 +277,7 @@ interface IngredienteForm {
                                 <button (click)="quitarIngrediente(i)"
                                         class="text-[10px] px-1.5 py-0.5 rounded"
                                         style="background:rgb(var(--color-danger)/0.1);color:rgb(var(--color-danger))">
-                                  ✕
+                                  <iconify-icon icon="tabler:x" width="10" height="10" style="color:currentColor"></iconify-icon>
                                 </button>
                               </td>
                             </tr>
@@ -300,8 +307,8 @@ interface IngredienteForm {
                     <div class="flex-1"></div>
                     <button (click)="descargarPDF()"
                             [disabled]="ingredientesForm().length === 0"
-                            class="btn-secondary text-sm">
-                      📄 PDF
+                            class="btn-secondary text-sm inline-flex items-center gap-1.5">
+                      <iconify-icon icon="tabler:file-text" width="14" height="14" style="color:currentColor"></iconify-icon> PDF
                     </button>
                     <button (click)="guardar()"
                             [disabled]="guardando() || ingredientesForm().length === 0"
@@ -313,9 +320,9 @@ interface IngredienteForm {
                   </div>
 
                   @if (errorMsg()) {
-                    <p class="text-xs px-3 py-2 rounded-lg"
+                    <p class="text-xs px-3 py-2 rounded-lg inline-flex items-center gap-1.5"
                        style="background:rgb(var(--color-danger)/0.1);color:rgb(var(--color-danger))">
-                      ⚠️ {{ errorMsg() }}
+                      <iconify-icon icon="tabler:alert-triangle" width="14" height="14" style="color:currentColor"></iconify-icon> {{ errorMsg() }}
                     </p>
                   }
                 </div>
@@ -345,7 +352,10 @@ interface IngredienteForm {
                         <span class="w-4 h-4 rounded-full border-2 border-white/30 border-t-white animate-spin inline-block mr-1"></span>
                         Consultando IA...
                       } @else {
-                        🔄 {{ geminiRespuesta() ? 'Regenerar' : 'Sugerir receta' }}
+                        <span class="inline-flex items-center gap-1.5">
+                          <iconify-icon icon="tabler:refresh" width="14" height="14" style="color:currentColor"></iconify-icon>
+                          {{ geminiRespuesta() ? 'Regenerar' : 'Sugerir receta' }}
+                        </span>
                       }
                     </button>
                   </div>
@@ -372,12 +382,12 @@ interface IngredienteForm {
                   </div>
                   <div class="flex gap-2 pt-2 border-t" style="border-color:rgb(var(--color-border))">
                     <button (click)="usarComoNotas()"
-                            class="btn-secondary text-xs">
-                      📝 Usar como notas
+                            class="btn-secondary text-xs inline-flex items-center gap-1.5">
+                      <iconify-icon icon="tabler:file-text" width="14" height="14" style="color:currentColor"></iconify-icon> Usar como notas
                     </button>
                     <button (click)="descargarPDF()"
-                            class="btn-secondary text-xs">
-                      📄 Descargar PDF con sugerencia
+                            class="btn-secondary text-xs inline-flex items-center gap-1.5">
+                      <iconify-icon icon="tabler:file-text" width="14" height="14" style="color:currentColor"></iconify-icon> Descargar PDF con sugerencia
                     </button>
                   </div>
                 } @else {
@@ -389,9 +399,9 @@ interface IngredienteForm {
                 }
 
                 @if (errorGemini()) {
-                  <p class="text-xs px-3 py-2 rounded-lg"
+                  <p class="text-xs px-3 py-2 rounded-lg inline-flex items-center gap-1.5"
                      style="background:rgb(var(--color-danger)/0.1);color:rgb(var(--color-danger))">
-                    ⚠️ {{ errorGemini() }}
+                    <iconify-icon icon="tabler:alert-triangle" width="14" height="14" style="color:currentColor"></iconify-icon> {{ errorGemini() }}
                   </p>
                 }
               </div>
@@ -632,7 +642,7 @@ export class RecetasComponent implements OnInit {
             : p
         ));
         this.platoSeleccionado.update(p => p ? { ...p, tieneReceta: true, version: r.version, costoTotal: r.costoTotal } : p);
-        this.toastSvc.success(`✅ Receta v${r.version} guardada — Costo: Bs ${r.costoTotal.toFixed(2)}`);
+        this.toastSvc.success(`Receta v${r.version} guardada — Costo: Bs ${r.costoTotal.toFixed(2)}`);
       },
       error: err => {
         this.guardando.set(false);
@@ -804,7 +814,7 @@ export class RecetasComponent implements OnInit {
       doc.setFont('helvetica', 'bold');
       doc.setFontSize(11);
       doc.setTextColor(80, 40, 140);
-      doc.text('✨ SUGERENCIA GEMINI IA', MARGEN, y);
+      doc.text('SUGERENCIA GEMINI IA', MARGEN, y);
       y += 7;
 
       doc.setFont('helvetica', 'normal');

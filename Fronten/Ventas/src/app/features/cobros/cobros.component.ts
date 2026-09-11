@@ -1,4 +1,4 @@
-import { Component, OnInit, signal, computed } from '@angular/core';
+import { Component, OnInit, signal, computed, CUSTOM_ELEMENTS_SCHEMA } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { PensionadoService } from '../../core/services/api.service';
@@ -12,6 +12,7 @@ type SortColCobro = 'nombre' | 'periodo' | 'total' | 'saldo';
   selector: 'app-cobros',
   standalone: true,
   imports: [CommonModule, FormsModule, PaginationComponent],
+  schemas: [CUSTOM_ELEMENTS_SCHEMA],
   template: `
     <div class="space-y-5 animate-slide-up">
 
@@ -26,7 +27,7 @@ type SortColCobro = 'nombre' | 'periodo' | 'total' | 'saldo';
         </div>
         <div class="flex gap-2 flex-wrap">
           <input [(ngModel)]="busqueda" (ngModelChange)="pagina.set(1)" class="input w-44 text-sm"
-                 placeholder="🔍 Buscar pensionado…" maxlength="100">
+                 placeholder="Buscar pensionado…" maxlength="100">
           <button (click)="cambiarVista('pendientes')"
                   [class.btn-primary]="vistaActiva()==='pendientes'"
                   [class.btn-secondary]="vistaActiva()!=='pendientes'"
@@ -48,17 +49,17 @@ type SortColCobro = 'nombre' | 'periodo' | 'total' | 'saldo';
       <!-- Stats -->
       <div class="grid grid-cols-3 gap-4">
         <div class="stat-card">
-          <span class="text-xl">🧾</span>
+          <iconify-icon icon="tabler:receipt" width="24" height="24" style="color:currentColor"></iconify-icon>
           <p class="stat-value mt-1">{{ pendientes().length }}</p>
           <p class="stat-label">Cobros pendientes</p>
         </div>
         <div class="stat-card">
-          <span class="text-xl">💰</span>
+          <iconify-icon icon="tabler:currency-dollar" width="24" height="24" style="color:currentColor"></iconify-icon>
           <p class="stat-value mt-1">Bs {{ totalPendiente() | number:'1.2-2' }}</p>
           <p class="stat-label">Total por cobrar</p>
         </div>
         <div class="stat-card">
-          <span class="text-xl">✅</span>
+          <iconify-icon icon="tabler:circle-check" width="24" height="24" style="color:currentColor"></iconify-icon>
           <p class="stat-value mt-1">{{ totalPagados() }}</p>
           <p class="stat-label">Pagados este mes</p>
         </div>
@@ -122,7 +123,10 @@ type SortColCobro = 'nombre' | 'periodo' | 'total' | 'saldo';
                       Bs {{ c.saldoRestante | number:'1.2-2' }}
                     </span>
                   } @else {
-                    <span class="badge-success text-xs">✓ Completo</span>
+                    <span class="badge-success text-xs inline-flex items-center gap-1">
+                      <iconify-icon icon="tabler:check" width="14" height="14" style="color:currentColor"></iconify-icon>
+                      Completo
+                    </span>
                   }
                 </td>
                 <td>
@@ -137,9 +141,10 @@ type SortColCobro = 'nombre' | 'periodo' | 'total' | 'saldo';
                 <td>
                   @if (!c.pagado) {
                     <button (click)="abrirPago(c)"
-                            class="text-xs py-1 px-2 rounded-lg transition-all"
+                            class="text-xs py-1 px-2 rounded-lg transition-all inline-flex items-center gap-1"
                             style="background:rgb(var(--color-primary)/0.1);color:rgb(var(--color-primary))">
-                      💳 Registrar pago
+                      <iconify-icon icon="tabler:credit-card" width="14" height="14" style="color:currentColor"></iconify-icon>
+                      Registrar pago
                     </button>
                   }
                 </td>
@@ -171,10 +176,13 @@ type SortColCobro = 'nombre' | 'periodo' | 'total' | 'saldo';
            style="background:rgba(0,0,0,0.5)">
         <div class="card max-w-sm w-full space-y-4 animate-pop">
           <div class="flex items-center justify-between">
-            <h3 class="font-display font-bold" style="color:rgb(var(--color-on-surface))">
-              💳 Registrar Pago
+            <h3 class="font-display font-bold inline-flex items-center gap-1.5" style="color:rgb(var(--color-on-surface))">
+              <iconify-icon icon="tabler:credit-card" width="18" height="18" style="color:currentColor"></iconify-icon>
+              Registrar Pago
             </h3>
-            <button (click)="cobroSeleccionado.set(null)" class="btn-ghost p-1">✕</button>
+            <button (click)="cobroSeleccionado.set(null)" class="btn-ghost p-1">
+              <iconify-icon icon="line-md:close" width="16" height="16" style="color:currentColor"></iconify-icon>
+            </button>
           </div>
 
           <div class="p-3 rounded-xl space-y-1"
@@ -205,9 +213,9 @@ type SortColCobro = 'nombre' | 'periodo' | 'total' | 'saldo';
             <div>
               <label class="input-label">Forma de pago *</label>
               <select [(ngModel)]="formaPago" class="input text-sm">
-                <option value="EFECTIVO">💵 Efectivo</option>
-                <option value="QR">📱 QR</option>
-                <option value="MIXTO">💳 Mixto</option>
+                <option value="EFECTIVO">Efectivo</option>
+                <option value="QR">QR</option>
+                <option value="MIXTO">Mixto</option>
               </select>
             </div>
           </div>

@@ -1,4 +1,4 @@
-import { Component, OnInit, signal, computed } from '@angular/core';
+import { Component, OnInit, signal, computed, CUSTOM_ELEMENTS_SCHEMA } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ClienteService } from '../../core/services/api.service';
@@ -13,6 +13,7 @@ type SortCol = 'nombre' | 'registro' | 'ultimaCompra' | 'estado';
   selector: 'app-clientes',
   standalone: true,
   imports: [CommonModule, FormsModule, PaginationComponent],
+  schemas: [CUSTOM_ELEMENTS_SCHEMA],
   template: `
     <div class="space-y-5 animate-slide-up">
 
@@ -36,7 +37,13 @@ type SortCol = 'nombre' | 'registro' | 'ultimaCompra' | 'estado';
                   [style.outline]="filtroEstado() === est.estado
                     ? '2px solid rgb(var(--color-primary))' : 'none'">
             <div class="flex items-center justify-between">
-              <span class="text-xl">{{ est.emoji }}</span>
+              <span class="text-xl">
+                @if (est.icon) {
+                  <iconify-icon [attr.icon]="est.icon" width="20" height="20" style="color:currentColor"></iconify-icon>
+                } @else {
+                  {{ est.emoji }}
+                }
+              </span>
               <span [class]="est.badgeClass">{{ est.count }}</span>
             </div>
             <p class="stat-value text-xl mt-1">{{ est.count }}</p>
@@ -67,7 +74,7 @@ type SortCol = 'nombre' | 'registro' | 'ultimaCompra' | 'estado';
 
       <!-- Búsqueda -->
       <input [(ngModel)]="busqueda" (ngModelChange)="pagina.set(1)" class="input max-w-xs text-sm"
-             placeholder="🔍 Buscar por nombre o teléfono..."
+             placeholder="Buscar por nombre o teléfono..."
              maxlength="100" aria-label="Buscar clientes">
 
       <!-- Tabla -->
@@ -131,13 +138,20 @@ type SortCol = 'nombre' | 'registro' | 'ultimaCompra' | 'estado';
                 </td>
                 <td>
                   <span [class]="getBadgeEstado(c.estado)">
-                    {{ getEstadoLabel(c.estado) }}
+                    <span class="inline-flex items-center gap-1">
+                      @if (getEstadoIcon(c.estado)) {
+                        <iconify-icon [attr.icon]="getEstadoIcon(c.estado)" width="12" height="12" style="color:currentColor"></iconify-icon>
+                      } @else {
+                        {{ getEstadoEmoji(c.estado) }}
+                      }
+                      {{ getEstadoLabel(c.estado) }}
+                    </span>
                   </span>
                 </td>
                 @if (puedeEditar()) {
                   <td>
-                    <button (click)="abrirEdicion(c)" class="btn-ghost text-xs px-2 py-1">
-                      ✏️ Editar
+                    <button (click)="abrirEdicion(c)" class="btn-ghost text-xs px-2 py-1 inline-flex items-center gap-1">
+                      <iconify-icon icon="line-md:edit" width="14" height="14" style="color:currentColor"></iconify-icon> Editar
                     </button>
                   </td>
                 }
@@ -170,8 +184,14 @@ type SortCol = 'nombre' | 'registro' | 'ultimaCompra' | 'estado';
            style="background:rgba(0,0,0,0.5)" (click)="cerrarModal()">
         <div class="card max-w-sm w-full space-y-4 animate-pop"
              (click)="$event.stopPropagation()">
-          <h3 class="font-display font-bold" style="color:rgb(var(--color-on-surface))">
-            {{ editando() ? '✏️ Editar Cliente' : '👥 Nuevo Cliente' }}
+          <h3 class="font-display font-bold inline-flex items-center gap-1.5" style="color:rgb(var(--color-on-surface))">
+            @if (editando()) {
+              <iconify-icon icon="line-md:edit" width="18" height="18" style="color:currentColor"></iconify-icon>
+              Editar Cliente
+            } @else {
+              <iconify-icon icon="tabler:users" width="18" height="18" style="color:currentColor"></iconify-icon>
+              Nuevo Cliente
+            }
           </h3>
           <div class="space-y-3">
             <div>
@@ -248,14 +268,14 @@ export class ClientesComponent implements OnInit {
     { valor: 'POSIBLE_INACTIVO', label: 'Posible inact.'},
   ];
 
-  estadosStats = computed(() => [
-    { estado: 'ACTIVO',        label: 'Activos',     emoji: '✅', badgeClass: 'badge-success',
+  estadosStats = computed((): { estado: string; label: string; icon?: string; emoji?: string; badgeClass: string; count: number }[] => [
+    { estado: 'ACTIVO',        label: 'Activos',     icon: 'tabler:circle-check', badgeClass: 'badge-success',
       count: this.clientes().filter(c => c.estado === 'ACTIVO').length },
     { estado: 'INACTIVO',      label: 'Inactivos',   emoji: '😴', badgeClass: 'badge-neutral',
       count: this.clientes().filter(c => c.estado === 'INACTIVO').length },
-    { estado: 'RECUPERADO',    label: 'Recuperados', emoji: '🔄', badgeClass: 'badge-info',
+    { estado: 'RECUPERADO',    label: 'Recuperados', icon: 'tabler:refresh', badgeClass: 'badge-info',
       count: this.clientes().filter(c => c.estado === 'RECUPERADO').length },
-    { estado: 'CLIENTE_NUEVO', label: 'Nuevos',      emoji: '⭐', badgeClass: 'badge-warning',
+    { estado: 'CLIENTE_NUEVO', label: 'Nuevos',      icon: 'tabler:star', badgeClass: 'badge-warning',
       count: this.clientes().filter(c => c.estado === 'CLIENTE_NUEVO').length },
   ]);
 
@@ -405,15 +425,33 @@ export class ClientesComponent implements OnInit {
 
   getEstadoLabel(estado: EstadoCliente): string {
     const map: Record<string, string> = {
-      CLIENTE_NUEVO:    '⭐ Nuevo',
-      POSIBLE_ACTIVO:   '📈 Posible activo',
-      ACTIVO:           '✅ Activo',
-      POSIBLE_INACTIVO: '⚠️ Posible inactivo',
-      INACTIVO:         '😴 Inactivo',
-      RECUPERADO:       '🔄 Recuperado',
-      BLOQUEADO:        '🔒 Bloqueado',
-      ELIMINADO:        '🗑️ Eliminado',
+      CLIENTE_NUEVO:    'Nuevo',
+      POSIBLE_ACTIVO:   'Posible activo',
+      ACTIVO:           'Activo',
+      POSIBLE_INACTIVO: 'Posible inactivo',
+      INACTIVO:         'Inactivo',
+      RECUPERADO:       'Recuperado',
+      BLOQUEADO:        'Bloqueado',
+      ELIMINADO:        'Eliminado',
     };
     return map[estado] ?? estado;
+  }
+
+  getEstadoIcon(estado: EstadoCliente): string | null {
+    const map: Record<string, string> = {
+      CLIENTE_NUEVO:    'tabler:star',
+      POSIBLE_ACTIVO:   'tabler:trending-up',
+      ACTIVO:           'tabler:circle-check',
+      POSIBLE_INACTIVO: 'tabler:alert-triangle',
+      RECUPERADO:       'tabler:refresh',
+      BLOQUEADO:        'tabler:lock',
+      ELIMINADO:        'tabler:trash',
+    };
+    return map[estado] ?? null;
+  }
+
+  getEstadoEmoji(estado: EstadoCliente): string {
+    // Sin icono confiable en la whitelist de Iconify para este estado.
+    return estado === 'INACTIVO' ? '😴' : '';
   }
 }

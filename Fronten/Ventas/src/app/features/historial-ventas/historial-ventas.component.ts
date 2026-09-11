@@ -1,4 +1,4 @@
-import { Component, OnInit, signal, computed } from '@angular/core';
+import { Component, OnInit, signal, computed, CUSTOM_ELEMENTS_SCHEMA } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { VentaService, SolicitudAprobacionService } from '../../core/services/api.service';
@@ -13,6 +13,7 @@ type SortCol = 'fecha' | 'total' | 'formaPago' | 'estado';
   selector: 'app-historial-ventas',
   standalone: true,
   imports: [CommonModule, FormsModule, PaginationComponent],
+  schemas: [CUSTOM_ELEMENTS_SCHEMA],
   template: `
     <div class="space-y-5 animate-slide-up">
 
@@ -39,7 +40,7 @@ type SortCol = 'fecha' | 'total' | 'formaPago' | 'estado';
         <button (click)="buscar()" [disabled]="cargando()" class="btn-primary">
           @if (cargando()) {
             <span class="w-4 h-4 rounded-full border-2 border-white/30 border-t-white animate-spin inline-block"></span>
-          } @else { 🔍 }
+          } @else { <iconify-icon icon="line-md:search" width="16" height="16" style="color:currentColor"></iconify-icon> }
           Buscar
         </button>
         <button (click)="setHoy()" class="btn-secondary text-sm">Hoy</button>
@@ -87,7 +88,7 @@ type SortCol = 'fecha' | 'total' | 'formaPago' | 'estado';
       <div class="card space-y-3">
         <div class="flex flex-wrap items-center gap-3 justify-between">
           <input [(ngModel)]="busqueda" class="input w-56 text-sm"
-                 placeholder="🔍 Buscar por cliente, cajero..."
+                 placeholder="Buscar por cliente, cajero..."
                  maxlength="100">
           <div class="flex gap-2">
             <button (click)="setFiltroEstado('')"
@@ -144,7 +145,9 @@ type SortCol = 'fecha' | 'total' | 'formaPago' | 'estado';
               } @else if (ventasPaginadas().length === 0) {
                 <tr>
                   <td colspan="7" class="text-center py-12">
-                    <p class="text-4xl mb-2 opacity-20">💰</p>
+                    <p class="mb-2 opacity-20 flex justify-center">
+                      <iconify-icon icon="tabler:currency-dollar" width="40" height="40" style="color:currentColor"></iconify-icon>
+                    </p>
                     <p class="text-sm" style="color:rgb(var(--color-on-surface)/0.4)">
                       {{ buscado() ? 'No se encontraron ventas en el período' : 'Selecciona un rango de fechas y presiona Buscar' }}
                     </p>
@@ -197,13 +200,13 @@ type SortCol = 'fecha' | 'total' | 'formaPago' | 'estado';
                         <button (click)="verDetalle(v)"
                                 class="btn-ghost text-xs px-2 py-1"
                                 title="Ver detalle">
-                          👁️
+                          <iconify-icon icon="tabler:eye" width="16" height="16" style="color:currentColor"></iconify-icon>
                         </button>
                         @if (!v.anulada && puedeAnular()) {
                           <button (click)="abrirAnular(v)"
                                   class="btn-ghost text-xs px-2 py-1 text-danger"
                                   [title]="esAdmin() ? 'Anular venta' : 'Solicitar anulación'">
-                            ✕
+                            <iconify-icon icon="line-md:close" width="16" height="16" style="color:currentColor"></iconify-icon>
                           </button>
                         }
                       </div>
@@ -235,7 +238,9 @@ type SortCol = 'fecha' | 'total' | 'formaPago' | 'estado';
               Venta #{{ ventaDetalle()!.id }}
             </h3>
             <button (click)="ventaDetalle.set(null)"
-                    class="btn-ghost text-lg leading-none">✕</button>
+                    class="btn-ghost text-lg leading-none">
+              <iconify-icon icon="line-md:close" width="18" height="18" style="color:currentColor"></iconify-icon>
+            </button>
           </div>
 
           <div class="grid grid-cols-2 gap-3 text-sm">

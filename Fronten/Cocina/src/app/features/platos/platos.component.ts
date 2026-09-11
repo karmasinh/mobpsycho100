@@ -1,4 +1,4 @@
-import { Component, OnInit, signal, computed } from '@angular/core';
+import { Component, OnInit, signal, computed, CUSTOM_ELEMENTS_SCHEMA } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { PlatoService, CategoriaService } from '../../core/services/api.service';
@@ -10,6 +10,7 @@ import { PaginationComponent } from '../../shared/components/pagination.componen
   selector: 'app-platos',
   standalone: true,
   imports: [CommonModule, FormsModule, PaginationComponent],
+  schemas: [CUSTOM_ELEMENTS_SCHEMA],
   template: `
     <div class="space-y-5 animate-fade-up">
 
@@ -24,7 +25,7 @@ import { PaginationComponent } from '../../shared/components/pagination.componen
           </p>
         </div>
         <div class="flex gap-2 w-full sm:w-auto">
-          <input [(ngModel)]="busqueda" (ngModelChange)="pagina.set(1)" maxlength="100" class="input w-full sm:w-48 text-sm" placeholder="🔍 Buscar plato...">
+          <input [(ngModel)]="busqueda" (ngModelChange)="pagina.set(1)" maxlength="100" class="input w-full sm:w-48 text-sm" placeholder="Buscar plato...">
           <button (click)="abrirCrearModal()" class="btn-primary text-sm py-2 px-3 whitespace-nowrap">
             + Nuevo Plato
           </button>
@@ -115,16 +116,16 @@ import { PaginationComponent } from '../../shared/components/pagination.componen
 
               <!-- Acciones -->
               <div class="flex gap-2 pt-2" style="border-top:1px dashed rgb(var(--color-border))">
-                <button (click)="abrirEditarModal(plato)" class="btn-secondary text-xs py-1.5 px-2 flex-1 justify-center">
-                  ✏️ Editar
+                <button (click)="abrirEditarModal(plato)" class="btn-secondary text-xs py-1.5 px-2 flex-1 justify-center inline-flex items-center gap-1">
+                  <iconify-icon icon="line-md:edit" width="14" height="14" style="color:currentColor"></iconify-icon> Editar
                 </button>
                 @if (plato.activo) {
-                  <button (click)="desactivarPlato(plato)" class="btn-danger text-xs py-1.5 px-2 flex-1 justify-center bg-danger/10 text-danger hover:bg-danger/20">
-                    ✕ Dar Baja
+                  <button (click)="desactivarPlato(plato)" class="btn-danger text-xs py-1.5 px-2 flex-1 justify-center bg-danger/10 text-danger hover:bg-danger/20 inline-flex items-center gap-1">
+                    <iconify-icon icon="tabler:x" width="14" height="14" style="color:currentColor"></iconify-icon> Dar Baja
                   </button>
                 } @else {
-                  <button (click)="activarPlato(plato)" class="btn-secondary text-xs py-1.5 px-2 flex-1 justify-center bg-success/10 text-success border-success/30 hover:bg-success/20">
-                    ✓ Reactivar
+                  <button (click)="activarPlato(plato)" class="btn-secondary text-xs py-1.5 px-2 flex-1 justify-center bg-success/10 text-success border-success/30 hover:bg-success/20 inline-flex items-center gap-1">
+                    <iconify-icon icon="tabler:check" width="14" height="14" style="color:currentColor"></iconify-icon> Reactivar
                   </button>
                 }
               </div>
@@ -132,7 +133,7 @@ import { PaginationComponent } from '../../shared/components/pagination.componen
           }
           @if (platosFiltrados().length === 0) {
             <div class="col-span-full text-center py-16 card" style="color:rgb(var(--color-on-surface)/0.35)">
-              <p class="text-4xl mb-2">🍽️</p>
+              <iconify-icon icon="tabler:tools-kitchen-2" width="40" height="40" style="color:currentColor" class="mb-2 inline-block"></iconify-icon>
               <p>Sin platos que coincidan con la búsqueda o tipo seleccionado</p>
             </div>
           }
@@ -154,10 +155,16 @@ import { PaginationComponent } from '../../shared/components/pagination.componen
              (click)="$event.stopPropagation()">
 
           <div class="flex items-center justify-between">
-            <h3 class="font-display font-bold text-lg" style="color:rgb(var(--color-on-surface))">
-              {{ modoEditar() ? '✏️ Editar Plato' : '🍽️ Registrar Nuevo Plato' }}
+            <h3 class="font-display font-bold text-lg inline-flex items-center gap-1.5" style="color:rgb(var(--color-on-surface))">
+              @if (modoEditar()) {
+                <iconify-icon icon="line-md:edit" width="18" height="18" style="color:currentColor"></iconify-icon> Editar Plato
+              } @else {
+                <iconify-icon icon="tabler:tools-kitchen-2" width="18" height="18" style="color:currentColor"></iconify-icon> Registrar Nuevo Plato
+              }
             </h3>
-            <button (click)="cerrarModal()" class="btn-ghost p-1">✕</button>
+            <button (click)="cerrarModal()" class="btn-ghost p-1">
+              <iconify-icon icon="tabler:x" width="16" height="16" style="color:currentColor"></iconify-icon>
+            </button>
           </div>
 
           <div class="space-y-3">
@@ -219,8 +226,8 @@ import { PaginationComponent } from '../../shared/components/pagination.componen
           </div>
 
           @if (errorForm()) {
-            <p class="text-xs p-2.5 rounded-lg" style="background:rgb(var(--color-danger)/0.1);color:rgb(var(--color-danger))">
-              ⚠️ {{ errorForm() }}
+            <p class="text-xs p-2.5 rounded-lg inline-flex items-center gap-1.5" style="background:rgb(var(--color-danger)/0.1);color:rgb(var(--color-danger))">
+              <iconify-icon icon="tabler:alert-triangle" width="14" height="14" style="color:currentColor"></iconify-icon> {{ errorForm() }}
             </p>
           }
 
@@ -445,7 +452,7 @@ export class PlatosComponent implements OnInit {
       next: () => {
         this.guardando.set(false);
         this.cerrarModal();
-        this.toastSvc.success(this.modoEditar() ? '✅ Plato actualizado exitosamente' : '✅ Plato registrado exitosamente');
+        this.toastSvc.success(this.modoEditar() ? 'Plato actualizado exitosamente' : 'Plato registrado exitosamente');
         this.cargar();
       },
       error: (err: any) => {
@@ -465,10 +472,10 @@ export class PlatosComponent implements OnInit {
     if (confirm(`¿Está seguro de dar de baja al plato "${plato.nombre}"? No aparecerá en el menú de ventas.`)) {
       this.platoService.desactivar(plato.id).subscribe({
         next: () => {
-          this.toastSvc.success('✕ Plato dado de baja correctamente');
+          this.toastSvc.success('Plato dado de baja correctamente');
           this.cargar();
         },
-        error: () => this.toastSvc.error('❌ Error al dar de baja el plato')
+        error: () => this.toastSvc.error('Error al dar de baja el plato')
       });
     }
   }
@@ -485,10 +492,10 @@ export class PlatosComponent implements OnInit {
       categoriaIds: plato.categorias.map(c => c.id)
     }).subscribe({
       next: () => {
-        this.toastSvc.success('✓ Plato reactivado correctamente');
+        this.toastSvc.success('Plato reactivado correctamente');
         this.cargar();
       },
-      error: () => this.toastSvc.error('❌ Error al reactivar el plato')
+      error: () => this.toastSvc.error('Error al reactivar el plato')
     });
   }
 }

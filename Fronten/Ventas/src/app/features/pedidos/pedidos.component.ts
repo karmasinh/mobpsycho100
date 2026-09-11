@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy, signal, computed } from '@angular/core';
+import { Component, OnInit, OnDestroy, signal, computed, CUSTOM_ELEMENTS_SCHEMA } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { forkJoin, interval, Subscription } from 'rxjs';
@@ -16,6 +16,7 @@ type SortCol = 'fecha' | 'total' | 'estado';
   selector: 'app-pedidos',
   standalone: true,
   imports: [CommonModule, FormsModule, PaginationComponent],
+  schemas: [CUSTOM_ELEMENTS_SCHEMA],
   template: `
     <div class="space-y-5 animate-slide-up">
 
@@ -46,7 +47,9 @@ type SortCol = 'fecha' | 'total' | 'estado';
                [style.outline]="filtroEstado() === e.estado
                  ? '2px solid rgb(var(--color-primary))' : 'none'"
                (click)="toggleEstado(e.estado)">
-            <p class="text-xl">{{ e.emoji }}</p>
+            <p class="text-xl flex justify-center">
+              <iconify-icon [attr.icon]="e.icon" width="22" height="22" style="color:currentColor"></iconify-icon>
+            </p>
             <p class="font-bold text-lg mt-1"
                [style.color]="contarEstado(e.estado) > 0 ? e.color : 'rgb(var(--color-on-surface)/0.3)'">
               {{ contarEstado(e.estado) }}
@@ -75,7 +78,7 @@ type SortCol = 'fecha' | 'total' | 'estado';
           </div>
           <input [(ngModel)]="busqueda" (ngModelChange)="pagina.set(1)"
                  class="input w-52 text-sm"
-                 placeholder="🔍 Buscar cliente, #ID..." maxlength="100">
+                 placeholder="Buscar cliente, #ID..." maxlength="100">
         </div>
 
         <div class="table-wrapper">
@@ -109,7 +112,9 @@ type SortCol = 'fecha' | 'total' | 'estado';
               } @else if (pedidosPaginados().length === 0) {
                 <tr>
                   <td colspan="7" class="text-center py-12">
-                    <p class="text-4xl mb-2 opacity-20">📋</p>
+                    <p class="mb-2 opacity-20 flex justify-center">
+                      <iconify-icon icon="tabler:clipboard-list" width="40" height="40" style="color:currentColor"></iconify-icon>
+                    </p>
                     <p class="text-sm" style="color:rgb(var(--color-on-surface)/0.4)">
                       No hay pedidos en esta vista
                     </p>
@@ -156,14 +161,14 @@ type SortCol = 'fecha' | 'total' | 'estado';
                       <div class="flex gap-1">
                         <button (click)="verDetalle(p)"
                                 class="btn-ghost text-xs px-2 py-1" title="Ver detalle">
-                          👁️
+                          <iconify-icon icon="tabler:eye" width="16" height="16" style="color:currentColor"></iconify-icon>
                         </button>
                         @if (p.estado === 'LISTO') {
                           <button (click)="marcarEntregado(p)"
                                   class="btn-ghost text-xs px-2 py-1 text-success"
                                   title="Marcar como entregado"
                                   [disabled]="procesando()">
-                            ✓
+                            <iconify-icon icon="line-md:confirm-circle" width="16" height="16" style="color:currentColor"></iconify-icon>
                           </button>
                         }
                         @if (p.estado === 'PENDIENTE') {
@@ -171,7 +176,7 @@ type SortCol = 'fecha' | 'total' | 'estado';
                                   class="btn-ghost text-xs px-2 py-1 text-danger"
                                   title="Cancelar pedido"
                                   [disabled]="procesando()">
-                            ✕
+                            <iconify-icon icon="line-md:close" width="16" height="16" style="color:currentColor"></iconify-icon>
                           </button>
                         }
                       </div>
@@ -310,11 +315,11 @@ export class PedidosComponent implements OnInit, OnDestroy {
   ];
 
   estadosInfo = [
-    { estado: 'PENDIENTE' as EstadoPedido,     label: 'Pendiente',    emoji: '⏳', color: 'rgb(var(--color-warning))' },
-    { estado: 'EN_PREPARACION' as EstadoPedido, label: 'En cocina',   emoji: '🍳', color: 'rgb(var(--color-primary))' },
-    { estado: 'LISTO' as EstadoPedido,          label: 'Listo',        emoji: '✅', color: 'rgb(var(--color-success))' },
-    { estado: 'ENTREGADO' as EstadoPedido,      label: 'Entregado',    emoji: '🛍️', color: 'rgb(var(--color-on-surface)/0.4)' },
-    { estado: 'CANCELADO' as EstadoPedido,      label: 'Cancelado',    emoji: '✕',  color: 'rgb(var(--color-danger))' },
+    { estado: 'PENDIENTE' as EstadoPedido,     label: 'Pendiente',    icon: 'tabler:hourglass',      color: 'rgb(var(--color-warning))' },
+    { estado: 'EN_PREPARACION' as EstadoPedido, label: 'En cocina',   icon: 'tabler:chef-hat',        color: 'rgb(var(--color-primary))' },
+    { estado: 'LISTO' as EstadoPedido,          label: 'Listo',        icon: 'tabler:circle-check',   color: 'rgb(var(--color-success))' },
+    { estado: 'ENTREGADO' as EstadoPedido,      label: 'Entregado',    icon: 'tabler:shopping-bag',   color: 'rgb(var(--color-on-surface)/0.4)' },
+    { estado: 'CANCELADO' as EstadoPedido,      label: 'Cancelado',    icon: 'tabler:x',               color: 'rgb(var(--color-danger))' },
   ];
 
   private realtimeSub?: Subscription;

@@ -125,6 +125,12 @@ public class ProduccionServiceImpl implements ProduccionService {
     public LineaProduccion actualizarProducida(Long lineaId, Integer cantidadProducida, Long usuarioId) {
         LineaProduccion linea = lineaRepo.findById(lineaId)
                 .orElseThrow(() -> new RecursoNoEncontradoException("LineaProduccion", lineaId));
+        EstadoProduccion estadoDia = linea.getProduccion().getEstado();
+        if (estadoDia != EstadoProduccion.EN_CURSO) {
+            throw new NegocioException(
+                    "No se puede registrar producción: el día está en estado " + estadoDia
+                            + " (debe estar EN_CURSO).");
+        }
         if (cantidadProducida < 0) throw new NegocioException("La cantidad producida no puede ser negativa");
         if (cantidadProducida > linea.getCantidadPlanificada()) {
             throw new NegocioException("La cantidad producida (" + cantidadProducida

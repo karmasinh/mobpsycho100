@@ -1,4 +1,4 @@
-import { Component, OnInit, signal, computed } from '@angular/core';
+import { Component, OnInit, signal, computed, CUSTOM_ELEMENTS_SCHEMA } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { RolService, ModuloMenuService } from '../../core/services/api.service';
@@ -10,6 +10,7 @@ import { PaginationComponent } from '../../shared/components/pagination.componen
   selector: 'app-roles',
   standalone: true,
   imports: [CommonModule, FormsModule, PaginationComponent],
+  schemas: [CUSTOM_ELEMENTS_SCHEMA],
   template: `
     <div class="space-y-5 animate-slide-up">
 
@@ -26,7 +27,7 @@ import { PaginationComponent } from '../../shared/components/pagination.componen
         <div class="flex gap-2 w-full sm:w-auto">
           <input [(ngModel)]="busqueda" (ngModelChange)="pagina.set(1)"
                  class="input w-full sm:w-48 text-sm" maxlength="100"
-                 placeholder="🔍 Buscar rol...">
+                 placeholder="Buscar rol...">
           <button (click)="abrirModal()" class="btn-primary whitespace-nowrap">+ Nuevo rol</button>
         </div>
       </div>
@@ -43,7 +44,9 @@ import { PaginationComponent } from '../../shared/components/pagination.componen
             <div class="flex items-start justify-between gap-3 flex-wrap">
               <div class="flex items-center gap-3">
                 <div class="w-10 h-10 rounded-xl flex items-center justify-center text-xl flex-shrink-0"
-                     style="background:rgb(var(--color-primary)/0.12)">🛡️</div>
+                     style="background:rgb(var(--color-primary)/0.12);color:rgb(var(--color-primary))">
+                  <iconify-icon icon="tabler:shield" width="22" height="22" style="color:currentColor"></iconify-icon>
+                </div>
                 <div>
                   <p class="font-bold text-sm" style="color:rgb(var(--color-on-surface))">{{ rol.nombre }}</p>
                   <p class="text-xs" style="color:rgb(var(--color-on-surface)/0.5)">
@@ -58,15 +61,15 @@ import { PaginationComponent } from '../../shared/components/pagination.componen
                   <span class="badge-neutral">Inactivo</span>
                 }
                 <button (click)="abrirEditar(rol)"
-                        class="text-xs py-1 px-2 rounded-lg border"
+                        class="text-xs py-1 px-2 rounded-lg border inline-flex items-center gap-1"
                         style="border-color:rgb(var(--color-border));color:rgb(var(--color-on-surface)/0.7)">
-                  ✏️ Editar
+                  <iconify-icon icon="line-md:edit" width="14" height="14" style="color:currentColor"></iconify-icon> Editar
                 </button>
                 @if (rol.activo) {
                   <button (click)="desactivar(rol)"
-                          class="text-xs py-1 px-2 rounded-lg"
+                          class="text-xs py-1 px-2 rounded-lg inline-flex items-center gap-1"
                           style="background:rgb(var(--color-danger)/0.1);color:rgb(var(--color-danger))">
-                    ✕ Baja
+                    <iconify-icon icon="tabler:x" width="14" height="14" style="color:currentColor"></iconify-icon> Baja
                   </button>
                 }
               </div>
@@ -89,7 +92,7 @@ import { PaginationComponent } from '../../shared/components/pagination.componen
         }
         @if (!cargando() && rolesFiltrados().length === 0) {
           <div class="card text-center py-12" style="color:rgb(var(--color-on-surface)/0.35)">
-            <p class="text-3xl mb-2">🛡️</p>
+            <p class="mb-2 flex justify-center"><iconify-icon icon="tabler:shield" width="36" height="36" style="color:currentColor"></iconify-icon></p>
             <p>No hay roles registrados</p>
           </div>
         }
@@ -110,8 +113,12 @@ import { PaginationComponent } from '../../shared/components/pagination.componen
              style="max-height:90vh;overflow-y:auto"
              (click)="$event.stopPropagation()">
 
-          <h3 class="font-display font-bold" style="color:rgb(var(--color-on-surface))">
-            {{ editandoId() ? '✏️ Editar Rol' : '🛡️ Nuevo Rol' }}
+          <h3 class="font-display font-bold inline-flex items-center gap-1.5" style="color:rgb(var(--color-on-surface))">
+            @if (editandoId()) {
+              <iconify-icon icon="line-md:edit" width="18" height="18" style="color:currentColor"></iconify-icon> Editar Rol
+            } @else {
+              <iconify-icon icon="tabler:shield" width="18" height="18" style="color:currentColor"></iconify-icon> Nuevo Rol
+            }
           </h3>
 
           <div class="space-y-3">
@@ -156,9 +163,9 @@ import { PaginationComponent } from '../../shared/components/pagination.componen
           </div>
 
           @if (error()) {
-            <p class="text-xs p-2 rounded-lg"
+            <p class="text-xs p-2 rounded-lg inline-flex items-center gap-1.5"
                style="background:rgb(var(--color-danger)/0.1);color:rgb(var(--color-danger))">
-              ⚠️ {{ error() }}
+              <iconify-icon icon="tabler:alert-triangle" width="14" height="14" style="color:currentColor"></iconify-icon> {{ error() }}
             </p>
           }
 
@@ -292,7 +299,7 @@ export class RolesComponent implements OnInit {
         this.guardando.set(false);
         this.cerrar();
         this.roles.update(list => id ? list.map(x => x.id === id ? r : x) : [...list, r]);
-        this.toastSvc.success(id ? '✅ Rol actualizado' : '✅ Rol creado');
+        this.toastSvc.success(id ? 'Rol actualizado' : 'Rol creado');
       },
       error: err => {
         this.guardando.set(false);
@@ -306,9 +313,9 @@ export class RolesComponent implements OnInit {
     this.rolSvc.desactivar(rol.id).subscribe({
       next: () => {
         this.roles.update(list => list.map(r => r.id === rol.id ? { ...r, activo: false } : r));
-        this.toastSvc.success('✕ Rol desactivado');
+        this.toastSvc.success('Rol desactivado');
       },
-      error: err => this.toastSvc.error(err?.error?.mensaje ?? '❌ Error al desactivar'),
+      error: err => this.toastSvc.error(err?.error?.mensaje ?? 'Error al desactivar'),
     });
   }
 }

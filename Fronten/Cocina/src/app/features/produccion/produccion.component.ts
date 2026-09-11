@@ -1,4 +1,4 @@
-import { Component, OnInit, signal, computed } from '@angular/core';
+import { Component, OnInit, signal, computed, CUSTOM_ELEMENTS_SCHEMA } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ProduccionService, PlatoService } from '../../core/services/api.service';
@@ -9,6 +9,7 @@ import { ProduccionDia, LineaProduccion, EstadoProduccion, TipoLineaProduccion, 
   selector: 'app-produccion',
   standalone: true,
   imports: [CommonModule, FormsModule],
+  schemas: [CUSTOM_ELEMENTS_SCHEMA],
   template: `
     <div class="space-y-5 animate-slide-up">
 
@@ -50,7 +51,7 @@ import { ProduccionDia, LineaProduccion, EstadoProduccion, TipoLineaProduccion, 
       <!-- Sin plan -->
       @if (!cargando() && !produccionHoy()) {
         <div class="card flex flex-col items-center justify-center py-16 text-center gap-4">
-          <span class="text-6xl opacity-30">🍳</span>
+          <iconify-icon icon="tabler:chef-hat" width="48" height="48" class="opacity-30" style="color:currentColor"></iconify-icon>
           <div>
             <p class="font-semibold" style="color: rgb(var(--color-on-surface))">
               No hay plan de producción para hoy
@@ -179,8 +180,8 @@ import { ProduccionDia, LineaProduccion, EstadoProduccion, TipoLineaProduccion, 
 
         <!-- Tabla sopas -->
         <div class="card">
-          <h3 class="font-display font-semibold mb-4" style="color: rgb(var(--color-on-surface))">
-            🍵 Sopas del día
+          <h3 class="font-display font-semibold mb-4 inline-flex items-center gap-1.5" style="color: rgb(var(--color-on-surface))">
+            <iconify-icon icon="tabler:soup" width="18" height="18" style="color:currentColor"></iconify-icon> Sopas del día
           </h3>
           <div class="table-wrapper">
             <table>
@@ -245,8 +246,8 @@ import { ProduccionDia, LineaProduccion, EstadoProduccion, TipoLineaProduccion, 
 
         <!-- Tabla segundos -->
         <div class="card">
-          <h3 class="font-display font-semibold mb-4" style="color: rgb(var(--color-on-surface))">
-            🥘 Segundos del día
+          <h3 class="font-display font-semibold mb-4 inline-flex items-center gap-1.5" style="color: rgb(var(--color-on-surface))">
+            <iconify-icon icon="tabler:bowl" width="18" height="18" style="color:currentColor"></iconify-icon> Segundos del día
           </h3>
           <div class="table-wrapper">
             <table>
@@ -321,14 +322,16 @@ import { ProduccionDia, LineaProduccion, EstadoProduccion, TipoLineaProduccion, 
             <h3 class="font-display text-lg font-bold" style="color: rgb(var(--color-on-surface))">
               Planificar producción — {{ fechaHoy() }}
             </h3>
-            <button (click)="modalNuevoPlan.set(false)" class="btn-ghost text-lg leading-none">✕</button>
+            <button (click)="modalNuevoPlan.set(false)" class="btn-ghost text-lg leading-none">
+              <iconify-icon icon="tabler:x" width="16" height="16" style="color:currentColor"></iconify-icon>
+            </button>
           </div>
 
           <!-- Sopas -->
           <div>
             <div class="flex items-center justify-between mb-2">
-              <p class="text-sm font-semibold" style="color: rgb(var(--color-on-surface)/0.7)">
-                🍵 Sopas
+              <p class="text-sm font-semibold inline-flex items-center gap-1.5" style="color: rgb(var(--color-on-surface)/0.7)">
+                <iconify-icon icon="tabler:soup" width="16" height="16" style="color:currentColor"></iconify-icon> Sopas
               </p>
               <button (click)="agregarLinea('SOPA')" class="text-xs px-3 py-1 rounded-lg font-semibold"
                       style="background: rgb(var(--color-primary)/0.1); color: rgb(var(--color-primary))">
@@ -350,7 +353,9 @@ import { ProduccionDia, LineaProduccion, EstadoProduccion, TipoLineaProduccion, 
                     <input type="number" [(ngModel)]="l.cantidadPlanificada"
                            class="input w-20 text-sm text-center" min="1">
                   </div>
-                  <button (click)="quitarLinea(l)" class="text-danger btn-ghost text-sm px-2">✕</button>
+                  <button (click)="quitarLinea(l)" class="text-danger btn-ghost text-sm px-2">
+                    <iconify-icon icon="tabler:x" width="14" height="14" style="color:currentColor"></iconify-icon>
+                  </button>
                 </div>
               }
               @if (lineasNuevasSopa().length === 0) {
@@ -364,8 +369,8 @@ import { ProduccionDia, LineaProduccion, EstadoProduccion, TipoLineaProduccion, 
           <!-- Segundos -->
           <div>
             <div class="flex items-center justify-between mb-2">
-              <p class="text-sm font-semibold" style="color: rgb(var(--color-on-surface)/0.7)">
-                🥘 Segundos
+              <p class="text-sm font-semibold inline-flex items-center gap-1.5" style="color: rgb(var(--color-on-surface)/0.7)">
+                <iconify-icon icon="tabler:bowl" width="16" height="16" style="color:currentColor"></iconify-icon> Segundos
               </p>
               <button (click)="agregarLinea('SEGUNDO')" class="text-xs px-3 py-1 rounded-lg font-semibold"
                       style="background: rgb(var(--color-primary)/0.1); color: rgb(var(--color-primary))">
@@ -387,7 +392,9 @@ import { ProduccionDia, LineaProduccion, EstadoProduccion, TipoLineaProduccion, 
                     <input type="number" [(ngModel)]="l.cantidadPlanificada"
                            class="input w-20 text-sm text-center" min="1">
                   </div>
-                  <button (click)="quitarLinea(l)" class="text-danger btn-ghost text-sm px-2">✕</button>
+                  <button (click)="quitarLinea(l)" class="text-danger btn-ghost text-sm px-2">
+                    <iconify-icon icon="tabler:x" width="14" height="14" style="color:currentColor"></iconify-icon>
+                  </button>
                 </div>
               }
               @if (lineasNuevasSegundo().length === 0) {
@@ -401,8 +408,8 @@ import { ProduccionDia, LineaProduccion, EstadoProduccion, TipoLineaProduccion, 
           <!-- Especiales -->
           <div>
             <div class="flex items-center justify-between mb-2">
-              <p class="text-sm font-semibold" style="color: rgb(var(--color-on-surface)/0.7)">
-                ⭐ Especiales (opcional)
+              <p class="text-sm font-semibold inline-flex items-center gap-1.5" style="color: rgb(var(--color-on-surface)/0.7)">
+                <iconify-icon icon="tabler:star" width="16" height="16" style="color:currentColor"></iconify-icon> Especiales (opcional)
               </p>
               <button (click)="agregarLinea('ESPECIAL')" class="text-xs px-3 py-1 rounded-lg font-semibold"
                       style="background: rgb(var(--color-primary)/0.1); color: rgb(var(--color-primary))">
@@ -424,7 +431,9 @@ import { ProduccionDia, LineaProduccion, EstadoProduccion, TipoLineaProduccion, 
                     <input type="number" [(ngModel)]="l.cantidadPlanificada"
                            class="input w-20 text-sm text-center" min="1">
                   </div>
-                  <button (click)="quitarLinea(l)" class="text-danger btn-ghost text-sm px-2">✕</button>
+                  <button (click)="quitarLinea(l)" class="text-danger btn-ghost text-sm px-2">
+                    <iconify-icon icon="tabler:x" width="14" height="14" style="color:currentColor"></iconify-icon>
+                  </button>
                 </div>
               }
             </div>
