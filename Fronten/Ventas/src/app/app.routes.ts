@@ -156,6 +156,20 @@ export const routes: Routes = [
           import('./features/aprobaciones/aprobaciones.component').then(m => m.AprobacionesComponent),
       },
       {
+        path: 'config-ticket',
+        data: { modulo: 'MOD_CONFIG_TICKET', title: 'Ticket de venta' },
+        canActivate: [authGuard],
+        loadComponent: () =>
+          import('./features/config-ticket/config-ticket.component').then(m => m.ConfigTicketComponent),
+      },
+      {
+        path: 'facturacion',
+        data: { modulo: 'MOD_FACTURACION', title: 'Facturación' },
+        canActivate: [authGuard],
+        loadComponent: () =>
+          import('./features/facturacion/facturacion.component').then(m => m.FacturacionComponent),
+      },
+      {
         path: 'sin-acceso',
         loadComponent: () =>
           import('./shared/components/sin-acceso.component').then(m => m.SinAccesoComponent),

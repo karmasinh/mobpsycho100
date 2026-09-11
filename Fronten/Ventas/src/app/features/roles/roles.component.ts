@@ -25,7 +25,7 @@ import { PaginationComponent } from '../../shared/components/pagination.componen
           </p>
         </div>
         <div class="flex gap-2 w-full sm:w-auto">
-          <input [(ngModel)]="busqueda" (ngModelChange)="pagina.set(1)"
+          <input [ngModel]="busqueda()" (ngModelChange)="busqueda.set($event); pagina.set(1)"
                  class="input w-full sm:w-48 text-sm" maxlength="100"
                  placeholder="Buscar rol...">
           <button (click)="abrirModal()" class="btn-primary whitespace-nowrap">+ Nuevo rol</button>
@@ -193,7 +193,7 @@ export class RolesComponent implements OnInit {
   error            = signal('');
   modulosSeleccionados = signal<Set<number>>(new Set());
 
-  busqueda         = '';
+  busqueda         = signal('');
   pagina           = signal(1);
   readonly pageSize = 10;
   sortCol          = signal<string>('');
@@ -203,7 +203,7 @@ export class RolesComponent implements OnInit {
 
   rolesFiltrados = computed(() => {
     let lista = this.roles();
-    const q = this.busqueda.trim().toLowerCase();
+    const q = this.busqueda().trim().toLowerCase();
     if (q) lista = lista.filter(r =>
       r.nombre.toLowerCase().includes(q) ||
       (r.descripcion ?? '').toLowerCase().includes(q)

@@ -49,6 +49,7 @@ export const ICONO_MAP: Record<string, string> = {
   'building': 'tabler:building',
   'alert-triangle': 'tabler:alert-triangle',
   'layout': 'tabler:layout-grid',
+  'file-type-pdf': 'tabler:file-type-pdf',
 
   // ── Reemplazo de emoji: acción efímera (line-md animado) ──
   'confirmar': 'line-md:confirm-circle',
@@ -101,6 +102,7 @@ export const ICONO_MAP: Record<string, string> = {
   'almacen': 'tabler:building-warehouse',
   'balanza': 'tabler:scale',
   'paleta': 'tabler:palette',
+  'cerrar-sesion': 'tabler:logout',
 };
 
 let registrado = false;

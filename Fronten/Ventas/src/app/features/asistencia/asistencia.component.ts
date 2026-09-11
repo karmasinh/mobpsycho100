@@ -59,7 +59,7 @@ interface PensionadoAsistencia extends Pensionado {
       </div>
 
       <!-- Búsqueda -->
-      <input [(ngModel)]="busqueda" class="input max-w-xs text-sm"
+      <input [ngModel]="busqueda()" (ngModelChange)="busqueda.set($event)" class="input max-w-xs text-sm"
              placeholder="Buscar pensionado...">
 
       <!-- Grid de pensionados -->
@@ -127,7 +127,7 @@ interface PensionadoAsistencia extends Pensionado {
 export class AsistenciaComponent implements OnInit {
   pensionados = signal<PensionadoAsistencia[]>([]);
   cargando    = signal(true);
-  busqueda    = '';
+  busqueda    = signal('');
 
   asistieron = computed(() => this.pensionados().filter(p => p.asistioHoy).length);
   pendientes = computed(() => this.pensionados().filter(p => !p.asistioHoy));
@@ -137,7 +137,7 @@ export class AsistenciaComponent implements OnInit {
   });
 
   filtrados = computed(() => {
-    const q = this.busqueda.toLowerCase();
+    const q = this.busqueda().toLowerCase();
     if (!q) return this.pensionados();
     return this.pensionados().filter(p =>
       `${p.nombre} ${p.apellido}`.toLowerCase().includes(q)

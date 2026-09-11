@@ -32,6 +32,7 @@ public class PensionadoServiceImpl implements PensionadoService {
     private final TipoAlmuerzoRepository tipoAlmuerzoRepository;
     private final UsuarioRepository usuarioRepository;
     private final RolRepository rolRepository;
+    private final SucursalRepository sucursalRepository;
     private final PasswordEncoder passwordEncoder;
 
     @Override
@@ -40,6 +41,12 @@ public class PensionadoServiceImpl implements PensionadoService {
         if (pensionadoRepository.existsByCedula(request.getCedula())) {
             throw new DuplicadoException("Ya existe un pensionado con cédula: " + request.getCedula());
         }
+
+        if (request.getSucursalId() == null) {
+            throw new NegocioException("La sucursal es obligatoria para registrar un pensionado.");
+        }
+        Sucursal sucursal = sucursalRepository.findById(request.getSucursalId())
+                .orElseThrow(() -> new RecursoNoEncontradoException("Sucursal", request.getSucursalId()));
 
         // El correo/teléfono son UNIQUE en BD — un "" (a diferencia de null) sí choca
         // contra otro "", así que se normaliza antes de validar y de persistir.
@@ -62,6 +69,7 @@ public class PensionadoServiceImpl implements PensionadoService {
                 .telefono(telefono)
                 .correo(correo)
                 .tipoAlmuerzo(tipoAlmuerzo)
+                .sucursal(sucursal)
                 .fechaInscripcion(request.getFechaInscripcion())
                 .estado(EstadoPensionado.ACTIVO)
                 .saldoPendiente(0.0)
@@ -105,6 +113,15 @@ public class PensionadoServiceImpl implements PensionadoService {
     @Transactional(readOnly = true)
     public List<Pensionado> listarActivos() {
         return pensionadoRepository.findByEstado(EstadoPensionado.ACTIVO);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<Pensionado> listarActivos(Long sucursalId) {
+        if (sucursalId == null) {
+            return listarActivos();
+        }
+        return pensionadoRepository.findByEstadoAndSucursal_Id(EstadoPensionado.ACTIVO, sucursalId);
     }
 
     @Override

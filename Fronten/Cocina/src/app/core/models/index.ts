@@ -273,6 +273,7 @@ export interface Theme {
   nombre: string;
   descripcion: string;
   emoji: string;
+  color: string;
 }
 
 // ── API Error ─────────────────────────────────────────────────

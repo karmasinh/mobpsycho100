@@ -2,6 +2,8 @@ package com.restaurante.dto.request;
 
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Positive;
+import jakarta.validation.constraints.PositiveOrZero;
 import jakarta.validation.constraints.Size;
 import lombok.Data;
 import java.util.List;
@@ -21,8 +23,10 @@ public class PlatoRequest {
     private String descripcion;
 
     @NotNull(message = "El precio de venta es obligatorio")
+    @Positive(message = "El precio de venta debe ser mayor que cero")
     private Double precioVenta;
 
+    @PositiveOrZero(message = "El costo estimado no puede ser negativo")
     private Double costoEstimado;
 
     @Size(max = 40, message = "El tipo de plato no debe superar los 40 caracteres")

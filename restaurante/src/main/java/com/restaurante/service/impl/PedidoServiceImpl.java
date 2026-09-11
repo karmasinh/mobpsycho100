@@ -101,11 +101,13 @@ public class PedidoServiceImpl implements PedidoService {
             if (d.getSopaSeleccionadaId() != null) {
                 Plato sopa = platoRepository.findById(d.getSopaSeleccionadaId())
                         .orElseThrow(() -> new RecursoNoEncontradoException("Plato (sopa)", d.getSopaSeleccionadaId()));
+                exigirRol(sopa, "SOPA", "sopa");
                 detalle.setSopaSeleccionada(sopa);
             }
             if (d.getSegundoSeleccionadoId() != null) {
                 Plato segundo = platoRepository.findById(d.getSegundoSeleccionadoId())
                         .orElseThrow(() -> new RecursoNoEncontradoException("Plato (segundo)", d.getSegundoSeleccionadoId()));
+                exigirRol(segundo, "SEGUNDO", "segundo");
                 detalle.setSegundoSeleccionado(segundo);
             }
 
@@ -116,6 +118,20 @@ public class PedidoServiceImpl implements PedidoService {
         Pedido creado = pedidoRepository.save(pedido);
         publicarEnTiempoReal(creado, TipoEventoPedido.PEDIDO_NUEVO);
         return creado;
+    }
+
+    /**
+     * Rechaza una selección de sopa/segundo cuyo tipo real no corresponde (ej. mandar un
+     * SEGUNDO en sopaSeleccionadaId) — sin esto la API lo aceptaba, la comanda salía mal y
+     * se descontaban dos unidades de la misma línea de producción (hallazgo real, ver
+     * comparación contra la versión base del sistema en 10_BACKLOG_Y_CAMBIOS.md).
+     */
+    private void exigirRol(Plato plato, String tipoEsperado, String queEs) {
+        if (!tipoEsperado.equals(plato.getTipo())) {
+            throw new NegocioException(String.format(
+                    "'%s' no puede usarse como %s del almuerzo: su tipo es %s, se esperaba %s.",
+                    plato.getNombre(), queEs, plato.getTipo(), tipoEsperado));
+        }
     }
 
     @Override

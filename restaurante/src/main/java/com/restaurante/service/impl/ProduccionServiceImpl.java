@@ -186,8 +186,20 @@ public class ProduccionServiceImpl implements ProduccionService {
     @Override
     @Transactional
     public void decrementarStock(LocalDate fecha, Long sucursalId, Long platoId, int cantidad) {
-        lineaRepo.findByFechaAndSucursalAndPlato(fecha, sucursalId, platoId)
-                .ifPresent(linea -> lineaRepo.incrementarVendida(linea.getId(), cantidad));
+        LineaProduccion linea = lineaRepo.findByFechaAndSucursalAndPlato(fecha, sucursalId, platoId)
+                .orElseThrow(() -> new NegocioException(
+                        "No hay producción planificada hoy para \"" + nombrePlato(platoId) + "\" — no se puede vender."));
+
+        int filasActualizadas = lineaRepo.incrementarVendida(linea.getId(), cantidad);
+        if (filasActualizadas == 0) {
+            throw new NegocioException(
+                    "Stock insuficiente de \"" + nombrePlato(platoId) + "\": disponible " + linea.getCantidadDisponible()
+                    + ", se intentó vender " + cantidad + ".");
+        }
+    }
+
+    private String nombrePlato(Long platoId) {
+        return platoRepository.findById(platoId).map(Plato::getNombre).orElse("plato #" + platoId);
     }
 
     @Override

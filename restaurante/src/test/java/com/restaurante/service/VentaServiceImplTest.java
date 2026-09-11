@@ -38,6 +38,7 @@ class VentaServiceImplTest {
     @Mock private PlatoRepository platoRepository;
     @Mock private ProduccionService produccionService;
     @Mock private CierreCajaService cierreCajaService;
+    @Mock private ConfiguracionTicketService configuracionTicketService;
 
     @InjectMocks
     private VentaServiceImpl ventaService;
@@ -51,6 +52,8 @@ class VentaServiceImplTest {
         cajero = Usuario.builder().id(10L).username("cajero1").build();
         lenient().when(cierreCajaService.obtenerAbiertoPorCajero(10L))
                 .thenReturn(Optional.of(CierreCaja.builder().id(1L).build()));
+        lenient().when(configuracionTicketService.siguienteNumeroTicket(any()))
+                .thenReturn("S1-000001");
     }
 
     private Pedido pedidoConTotal(double total, EstadoPedido estado) {

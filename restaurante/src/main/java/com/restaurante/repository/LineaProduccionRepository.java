@@ -44,8 +44,13 @@ public interface LineaProduccionRepository extends JpaRepository<LineaProduccion
             @Param("platoId") Long platoId);
 
     @Modifying
-    @Query("UPDATE LineaProduccion lp SET lp.cantidadVendida = lp.cantidadVendida + :cantidad WHERE lp.id = :id")
-    void incrementarVendida(@Param("id") Long id, @Param("cantidad") int cantidad);
+    @Query("""
+        UPDATE LineaProduccion lp
+        SET lp.cantidadVendida = lp.cantidadVendida + :cantidad
+        WHERE lp.id = :id
+          AND lp.cantidadVendida + :cantidad <= lp.cantidadProducida
+    """)
+    int incrementarVendida(@Param("id") Long id, @Param("cantidad") int cantidad);
 
     @Modifying
     @Query("""

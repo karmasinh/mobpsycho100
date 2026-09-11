@@ -1,0 +1,6 @@
+{
+  "admin": { "username": "admin", "password": "admin123", "rol": "ADMIN" },
+  "cocinero": { "username": "cocinero1", "password": "Cocina123!", "rol": "COCINERO" },
+  "jefeCocina": { "username": "jefecocina1", "password": "JefeCocina123!", "rol": "JEFE_COCINA" },
+  "almacenero": { "username": "almacenero1", "password": "Almacen123!", "rol": "ALMACENERO" }
+}

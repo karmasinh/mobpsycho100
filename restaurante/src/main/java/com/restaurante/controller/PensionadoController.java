@@ -5,6 +5,7 @@ import com.restaurante.dto.request.PensionadoRequest;
 import com.restaurante.entity.AsistenciaPensionado;
 import com.restaurante.entity.CobroMensual;
 import com.restaurante.entity.Pensionado;
+import com.restaurante.security.SucursalAccessService;
 import com.restaurante.security.UserDetailsImpl;
 import com.restaurante.service.PensionadoService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -27,11 +28,14 @@ import java.util.List;
 public class PensionadoController {
 
     private final PensionadoService pensionadoService;
+    private final SucursalAccessService sucursalAccessService;
 
     @PostMapping
     @PreAuthorize("hasAnyRole('ADMIN','CAJERO','VENDEDOR') or @perm.tiene(authentication, 'MOD_PENSIONADOS')")
     @Operation(summary = "Registrar pensionado — crea usuario automáticamente")
-    public ResponseEntity<Pensionado> registrar(@Valid @RequestBody PensionadoRequest request) {
+    public ResponseEntity<Pensionado> registrar(@Valid @RequestBody PensionadoRequest request,
+                                                 @AuthenticationPrincipal UserDetailsImpl user) {
+        request.setSucursalId(sucursalAccessService.resolver(user, request.getSucursalId()));
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(pensionadoService.registrar(request));
     }
@@ -41,14 +45,21 @@ public class PensionadoController {
 
     @GetMapping("/{id}")
     @PreAuthorize(ROLES_PENSIONADOS)
-    public ResponseEntity<Pensionado> obtener(@PathVariable Long id) {
-        return ResponseEntity.ok(pensionadoService.obtenerPorId(id));
+    public ResponseEntity<Pensionado> obtener(@PathVariable Long id,
+                                               @AuthenticationPrincipal UserDetailsImpl user) {
+        Pensionado pensionado = pensionadoService.obtenerPorId(id);
+        if (pensionado.getSucursal() != null) {
+            sucursalAccessService.verificarPertenece(user, pensionado.getSucursal().getId());
+        }
+        return ResponseEntity.ok(pensionado);
     }
 
     @GetMapping
     @PreAuthorize("hasAnyRole('ADMIN','CAJERO','VENDEDOR') or @perm.tiene(authentication, 'MOD_PENSIONADOS')")
-    public ResponseEntity<List<Pensionado>> listar() {
-        return ResponseEntity.ok(pensionadoService.listarActivos());
+    public ResponseEntity<List<Pensionado>> listar(@RequestParam(required = false) Long sucursalId,
+                                                     @AuthenticationPrincipal UserDetailsImpl user) {
+        Long efectiva = sucursalAccessService.resolver(user, sucursalId);
+        return ResponseEntity.ok(pensionadoService.listarActivos(efectiva));
     }
 
     @PatchMapping("/{id}/baja")

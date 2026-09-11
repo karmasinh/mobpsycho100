@@ -26,7 +26,7 @@ type SortCol = 'nombre' | 'registro' | 'ultimaCompra' | 'estado';
             {{ clientes().length }} registros · {{ clientesFiltrados().length }} en vista actual
           </p>
         </div>
-        <button (click)="abrirModal()" class="btn-primary">+ Nuevo cliente</button>
+        <button (click)="abrirModal()" class="btn-primary" data-cy="btn-nuevo-cliente">+ Nuevo cliente</button>
       </div>
 
       <!-- Stats de estados -->
@@ -73,7 +73,7 @@ type SortCol = 'nombre' | 'registro' | 'ultimaCompra' | 'estado';
       </div>
 
       <!-- Búsqueda -->
-      <input [(ngModel)]="busqueda" (ngModelChange)="pagina.set(1)" class="input max-w-xs text-sm"
+      <input [ngModel]="busqueda()" (ngModelChange)="busqueda.set($event); pagina.set(1)" class="input max-w-xs text-sm"
              placeholder="Buscar por nombre o teléfono..."
              maxlength="100" aria-label="Buscar clientes">
 
@@ -150,7 +150,7 @@ type SortCol = 'nombre' | 'registro' | 'ultimaCompra' | 'estado';
                 </td>
                 @if (puedeEditar()) {
                   <td>
-                    <button (click)="abrirEdicion(c)" class="btn-ghost text-xs px-2 py-1 inline-flex items-center gap-1">
+                    <button (click)="abrirEdicion(c)" class="btn-ghost text-xs px-2 py-1 inline-flex items-center gap-1" data-cy="btn-editar-cliente">
                       <iconify-icon icon="line-md:edit" width="14" height="14" style="color:currentColor"></iconify-icon> Editar
                     </button>
                   </td>
@@ -199,7 +199,8 @@ type SortCol = 'nombre' | 'registro' | 'ultimaCompra' | 'estado';
               <input [(ngModel)]="formCliente.nombre" class="input text-sm"
                      placeholder="Nombre completo del cliente"
                      maxlength="100" required
-                     [class.border-danger]="errNombre">
+                     [class.border-danger]="errNombre"
+                     data-cy="input-cliente-nombre">
               @if (errNombre) {
                 <p class="text-xs mt-1" style="color:rgb(var(--color-danger))">{{ errNombre }}</p>
               }
@@ -211,7 +212,8 @@ type SortCol = 'nombre' | 'registro' | 'ultimaCompra' | 'estado';
               </label>
               <input [(ngModel)]="formCliente.telefono" class="input text-sm"
                      placeholder="79xxxxxx" maxlength="15" type="tel"
-                     [class.border-danger]="errTelefono">
+                     [class.border-danger]="errTelefono"
+                     data-cy="input-cliente-telefono">
               @if (errTelefono) {
                 <p class="text-xs mt-1" style="color:rgb(var(--color-danger))">{{ errTelefono }}</p>
               }
@@ -229,7 +231,7 @@ type SortCol = 'nombre' | 'registro' | 'ultimaCompra' | 'estado';
           </div>
           <div class="flex gap-2 pt-1">
             <button (click)="cerrarModal()" class="btn-secondary flex-1 justify-center">Cancelar</button>
-            <button (click)="guardar()" [disabled]="guardando()" class="btn-primary flex-1 justify-center">
+            <button (click)="guardar()" [disabled]="guardando()" class="btn-primary flex-1 justify-center" data-cy="btn-guardar-cliente">
               @if (guardando()) {
                 <span class="w-4 h-4 rounded-full border-2 border-white/30 border-t-white animate-spin inline-block mr-2"></span>
                 Guardando…
@@ -244,7 +246,7 @@ type SortCol = 'nombre' | 'registro' | 'ultimaCompra' | 'estado';
 export class ClientesComponent implements OnInit {
   clientes     = signal<Cliente[]>([]);
   cargando     = signal(true);
-  busqueda     = '';
+  busqueda     = signal('');
   filtroEstado = signal<string>('TODOS');
   modal        = signal(false);
   guardando    = signal(false);
@@ -283,7 +285,7 @@ export class ClientesComponent implements OnInit {
     let lista = this.clientes();
     if (this.filtroEstado() !== 'TODOS')
       lista = lista.filter(c => c.estado === this.filtroEstado());
-    const q = this.busqueda.toLowerCase().trim();
+    const q = this.busqueda().toLowerCase().trim();
     if (q) lista = lista.filter(c =>
       c.nombre.toLowerCase().includes(q) || (c.telefono ?? '').includes(q)
     );

@@ -12,6 +12,7 @@ import com.restaurante.exception.NegocioException;
 import com.restaurante.exception.RecursoNoEncontradoException;
 import com.restaurante.repository.*;
 import com.restaurante.service.CierreCajaService;
+import com.restaurante.service.ConfiguracionTicketService;
 import com.restaurante.service.ProduccionService;
 import com.restaurante.service.VentaService;
 import lombok.RequiredArgsConstructor;
@@ -37,6 +38,7 @@ public class VentaServiceImpl implements VentaService {
     private final PlatoRepository platoRepository;
     private final ProduccionService produccionService;
     private final CierreCajaService cierreCajaService;
+    private final ConfiguracionTicketService configuracionTicketService;
 
     @Override
     @Transactional
@@ -73,6 +75,8 @@ public class VentaServiceImpl implements VentaService {
         double vuelto = formaPago == FormaPago.CREDITO_CUENTA ? 0.0
                 : montoRecibido - pedido.getTotal();
 
+        String numeroTicket = configuracionTicketService.siguienteNumeroTicket(pedido.getSucursal().getId());
+
         Venta venta = Venta.builder()
                 .pedido(pedido)
                 .sucursal(pedido.getSucursal())
@@ -82,6 +86,7 @@ public class VentaServiceImpl implements VentaService {
                 .formaPago(formaPago)
                 .cajero(cajero)
                 .anulada(false)
+                .numeroTicket(numeroTicket)
                 .build();
 
         ventaRepository.save(venta);

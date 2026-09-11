@@ -25,7 +25,7 @@ import { PaginationComponent } from '../../shared/components/pagination.componen
           </p>
         </div>
         <div class="flex gap-2 w-full sm:w-auto">
-          <input [(ngModel)]="busqueda" (ngModelChange)="pagina.set(1)" maxlength="100" class="input w-full sm:w-48 text-sm" placeholder="Buscar plato...">
+          <input [ngModel]="busqueda()" (ngModelChange)="busqueda.set($event); pagina.set(1)" maxlength="100" class="input w-full sm:w-48 text-sm" placeholder="Buscar plato...">
           <button (click)="abrirCrearModal()" class="btn-primary text-sm py-2 px-3 whitespace-nowrap">
             + Nuevo Plato
           </button>
@@ -252,7 +252,7 @@ export class PlatosComponent implements OnInit {
   platos       = signal<Plato[]>([]);
   categorias   = signal<CategoriaPlato[]>([]);
   cargando     = signal(true);
-  busqueda     = '';
+  busqueda     = signal('');
   tipoFiltro   = signal('TODOS');
 
   pagina       = signal(1);
@@ -306,7 +306,7 @@ export class PlatosComponent implements OnInit {
     if (this.tipoFiltro() !== 'TODOS') {
       lista = lista.filter(p => p.tipo === this.tipoFiltro());
     }
-    const q = this.busqueda.trim().toLowerCase();
+    const q = this.busqueda().trim().toLowerCase();
     if (q) {
       lista = lista.filter(p =>
         p.nombre.toLowerCase().includes(q) ||

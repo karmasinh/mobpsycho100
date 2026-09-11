@@ -25,7 +25,7 @@ import { PaginationComponent } from '../../shared/components/pagination.componen
           </p>
         </div>
         <div class="flex gap-2 w-full sm:w-auto">
-          <input [(ngModel)]="busqueda" (ngModelChange)="pagina.set(1)"
+          <input [ngModel]="busqueda()" (ngModelChange)="busqueda.set($event); pagina.set(1)"
                  class="input w-full sm:w-48 text-sm" maxlength="100"
                  placeholder="Buscar sucursal...">
           <button (click)="abrirModal()" class="btn-primary whitespace-nowrap">+ Nueva sucursal</button>
@@ -154,7 +154,7 @@ export class SucursalesComponent implements OnInit {
   guardando   = signal(false);
   error       = signal('');
 
-  busqueda    = '';
+  busqueda    = signal('');
   pagina      = signal(1);
   readonly pageSize = 10;
   sortCol     = signal<string>('');
@@ -164,7 +164,7 @@ export class SucursalesComponent implements OnInit {
 
   sucursalesFiltradas = computed(() => {
     let lista = this.sucursales();
-    const q = this.busqueda.trim().toLowerCase();
+    const q = this.busqueda().trim().toLowerCase();
     if (q) lista = lista.filter(s =>
       s.nombre.toLowerCase().includes(q) ||
       (s.direccion ?? '').toLowerCase().includes(q)

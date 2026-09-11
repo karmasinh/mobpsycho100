@@ -13,6 +13,7 @@ public interface PensionadoService {
     Pensionado registrar(PensionadoRequest request);
     Pensionado obtenerPorId(Long id);
     List<Pensionado> listarActivos();
+    List<Pensionado> listarActivos(Long sucursalId);
     void bajaVoluntaria(Long id);
     void reactivar(Long id);
 

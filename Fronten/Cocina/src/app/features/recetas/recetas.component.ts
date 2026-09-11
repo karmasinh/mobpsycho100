@@ -37,7 +37,7 @@ interface IngredienteForm {
             {{ platos().length }} registros · {{ platosSinReceta() }} platos sin receta · {{ platosConReceta() }} con receta activa
           </p>
         </div>
-        <input [(ngModel)]="busquedaPlato" (ngModelChange)="pagina.set(1)"
+        <input [ngModel]="busquedaPlato()" (ngModelChange)="busquedaPlato.set($event); pagina.set(1)"
                maxlength="100"
                class="input text-sm w-56"
                placeholder="Buscar plato...">
@@ -181,7 +181,7 @@ interface IngredienteForm {
                   <p class="font-semibold text-sm" style="color:rgb(var(--color-on-surface))">
                     Insumos disponibles
                   </p>
-                  <input [(ngModel)]="busquedaInsumo"
+                  <input [ngModel]="busquedaInsumo()" (ngModelChange)="busquedaInsumo.set($event)"
                          maxlength="100"
                          class="input text-xs"
                          placeholder="Buscar insumo...">
@@ -218,11 +218,11 @@ interface IngredienteForm {
 
                 <!-- Ingredientes seleccionados -->
                 <div class="flex-1 card flex flex-col gap-3">
-                  <div class="flex items-center justify-between">
-                    <p class="font-semibold text-sm" style="color:rgb(var(--color-on-surface))">
+                  <div class="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1">
+                    <p class="font-semibold text-sm whitespace-nowrap" style="color:rgb(var(--color-on-surface))">
                       Ingredientes de la receta
                     </p>
-                    <span class="text-xs font-mono font-bold" style="color:rgb(var(--color-primary))">
+                    <span class="text-xs font-mono font-bold whitespace-nowrap" style="color:rgb(var(--color-primary))">
                       Costo total: Bs {{ costoTotal() | number:'1.2-2' }}
                     </span>
                   </div>
@@ -424,7 +424,7 @@ export class RecetasComponent implements OnInit {
   // ── estado lista ──────────────────────────────────────────────
   platos        = signal<RecetaResumen[]>([]);
   cargando      = signal(true);
-  busquedaPlato = '';
+  busquedaPlato = signal('');
 
   pagina        = signal(1);
   readonly pageSize = 10;
@@ -433,7 +433,7 @@ export class RecetasComponent implements OnInit {
   sortDir = signal<'asc' | 'desc'>('asc');
 
   platosFiltrados = computed(() => {
-    const q = this.busquedaPlato.toLowerCase();
+    const q = this.busquedaPlato().toLowerCase();
     let lista = q
       ? this.platos().filter(p => p.platoNombre.toLowerCase().includes(q) || (p.platoCodigo ?? '').toLowerCase().includes(q))
       : this.platos();
@@ -466,10 +466,10 @@ export class RecetasComponent implements OnInit {
   // ── ingredientes ──────────────────────────────────────────────
   insumos         = signal<Insumo[]>([]);
   cargandoInsumos = signal(false);
-  busquedaInsumo  = '';
+  busquedaInsumo  = signal('');
 
   insumosFiltrados = computed(() => {
-    const q = this.busquedaInsumo.toLowerCase();
+    const q = this.busquedaInsumo().toLowerCase();
     return q
       ? this.insumos().filter(i => i.nombre.toLowerCase().includes(q))
       : this.insumos();

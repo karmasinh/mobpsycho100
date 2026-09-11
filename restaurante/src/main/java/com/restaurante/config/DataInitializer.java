@@ -111,6 +111,8 @@ public class DataInitializer implements CommandLineRunner {
         guardarModulo("MOD_ALERTAS_VENTAS",    "Centro de alertas",  "tabler:bell",             "/ventas/alertas",          ventas, 20, "VENTAS");
         guardarModulo("MOD_REPORTES",          "Reportes",           "tabler:chart-bar",        "/ventas/reportes",         ventas, 21, "VENTAS");
         guardarModulo("MOD_APROBACIONES",      "Aprobaciones",       "tabler:circle-check",     "/ventas/aprobaciones",     ventas, 22, "VENTAS");
+        guardarModulo("MOD_CONFIG_TICKET",     "Ticket de venta",    "tabler:receipt",          "/ventas/config-ticket",   ventas, 23, "VENTAS");
+        guardarModulo("MOD_FACTURACION",       "Facturación",        "tabler:file-invoice",     "/ventas/facturacion",     ventas, 24, "VENTAS");
 
         // ── ADMIN ─────────────────────────────────────────────────
         ModuloMenu admin = guardarModulo("MOD_ADMIN", "Administración", "tabler:settings", "/admin", null, 20, "ADMIN");
@@ -175,6 +177,7 @@ public class DataInitializer implements CommandLineRunner {
                     "MOD_PENSIONADOS","MOD_COBROS","MOD_ASISTENCIA",
                     "MOD_TIPOS_ALMUERZO","MOD_CATEGORIAS_PLATO",
                     "MOD_HISTORIAL_VENTAS","MOD_ALERTAS_VENTAS","MOD_REPORTES","MOD_APROBACIONES",
+                    "MOD_CONFIG_TICKET","MOD_FACTURACION",
                     // Admin
                     "MOD_ADMIN","MOD_EMPLEADOS","MOD_ROLES","MOD_USUARIOS",
                     "MOD_SUCURSALES","MOD_AUDITORIA","MOD_ALERTAS_SISTEMA","MOD_MODULOS"
@@ -203,14 +206,14 @@ public class DataInitializer implements CommandLineRunner {
                 List.of("MOD_VENTAS","MOD_CAJA","MOD_PEDIDOS_VENTAS","MOD_CLIENTES",
                         "MOD_PENSIONADOS","MOD_COBROS","MOD_ASISTENCIA",
                         "MOD_TIPOS_ALMUERZO","MOD_HISTORIAL_VENTAS","MOD_ALERTAS_VENTAS",
-                        "MOD_APROBACIONES"),
+                        "MOD_APROBACIONES","MOD_CONFIG_TICKET","MOD_FACTURACION"),
                 "Cajero: ventas, clientes, pensionados");
 
         crearRolConModulos("VENDEDOR",
                 List.of("MOD_VENTAS","MOD_CAJA","MOD_PEDIDOS_VENTAS","MOD_CLIENTES",
                         "MOD_PENSIONADOS","MOD_COBROS","MOD_ASISTENCIA",
                         "MOD_TIPOS_ALMUERZO","MOD_HISTORIAL_VENTAS","MOD_ALERTAS_VENTAS",
-                        "MOD_APROBACIONES"),
+                        "MOD_APROBACIONES","MOD_CONFIG_TICKET","MOD_FACTURACION"),
                 "Vendedor: ventas, clientes, pensionados");
 
         crearRolConModulos("GERENTE_SUCURSAL",
@@ -218,7 +221,8 @@ public class DataInitializer implements CommandLineRunner {
                         "MOD_PENSIONADOS","MOD_COBROS","MOD_ASISTENCIA",
                         "MOD_TIPOS_ALMUERZO","MOD_CATEGORIAS_PLATO",
                         "MOD_HISTORIAL_VENTAS","MOD_ALERTAS_VENTAS","MOD_REPORTES",
-                        "MOD_EMPLEADOS","MOD_ALERTAS_SISTEMA","MOD_APROBACIONES"),
+                        "MOD_EMPLEADOS","MOD_ALERTAS_SISTEMA","MOD_APROBACIONES","MOD_CONFIG_TICKET",
+                        "MOD_FACTURACION"),
                 "Gerente de sucursal con acceso a reportes");
 
         crearRolConModulos("PENSIONADO",

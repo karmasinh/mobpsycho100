@@ -8,18 +8,24 @@ export interface VentasThemeInfo {
   nombre: string;
   descripcion: string;
   emoji: string;
+  color: string;
 }
 
 @Injectable({ providedIn: 'root' })
 export class ThemeService {
 
   readonly THEMES: VentasThemeInfo[] = [
-    { id: 'entrerriana', nombre: 'Entrerriana', descripcion: 'La Entrerriana — verde, dorado y crema', emoji: '🌿' },
-    { id: 'lila',        nombre: 'Lila',        descripcion: 'Violeta suave — elegante y moderno',     emoji: '💜' },
-    { id: 'celeste',     nombre: 'Celeste',     descripcion: 'Azul cielo — fresco y profesional',       emoji: '🩵' },
-    { id: 'noche',       nombre: 'Noche',       descripcion: 'Oscuro profundo — moderno y contrastado', emoji: '🌙' },
-    { id: 'rosa',        nombre: 'Rosa',        descripcion: 'Cálido y acogedor — pensión familiar',    emoji: '🌸' },
+    { id: 'entrerriana', nombre: 'Entrerriana', descripcion: 'La Entrerriana — verde, dorado y crema', emoji: '🌿', color: '#C49A5A' },
+    { id: 'lila',        nombre: 'Lila',        descripcion: 'Violeta suave — elegante y moderno',     emoji: '💜', color: '#7C3AED' },
+    { id: 'celeste',     nombre: 'Celeste',     descripcion: 'Azul cielo — fresco y profesional',       emoji: '🩵', color: '#0EA5E9' },
+    { id: 'noche',       nombre: 'Noche',       descripcion: 'Oscuro profundo — moderno y contrastado', emoji: '🌙', color: '#8B5CF6' },
+    { id: 'rosa',        nombre: 'Rosa',        descripcion: 'Cálido y acogedor — pensión familiar',    emoji: '🌸', color: '#EC4899' },
   ];
+
+  /** Color principal de un tema, para el cuadradito del selector de apariencia. */
+  colorFor(id: string): string {
+    return this.THEMES.find(t => t.id === id)?.color ?? '#999';
+  }
 
   private readonly THEME_KEY = 'restaurante-ventas-theme';
 

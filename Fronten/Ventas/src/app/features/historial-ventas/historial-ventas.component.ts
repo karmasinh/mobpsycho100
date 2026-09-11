@@ -1,9 +1,10 @@
 import { Component, OnInit, signal, computed, CUSTOM_ELEMENTS_SCHEMA } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { VentaService, SolicitudAprobacionService } from '../../core/services/api.service';
+import { VentaService, SolicitudAprobacionService, ConfiguracionTicketService, FacturacionService } from '../../core/services/api.service';
 import { AuthService } from '../../core/services/auth.service';
 import { ToastService } from '../../core/services/toast.service';
+import { TicketPrintService } from '../../core/services/ticket-print.service';
 import { PaginationComponent } from '../../shared/components/pagination.component';
 import { Venta } from '../../core/models';
 
@@ -37,7 +38,7 @@ type SortCol = 'fecha' | 'total' | 'formaPago' | 'estado';
           <label class="input-label">Hasta *</label>
           <input type="date" [(ngModel)]="hasta" class="input" [min]="desde" [max]="hoyStr()">
         </div>
-        <button (click)="buscar()" [disabled]="cargando()" class="btn-primary">
+        <button (click)="buscar()" [disabled]="cargando()" class="btn-primary" data-cy="btn-buscar-historial">
           @if (cargando()) {
             <span class="w-4 h-4 rounded-full border-2 border-white/30 border-t-white animate-spin inline-block"></span>
           } @else { <iconify-icon icon="line-md:search" width="16" height="16" style="color:currentColor"></iconify-icon> }
@@ -87,7 +88,7 @@ type SortCol = 'fecha' | 'total' | 'formaPago' | 'estado';
       <!-- Tabla -->
       <div class="card space-y-3">
         <div class="flex flex-wrap items-center gap-3 justify-between">
-          <input [(ngModel)]="busqueda" class="input w-56 text-sm"
+          <input [ngModel]="busqueda()" (ngModelChange)="busqueda.set($event)" class="input w-56 text-sm"
                  placeholder="Buscar por cliente, cajero..."
                  maxlength="100">
           <div class="flex gap-2">
@@ -202,11 +203,26 @@ type SortCol = 'fecha' | 'total' | 'formaPago' | 'estado';
                                 title="Ver detalle">
                           <iconify-icon icon="tabler:eye" width="16" height="16" style="color:currentColor"></iconify-icon>
                         </button>
+                        @if (!v.anulada) {
+                          <button (click)="reimprimir(v)"
+                                  class="btn-ghost text-xs px-2 py-1"
+                                  title="Reimprimir ticket">
+                            <iconify-icon icon="tabler:printer" width="16" height="16" style="color:currentColor"></iconify-icon>
+                          </button>
+                        }
                         @if (!v.anulada && puedeAnular()) {
                           <button (click)="abrirAnular(v)"
                                   class="btn-ghost text-xs px-2 py-1 text-danger"
                                   [title]="esAdmin() ? 'Anular venta' : 'Solicitar anulación'">
                             <iconify-icon icon="line-md:close" width="16" height="16" style="color:currentColor"></iconify-icon>
+                          </button>
+                        }
+                        @if (!v.anulada) {
+                          <button (click)="abrirFacturar(v)"
+                                  class="btn-ghost text-xs px-2 py-1"
+                                  title="Emitir factura (cimientos — sin conexión real al SIN)"
+                                  data-cy="btn-abrir-facturar">
+                            <iconify-icon icon="tabler:file-invoice" width="16" height="16" style="color:currentColor"></iconify-icon>
                           </button>
                         }
                       </div>
@@ -388,6 +404,48 @@ type SortCol = 'fecha' | 'total' | 'formaPago' | 'estado';
         </div>
       </div>
     }
+
+    <!-- ── Modal emitir factura (cimientos — sin conexión real al SIN) ──── -->
+    @if (modalFacturar()) {
+      <div class="fixed inset-0 z-50 flex items-center justify-center p-4"
+           style="background:rgba(0,0,0,0.5)">
+        <div class="card max-w-sm w-full space-y-4 animate-pop">
+          <h3 class="font-display font-bold text-lg inline-flex items-center gap-2" style="color:rgb(var(--color-on-surface))">
+            <iconify-icon icon="tabler:file-invoice" width="20" height="20" style="color:currentColor"></iconify-icon>
+            Emitir factura — venta #{{ ventaFacturar()?.id }}
+          </h3>
+          <p class="text-xs p-2.5 rounded-lg" style="background:rgb(var(--color-warning)/0.1);color:rgb(var(--color-warning))">
+            Cimientos: se genera el XML localmente y queda PENDIENTE. No hay conexión real al SIN.
+          </p>
+          <div>
+            <label class="input-label">NIT o CI del cliente *</label>
+            <input [(ngModel)]="facturaNit" class="input w-full text-sm" maxlength="20" placeholder="0 para consumidor final" data-cy="input-factura-nit">
+          </div>
+          <div>
+            <label class="input-label">Razón social / nombre *</label>
+            <input [(ngModel)]="facturaRazonSocial" class="input w-full text-sm" maxlength="200" placeholder="Consumidor final" data-cy="input-factura-razon-social">
+          </div>
+          <div>
+            <label class="input-label">Correo (opcional)</label>
+            <input [(ngModel)]="facturaCorreo" type="email" class="input w-full text-sm" maxlength="150" placeholder="cliente@correo.com">
+          </div>
+          @if (errFacturar()) {
+            <p class="text-xs" style="color:rgb(var(--color-danger))">{{ errFacturar() }}</p>
+          }
+          <div class="flex gap-2">
+            <button (click)="modalFacturar.set(false)" class="btn-secondary flex-1 justify-center" [disabled]="procesandoFactura()">
+              Cancelar
+            </button>
+            <button (click)="confirmarFacturar()" class="btn-primary flex-1 justify-center" [disabled]="procesandoFactura()" data-cy="btn-confirmar-facturar">
+              @if (procesandoFactura()) {
+                <span class="w-4 h-4 rounded-full border-2 border-white/30 border-t-white animate-spin inline-block"></span>
+              }
+              Emitir factura
+            </button>
+          </div>
+        </div>
+      </div>
+    }
   `,
 })
 export class HistorialVentasComponent implements OnInit {
@@ -399,7 +457,7 @@ export class HistorialVentasComponent implements OnInit {
 
   desde = '';
   hasta = '';
-  busqueda = '';
+  busqueda = signal('');
 
   filtroEstado = signal<'' | 'vigente' | 'anulada'>('');
   sortCol      = signal<SortCol | ''>('fecha');
@@ -413,9 +471,20 @@ export class HistorialVentasComponent implements OnInit {
   motivoAnulacion = '';
   errMotivo    = signal('');
 
+  modalFacturar    = signal(false);
+  ventaFacturar    = signal<Venta | null>(null);
+  procesandoFactura = signal(false);
+  errFacturar      = signal('');
+  facturaNit          = '';
+  facturaRazonSocial  = '';
+  facturaCorreo       = '';
+
   constructor(
     private ventaService: VentaService,
     private solicitudService: SolicitudAprobacionService,
+    private configuracionTicketService: ConfiguracionTicketService,
+    private facturacionService: FacturacionService,
+    private ticketPrint: TicketPrintService,
     public auth: AuthService,
     private toastSvc: ToastService,
   ) {}
@@ -481,7 +550,7 @@ export class HistorialVentasComponent implements OnInit {
     if (this.filtroEstado() === 'vigente') list = list.filter(v => !v.anulada);
     if (this.filtroEstado() === 'anulada') list = list.filter(v => v.anulada);
 
-    const q = this.busqueda.toLowerCase().trim();
+    const q = this.busqueda().toLowerCase().trim();
     if (q) {
       list = list.filter(v =>
         v.cajero?.username?.toLowerCase().includes(q) ||
@@ -545,6 +614,23 @@ export class HistorialVentasComponent implements OnInit {
     });
   }
 
+  reimprimir(v: Venta): void {
+    const sucursalId = this.auth.sucursalActiva();
+    if (sucursalId == null) {
+      this.toastSvc.error('Selecciona una sucursal antes de reimprimir.');
+      return;
+    }
+    this.ventaService.obtener(v.id).subscribe({
+      next: detalle => {
+        this.configuracionTicketService.obtener(sucursalId).subscribe({
+          next: config => this.ticketPrint.imprimir(detalle, config),
+          error: () => this.toastSvc.error('No se pudo cargar la configuración del ticket'),
+        });
+      },
+      error: () => this.toastSvc.error('No se pudo cargar la venta'),
+    });
+  }
+
   abrirAnular(v: Venta): void {
     this.ventaAnular.set(v);
     this.motivoAnulacion = '';
@@ -594,6 +680,43 @@ export class HistorialVentasComponent implements OnInit {
         },
       });
     }
+  }
+
+  abrirFacturar(v: Venta): void {
+    this.ventaFacturar.set(v);
+    this.facturaNit = '';
+    this.facturaRazonSocial = '';
+    this.facturaCorreo = '';
+    this.errFacturar.set('');
+    this.modalFacturar.set(true);
+  }
+
+  confirmarFacturar(): void {
+    if (!this.facturaNit.trim()) {
+      this.errFacturar.set('El NIT o CI es obligatorio (usá 0 si no lo da)');
+      return;
+    }
+    if (!this.facturaRazonSocial.trim()) {
+      this.errFacturar.set('La razón social o nombre es obligatorio');
+      return;
+    }
+    const ventaId = this.ventaFacturar()!.id;
+    this.procesandoFactura.set(true);
+    this.facturacionService.emitir(ventaId, {
+      nitCliente: this.facturaNit.trim(),
+      razonSocialCliente: this.facturaRazonSocial.trim(),
+      correoCliente: this.facturaCorreo.trim() || null,
+    }).subscribe({
+      next: f => {
+        this.procesandoFactura.set(false);
+        this.modalFacturar.set(false);
+        this.toastSvc.success(`Factura #${f.numeroFactura} emitida — queda PENDIENTE (cimientos, sin envío real al SIN)`);
+      },
+      error: err => {
+        this.procesandoFactura.set(false);
+        this.errFacturar.set(err?.error?.mensaje ?? 'No se pudo emitir la factura');
+      },
+    });
   }
 
   fpLabel(fp: string): string {

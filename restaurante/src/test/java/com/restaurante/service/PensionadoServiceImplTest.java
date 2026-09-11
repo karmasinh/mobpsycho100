@@ -5,6 +5,7 @@ import com.restaurante.dto.request.PensionadoRequest;
 import com.restaurante.entity.CobroMensual;
 import com.restaurante.entity.Pensionado;
 import com.restaurante.entity.Rol;
+import com.restaurante.entity.Sucursal;
 import com.restaurante.entity.TipoAlmuerzo;
 import com.restaurante.exception.NegocioException;
 import com.restaurante.repository.*;
@@ -35,6 +36,7 @@ class PensionadoServiceImplTest {
     @Mock private TipoAlmuerzoRepository tipoAlmuerzoRepository;
     @Mock private UsuarioRepository usuarioRepository;
     @Mock private RolRepository rolRepository;
+    @Mock private SucursalRepository sucursalRepository;
     @Mock private PasswordEncoder passwordEncoder;
 
     private PensionadoServiceImpl pensionadoService;
@@ -45,10 +47,11 @@ class PensionadoServiceImplTest {
     void setUp() {
         pensionadoService = new PensionadoServiceImpl(
                 pensionadoRepository, asistenciaRepository, cobroMensualRepository,
-                tipoAlmuerzoRepository, usuarioRepository, rolRepository, passwordEncoder);
+                tipoAlmuerzoRepository, usuarioRepository, rolRepository, sucursalRepository, passwordEncoder);
 
         TipoAlmuerzo tipo = TipoAlmuerzo.builder().id(1L).nombre("Completo").precioMensual(100.0).build();
-        pensionado = Pensionado.builder().id(20L).tipoAlmuerzo(tipo).saldoPendiente(15.0).build();
+        Sucursal sucursal = Sucursal.builder().id(1L).nombre("Casa Matriz").build();
+        pensionado = Pensionado.builder().id(20L).tipoAlmuerzo(tipo).sucursal(sucursal).saldoPendiente(15.0).build();
     }
 
     @Test
@@ -92,6 +95,7 @@ class PensionadoServiceImplTest {
         request.setNombre("Ana"); request.setApellido("Gómez"); request.setCedula("1234567");
         request.setTelefono(""); request.setCorreo("");
         request.setTipoAlmuerzoId(1L);
+        request.setSucursalId(1L);
         request.setFechaInscripcion(java.time.LocalDate.now());
         request.setUsernamePersonalizado("ana.test");
         request.setPasswordInicial("Clave123!");
@@ -99,6 +103,8 @@ class PensionadoServiceImplTest {
         when(pensionadoRepository.existsByCedula("1234567")).thenReturn(false);
         when(tipoAlmuerzoRepository.findById(1L)).thenReturn(Optional.of(
                 TipoAlmuerzo.builder().id(1L).nombre("Completo").precioMensual(100.0).build()));
+        when(sucursalRepository.findById(1L)).thenReturn(Optional.of(
+                Sucursal.builder().id(1L).nombre("Casa Matriz").build()));
         when(pensionadoRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
         when(rolRepository.findByNombre("PENSIONADO")).thenReturn(Optional.of(Rol.builder().id(1L).nombre("PENSIONADO").build()));
         when(usuarioRepository.existsByUsername("ana.test")).thenReturn(false);
@@ -110,6 +116,32 @@ class PensionadoServiceImplTest {
         assertThat(creado.getCorreo()).isNull();
         verify(pensionadoRepository, never()).existsByTelefono(anyString());
         verify(pensionadoRepository, never()).existsByCorreo(anyString());
+    }
+
+    @Test
+    void registrar_rechazaSinSucursal() {
+        PensionadoRequest request = new PensionadoRequest();
+        request.setNombre("Ana"); request.setApellido("Gómez"); request.setCedula("1234567");
+        request.setTipoAlmuerzoId(1L);
+        request.setFechaInscripcion(java.time.LocalDate.now());
+        request.setUsernamePersonalizado("ana.test");
+        request.setPasswordInicial("Clave123!");
+
+        when(pensionadoRepository.existsByCedula("1234567")).thenReturn(false);
+
+        assertThrows(NegocioException.class, () -> pensionadoService.registrar(request));
+    }
+
+    @Test
+    void listarActivos_filtraPorSucursalCuandoSeIndica() {
+        pensionadoService.listarActivos(1L);
+        verify(pensionadoRepository).findByEstadoAndSucursal_Id(com.restaurante.enums.EstadoPensionado.ACTIVO, 1L);
+    }
+
+    @Test
+    void listarActivos_sinSucursalListaTodos() {
+        pensionadoService.listarActivos(null);
+        verify(pensionadoRepository).findByEstado(com.restaurante.enums.EstadoPensionado.ACTIVO);
     }
 
     @Test

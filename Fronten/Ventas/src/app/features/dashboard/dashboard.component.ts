@@ -235,7 +235,7 @@ interface DiaTendencia { etiqueta: string; total: number; }
                 @for (c of listaCobros().slice(0,5); track c.id) {
                   <tr>
                     <td class="font-medium">
-                      {{ c.pensionado.nombre }} {{ c.pensionado.apellido }}
+                      {{ c.pensionadoNombre }} {{ c.pensionadoApellido }}
                     </td>
                     <td class="font-mono text-xs">{{ c.mes }}/{{ c.anio }}</td>
                     <td class="font-mono font-semibold">Bs {{ c.totalCobrado | number:'1.2-2' }}</td>

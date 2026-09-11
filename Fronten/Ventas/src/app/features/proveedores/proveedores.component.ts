@@ -25,7 +25,7 @@ import { PaginationComponent } from '../../shared/components/pagination.componen
           </p>
         </div>
         <div class="flex gap-2 w-full sm:w-auto">
-          <input [(ngModel)]="busqueda" (ngModelChange)="pagina.set(1)"
+          <input [ngModel]="busqueda()" (ngModelChange)="busqueda.set($event); pagina.set(1)"
                  class="input w-full sm:w-52 text-sm" maxlength="100"
                  placeholder="Buscar proveedor...">
           <button (click)="abrirModal()" class="btn-primary whitespace-nowrap">+ Nuevo</button>
@@ -203,7 +203,7 @@ import { PaginationComponent } from '../../shared/components/pagination.componen
 export class ProveedoresComponent implements OnInit {
   proveedores = signal<Proveedor[]>([]);
   cargando    = signal(true);
-  busqueda    = '';
+  busqueda    = signal('');
   modal       = signal(false);
   editandoId  = signal<number | null>(null);
   guardando   = signal(false);
@@ -219,7 +219,7 @@ export class ProveedoresComponent implements OnInit {
   activos   = computed(() => this.proveedores().filter(p => p.activo).length);
 
   filtrados = computed(() => {
-    const q = this.busqueda.trim().toLowerCase();
+    const q = this.busqueda().trim().toLowerCase();
     let lista = q
       ? this.proveedores().filter(p =>
           p.nombre.toLowerCase().includes(q) ||

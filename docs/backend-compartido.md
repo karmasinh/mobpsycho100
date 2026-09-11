@@ -2,7 +2,7 @@
 
 ## Propósito y evidencia
 
-Este documento describe el backend que atiende a los frontends Cocina y Ventas. La revisión se realizó sobre `SistemaDesk/SistemaDesk/restaurante`, sus controladores, servicios, entidades, rutas consumidoras y pruebas existentes. El estado es una revisión estática del código; debe cerrarse con pruebas de integración y autorización.
+Este documento describe el backend que atiende a los frontends Cocina y Ventas. La revisión se realizó sobre `SistemaDesk/SistemaDesk/restaurante`, sus controladores, servicios, entidades, rutas consumidoras y pruebas existentes. El estado es una revisión estática del código combinada con ejecución real de la suite de pruebas (`mvn test`, ver sección Verificación).
 
 ## Unidad del proyecto
 
@@ -13,66 +13,73 @@ El código no se divide por proyecto académico: existe una sola API, una sola b
 Spring Boot 3.2.5 con Java 17, Spring Web, JPA, Security, Validation y WebSocket/STOMP. La persistencia usa PostgreSQL y JWT protege la API. El flujo principal es:
 
 ```text
-Angular Cocina/Ventas → HttpClient + Bearer JWT → Controller
+Angular Cocina/Ventas (web :4200/:4201, o app móvil Capacitor) → HttpClient + Bearer JWT → Controller
 → Service → Repository/JPA → PostgreSQL
                                    └→ evento STOMP para pedidos
 ```
 
-Entrada principal: `src/main/java/com/restaurante/controller`. La lógica está en `service/impl`, el acceso en `repository`, el dominio en `entity` y los contratos en `dto`.
+Entrada principal: `src/main/java/com/restaurante/controller`. La lógica está en `service/impl`, el acceso en `repository`, el dominio en `entity` y los contratos en `dto`. Autorización combina roles fijos (`hasRole`/`hasAnyRole`) con permisos dinámicos por módulo (`@perm.tiene(authentication, 'MOD_X')`, resuelto por `PermisoEvaluator` contra `UserDetailsImpl.getModulos()` reconstruido en cada request desde la base — el JWT solo lleva el claim `modulos` de forma informativa para el menú del frontend).
 
 ## Cobertura por dominio
 
 | Dominio | Controladores y capacidades | Estado |
 |---|---|---|
-| Seguridad y administración | `Auth`, `Empleado`, `Rol`, `ModuloMenu`, `Sucursal`, `Auditoria`, `Alerta` | IMPLEMENTADO_CON_BRECHA |
-| Cocina | `CategoriaInsumo`, `Insumo`, `Inventario`, `Plato`, `Receta`, `Produccion`, `Pedido` | IMPLEMENTADO_CON_BRECHA |
-| Ventas | `Cliente`, `Pedido`, `Venta`, `CierreCaja` | IMPLEMENTADO_CON_BRECHA |
-| Pensionados | `Pensionado`, `TipoAlmuerzoPensionados` | IMPLEMENTADO_CON_BRECHA |
-| Compartido | `Proveedor`, disponibilidad de producción, WebSocket y tareas programadas | IMPLEMENTADO_CON_BRECHA |
+| Seguridad y administración | `Auth`, `Empleado`, `Rol`, `ModuloMenu`, `Sucursal`, `Auditoria`, `Alerta` | IMPLEMENTADO |
+| Cocina | `CategoriaInsumo`, `Insumo`, `Inventario`, `Plato`, `Receta`, `Produccion`, `Pedido` | IMPLEMENTADO |
+| Ventas | `Cliente`, `Pedido`, `Venta`, `CierreCaja`, `SolicitudAprobacion` | IMPLEMENTADO |
+| Pensionados | `Pensionado`, `TipoAlmuerzoPensionados` | IMPLEMENTADO |
+| Compartido | `Proveedor`, disponibilidad de producción, WebSocket y tareas programadas | IMPLEMENTADO |
 
-No se encontró un módulo principal del frontend sin controlador correspondiente. Las brechas son de cumplimiento y seguridad, no necesariamente de ausencia de endpoints.
+No se encontró un módulo principal del frontend sin controlador correspondiente. Ver "Pendientes" al final para las brechas puntuales que sí siguen abiertas.
 
 ## Flujos implementados
 
-- Login devuelve JWT, sistema (`COCINA`, `VENTAS`, `ADMIN`), roles y contexto de usuario.
-- Cocina registra lotes, stock, mermas, recetas y producción; la producción puede consumir insumos por FEFO.
-- Ventas crea pedidos, cobra, anula ventas, gestiona caja, pensionados, asistencia y reportes.
+- Login devuelve JWT, sistema (`COCINA`, `VENTAS`, `ADMIN`), roles, módulos y contexto de usuario.
+- Cocina registra lotes, stock, mermas, recetas y producción; la producción consume insumos por FEFO con conversión de unidades unificada (`UnidadConversionService` contra el catálogo real `UnidadMedida`, ya no una lista hardcodeada separada).
+- Ventas crea pedidos, cobra (exige turno de caja abierto), gestiona caja, pensionados, asistencia y reportes/dashboards por rol.
+- **Flujo de solicitud → aprobación**: anulación de venta y reversión de movimiento de caja por roles no-ADMIN pasan por `SolicitudAprobacionController` (solicitar/aprobar/rechazar) en vez de ejecutarse directo; `ADMIN` sigue pudiendo anular/revertir directo.
 - Los pedidos publican eventos STOMP y la disponibilidad producida se comparte entre ambos frontends.
-- Schedulers generan cobros mensuales, alertas de inventario y cambios automáticos de estado.
+- Schedulers generan cobros mensuales, bajas automáticas de pensionados, alertas de inventario y degradación de fidelidad de clientes.
+
+## App móvil (Android, Capacitor)
+
+Ambos frontends se empaquetan también como app Android nativa vía Capacitor (`Fronten/Ventas/android/`, `Fronten/Cocina/android/`), sin librería de componentes Ionic — reutilizan el mismo sistema de diseño web (Tailwind + tokens CSS). Sesión migrada a `@capacitor/preferences` con cache en memoria para uso síncrono en el interceptor HTTP. Probado en emulador Android (`Medium_Phone_API_36.0`) con `adb reverse tcp:8080 tcp:8080` para alcanzar el backend local; en dispositivo físico se usa la misma técnica o la IP LAN configurada en `environment.mobile.ts`.
 
 ## Información recuperada de la documentación que acompaña al software
 
-`docs/DOCUMENTACION.md` registra cinco fases funcionales que deben conservarse como contexto al actualizar los análisis:
+`docs/DOCUMENTACION.md` registra cinco fases funcionales que deben conservarse como contexto histórico:
 
 1. **Fase 1:** multisucursal, receta→insumo, cobro automático de pensionados y disponibilidad producida.
 2. **Fase 2:** cierre de caja por turno y tiempo real Cocina↔Ventas mediante WebSocket/STOMP.
 3. **Fase 3:** costo promedio ponderado, rentabilidad por plato y comparativo entre sucursales.
 4. **Fase 4:** datos semilla, ingresos/retiros de caja, comanda impresa, notificación en Cocina e inventario por sucursal.
-5. **Fase 5:** permisos dinámicos reales por módulo y 20 pruebas unitarias de servicios.
+5. **Fase 5:** permisos dinámicos reales por módulo y pruebas unitarias de servicios.
 
-Estas fases explican por qué un caso puede tener endpoint y UI, pero todavía conservar una brecha de seguridad, prueba o regla de negocio.
+Fases posteriores no documentadas en `DOCUMENTACION.md` (agregadas directamente en este documento y en los backlogs de cada proyecto): app móvil Capacitor, migración de íconos a Iconify, flujo de solicitud/aprobación de reversiones, dashboards BI por rol, matriz de permisos con pruebas reales (`PermisoMatrizTest`), primera batería de pruebas de frontend (Jasmine/Karma) en ambos proyectos.
 
-## Divergencias que deben quedar visibles
+## Divergencias ya resueltas (constaban como abiertas en la revisión de 2026-09-09)
 
-- La tabla histórica de puertos en `DOCUMENTACION.md` está invertida respecto a los `package.json` actuales: Cocina usa 4200 y Ventas 4201.
-- La documentación histórica contempla una aplicación móvil Android, pero no existe un frontend móvil dentro de este código; debe confirmarse o retirarse del alcance.
-- Gemini se invoca directamente desde el frontend mediante una clave de entorno; si se mantiene la funcionalidad, debe evaluarse su traslado al backend.
-- El cierre de caja está implementado como control adicional y no bloquea ventas sin turno abierto; esa decisión debe aprobarse como regla de negocio.
+- ~~La documentación histórica contempla una aplicación móvil Android, pero no existe un frontend móvil~~ → **Resuelto**: app móvil Capacitor implementada y probada en emulador para ambos proyectos.
+- La tabla histórica de puertos en `DOCUMENTACION.md` sigue invertida respecto a los `package.json` actuales: Cocina usa 4200 y Ventas 4201 (no corregida en el documento histórico, se deja como nota permanente).
+- Gemini se sigue invocando desde el frontend con una clave de entorno; no se trasladó al backend en este período — sigue como pendiente (ver más abajo).
+- ~~El cierre de caja no bloquea ventas sin turno abierto~~ → **Resuelto**: `VentaServiceImpl.cobrar` ahora exige un turno `ABIERTO` en la sucursal del pedido antes de crear la `Venta` (decisión de negocio documentada en `Alison Docs/documentacion/borrador/10_BACKLOG_Y_CAMBIOS.md`).
 
-## Pendientes prioritarios para cubrir ambos frontends
+## Pendientes prioritarios (revisados 2026-09-11)
 
-| Prioridad | Brecha verificable | Trabajo requerido |
+| Prioridad | Estado anterior | Estado actual |
 |---|---|---|
-| Crítica | Varias rutas de `PedidoController` sólo usan `isAuthenticated()` | Validar rol, sucursal efectiva y transición permitida por ID/estado. |
-| Crítica | Consultas de producción, platos, sucursales, proveedores, alertas y pensionados tienen lecturas amplias | Aplicar autorización y aislamiento por sucursal donde corresponda. |
-| Crítica | Producción permite escenarios que la especificación aún restringe | Decidir y validar receta activa, cantidad planificada, stock insuficiente y estados. |
-| Alta | `VentaServiceImpl` no exige turno abierto para vender | Confirmar la regla; si se aprueba, bloquear el cobro sin caja abierta. |
-| Alta | Alertas y auditoría no están uniformemente limitadas por sucursal | Probar filtros, lectura, marcado y cobertura de eventos. |
-| Alta | Inicializadores de datos pueden duplicar responsabilidades | Revisar `DatosSemillaRunner`/`DataInitializer` y dejar una fuente única. |
-| Alta | Pruebas actuales cubren servicios, no todos los contratos HTTP | Añadir integración, seguridad, sucursal y concurrencia para cada caso crítico. |
+| Producción permitía escenarios sin restricción de receta/cantidad | Crítica | **Resuelto**: `ProduccionServiceImpl` valida receta activa y `cantidadProducida <= cantidadPlanificada`, con conversión de unidades correcta antes de descontar insumos. |
+| `VentaServiceImpl` no exigía turno abierto | Alta | **Resuelto** (ver arriba). |
+| Inicializadores de datos podían duplicar responsabilidades | Alta | **Resuelto**: `@Order` explícito agregado a `InventarioSucursalBackfillRunner`/`VentaSucursalBackfillRunner`, después de `DataInitializer`/`DatosPruebaRunner`. |
+| Catálogo de unidades duplicado (`UnidadConversionService` vs. `DataInitializer`) | Media | **Resuelto**: `UnidadConversionService` consulta `UnidadMedidaRepository`, ya no mantiene una lista `ALIAS` propia (5 tests en `UnidadConversionServiceTest`). |
+| Normalización de campos opcionales únicos (`Cliente`/`Pensionado` `telefono`/`correo`) | — | **Resuelto** (AUD-A-030, AUD-A-031): `""` se normaliza a `null` antes de validar duplicados y persistir, en ambos controllers/servicios. |
+| Pruebas cubrían servicios, no todos los contratos HTTP | Alta | **Parcialmente resuelto**: se agregaron `CategoriaPlatoControllerSecurityTest` (primer `@WebMvcTest` del proyecto, ejercita `@PreAuthorize` real), `ClienteControllerTest`, `TipoAlmuerzoPensionadosControllerTest`, `PermisoMatrizTest` (274 casos rol×módulo). Sigue faltando cobertura `@WebMvcTest` para la mayoría de los ~24 controllers restantes. |
+| Alertas y auditoría no uniformemente limitadas por sucursal | Alta | **Resuelto** (AUD-A-028): `AuditoriaLog` tiene `sucursal_id` poblado en los puntos de escritura relevantes; `listar()`/`porEntidad()`/`porUsuario()` filtran vía `SucursalAccessService`. |
+| Rutas de `PedidoController` con autorización débil (`isAuthenticated()` desnudo) | Crítica | **Sin verificar en este período** — no se auditó puntualmente en las últimas rondas; revisar antes de cerrar. |
+| Gemini invocado desde frontend con clave de entorno expuesta | — | **Sigue abierto** — no se trasladó al backend. |
 
-## Verificación recomendada
+## Verificación
 
-Ejecutar desde `SistemaDesk/SistemaDesk/restaurante`: `mvn test` para pruebas existentes y `mvn clean verify` como compuerta completa. Cada resultado debe enlazarse a `CU-L-*` o `CU-A-*`, a la auditoría correspondiente y a una evidencia reproducible.
+Desde `SistemaDesk/SistemaDesk/restaurante`: `mvn test` para pruebas existentes y `mvn clean verify` como compuerta completa.
 
-**Verificación realizada el 2026-09-09:** `mvn test` terminó con 20 pruebas ejecutadas, 0 fallos, 0 errores y `BUILD SUCCESS`. Esto valida servicios seleccionados, no todos los contratos HTTP ni el aislamiento por sucursal.
+**Verificación realizada el 2026-09-11:** `mvn test` terminó con **378 pruebas ejecutadas, 0 fallos, 0 errores** y `BUILD SUCCESS` (frente a las 20 pruebas registradas en la revisión de 2026-09-09 — el salto se explica por la matriz de permisos, las pruebas de solicitud de aprobación, venta, cierre de caja, producción, conversión de unidades y los controllers nuevos). Esto sigue sin cubrir todos los contratos HTTP (ver tabla de pendientes) ni una auditoría de concurrencia exhaustiva.

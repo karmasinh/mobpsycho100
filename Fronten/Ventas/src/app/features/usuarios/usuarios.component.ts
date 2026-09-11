@@ -24,7 +24,7 @@ import { PaginationComponent } from '../../shared/components/pagination.componen
             {{ empleados().length }} registros · Gestión de empleados y sus accesos
           </p>
         </div>
-        <input [(ngModel)]="busqueda" (ngModelChange)="pagina.set(1)"
+        <input [ngModel]="busqueda()" (ngModelChange)="busqueda.set($event); pagina.set(1)"
                class="input w-full sm:w-52 text-sm" maxlength="100"
                placeholder="Buscar usuario...">
       </div>
@@ -227,7 +227,7 @@ export class UsuariosComponent implements OnInit {
   empleados      = signal<Empleado[]>([]);
   roles          = signal<Rol[]>([]);
   cargando       = signal(true);
-  busqueda       = '';
+  busqueda       = signal('');
   modalRol       = signal(false);
   modalPass      = signal(false);
   empleadoActivo = signal<Empleado | null>(null);
@@ -245,7 +245,7 @@ export class UsuariosComponent implements OnInit {
   totalBloqueados = computed(() => this.empleados().filter(e => e.estado === 'BLOQUEADO').length);
 
   filtrados = computed(() => {
-    const q = this.busqueda.trim().toLowerCase();
+    const q = this.busqueda().trim().toLowerCase();
     let lista = q
       ? this.empleados().filter(e =>
           `${e.nombre} ${e.apellido}`.toLowerCase().includes(q) ||

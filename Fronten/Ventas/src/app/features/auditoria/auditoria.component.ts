@@ -67,7 +67,7 @@ type SortCol = 'fecha' | 'usuario' | 'entidad' | 'accion';
       <!-- Tabla -->
       <div class="card space-y-3">
         <div class="flex items-center gap-3">
-          <input [(ngModel)]="busqueda" class="input w-56 text-sm"
+          <input [ngModel]="busqueda()" (ngModelChange)="busqueda.set($event)" class="input w-56 text-sm"
                  placeholder="Buscar en registros..." maxlength="100">
           <span class="text-xs ml-auto" style="color:rgb(var(--color-on-surface)/0.4)">
             {{ filtrados().length }} registro{{ filtrados().length !== 1 ? 's' : '' }}
@@ -205,7 +205,7 @@ export class AuditoriaComponent implements OnInit {
 
   filtroUsuario = '';
   filtroEntidad = '';
-  busqueda      = '';
+  busqueda      = signal('');
 
   sortCol = signal<SortCol | ''>('fecha');
   sortDir = signal<'asc' | 'desc'>('desc');
@@ -250,13 +250,13 @@ export class AuditoriaComponent implements OnInit {
   limpiar(): void {
     this.filtroUsuario = '';
     this.filtroEntidad = '';
-    this.busqueda = '';
+    this.busqueda.set('');
     this.buscar();
   }
 
   filtrados = computed(() => {
     let list = this.logs();
-    const q = this.busqueda.toLowerCase().trim();
+    const q = this.busqueda().toLowerCase().trim();
     if (q) {
       list = list.filter(l =>
         l.username?.toLowerCase().includes(q) ||

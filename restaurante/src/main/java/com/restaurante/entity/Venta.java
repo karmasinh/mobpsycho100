@@ -1,6 +1,5 @@
 package com.restaurante.entity;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.restaurante.enums.FormaPago;
 import jakarta.persistence.*;
@@ -23,7 +22,7 @@ public class Venta {
 
     @OneToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "pedido_id", nullable = false, unique = true)
-    @JsonIgnore
+    @JsonIgnoreProperties({"hibernateLazyInitializer", "handler", "venta"})
     private Pedido pedido;
 
     /** Denormalizado desde pedido.sucursal para poder filtrar/reportar sin joins */
@@ -52,6 +51,10 @@ public class Venta {
 
     @Column(length = 255)
     private String motivoAnulacion;
+
+    /** Número de comprobante impreso para el cliente, ej. "S1-000042" — correlativo por sucursal. */
+    @Column(length = 20)
+    private String numeroTicket;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "usuario_cajero_id")

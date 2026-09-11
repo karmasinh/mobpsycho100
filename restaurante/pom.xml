@@ -20,6 +20,10 @@
     <properties>
         <java.version>17</java.version>
         <jjwt.version>0.11.5</jjwt.version>
+        <!-- 2.0.5, no 2.1.0+: las versiones 2.1.x/2.2.x se compilan para Java 21 (class file 65)
+             y el proyecto está fijado a Java 17 (class file 61) en todo el resto del pom. -->
+        <openpdf.version>2.0.5</openpdf.version>
+        <zxing.version>3.5.3</zxing.version>
     </properties>
 
     <dependencies>
@@ -83,6 +87,26 @@
             <groupId>org.projectlombok</groupId>
             <artifactId>lombok</artifactId>
             <optional>true</optional>
+        </dependency>
+
+        <!-- PDF de la factura (Fase C — generación local, sin conexión al SIN). LGPL/MPL, API
+             heredera de iText 5. -->
+        <dependency>
+            <groupId>com.github.librepdf</groupId>
+            <artifactId>openpdf</artifactId>
+            <version>${openpdf.version}</version>
+        </dependency>
+
+        <!-- QR de verificación DEMO embebido en el PDF (no apunta a un servicio real del SIN). -->
+        <dependency>
+            <groupId>com.google.zxing</groupId>
+            <artifactId>core</artifactId>
+            <version>${zxing.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.google.zxing</groupId>
+            <artifactId>javase</artifactId>
+            <version>${zxing.version}</version>
         </dependency>
 
         <!-- Test -->

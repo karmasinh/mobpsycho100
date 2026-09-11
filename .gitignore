@@ -17,6 +17,11 @@ Fronten/*/.angular/
 Fronten/*/dist/
 Fronten/*/npm-debug.log*
 
+# Cypress: artefactos de corrida, no código fuente
+Fronten/*/cypress/videos/
+Fronten/*/cypress/screenshots/
+Fronten/*/cypress/downloads/
+
 # IDE / OS
 .vscode/
 .idea/

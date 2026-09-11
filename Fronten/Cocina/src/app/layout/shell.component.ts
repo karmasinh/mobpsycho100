@@ -89,66 +89,11 @@ import { ICONOS_DISPONIBLES } from '../core/icons/app-icons.provider';
           }
         </nav>
 
-        <!-- Selector de tema — botón toggle con dropdown -->
-        <div class="px-3 py-3 flex-shrink-0"
-             style="border-top:1px solid rgb(var(--sb-border))">
-          <p style="font-size:9px;font-weight:700;letter-spacing:0.15em;margin-bottom:0.5rem;
-                    color:rgb(var(--sb-text)/0.28);text-transform:uppercase">
-            Apariencia
+        <!-- El perfil, la apariencia y cerrar sesión viven en el menú del avatar (topbar) -->
+        <div class="px-3 py-3 flex-shrink-0" style="border-top:1px solid rgb(var(--sb-border))">
+          <p style="font-size:9px;color:rgb(var(--sb-text)/0.28);text-align:center">
+            La Entrerriana · Sistema Cocina
           </p>
-
-          <button class="ent-theme-toggle"
-                  [class.open]="themeSelectorOpen()"
-                  (click)="toggleThemeSelector()">
-            <span>{{ currentThemeInfo().emoji }} {{ currentThemeInfo().nombre }}</span>
-            <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"
-                 [style.transform]="themeSelectorOpen() ? 'rotate(180deg)' : 'rotate(0deg)'"
-                 style="transition:transform 0.2s">
-              <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/>
-            </svg>
-          </button>
-
-          @if (themeSelectorOpen()) {
-            <div class="mt-1 space-y-0.5">
-              @for (theme of themeService.THEMES; track theme.id) {
-                <button class="ent-theme-option"
-                        [class.active]="themeService.currentTheme() === theme.id"
-                        (click)="themeService.setTheme(theme.id); themeSelectorOpen.set(false)">
-                  <span>{{ theme.emoji }}</span>
-                  <span class="flex-1">{{ theme.nombre }}</span>
-                  @if (themeService.currentTheme() === theme.id) {
-                    <span class="ent-check">✓</span>
-                  }
-                </button>
-              }
-            </div>
-          }
-        </div>
-
-        <!-- Usuario logueado -->
-        <div class="px-3 py-3 flex items-center gap-3 flex-shrink-0"
-             style="border-top:1px solid rgb(var(--sb-border))">
-          <div class="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0"
-               style="background:rgb(var(--sb-accent)/0.2);color:rgb(var(--sb-accent))">
-            {{ userInitial() }}
-          </div>
-          <div class="flex-1 min-w-0">
-            <p class="text-sm font-semibold truncate leading-tight" style="color:rgb(var(--sb-text))">
-              {{ authService.currentUser()?.username }}
-            </p>
-            <p style="font-size:11px;color:rgb(var(--sb-text)/0.38)" class="truncate">
-              {{ authService.rol() }}
-            </p>
-          </div>
-          <button (click)="authService.logout()"
-                  title="Cerrar sesión"
-                  class="btn-icon flex-shrink-0"
-                  style="color:rgba(239,68,68,0.75)">
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round"
-                    d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/>
-            </svg>
-          </button>
         </div>
       </aside>
 
@@ -241,11 +186,59 @@ import { ICONOS_DISPONIBLES } from '../core/icons/app-icons.provider';
               }
             </button>
 
-            <div class="hidden sm:flex w-8 h-8 rounded-full items-center justify-center
-                        text-xs font-bold cursor-default"
-                 [style.background]="'rgb(var(--color-primary) / 0.15)'"
-                 [style.color]="'rgb(var(--color-primary))'">
-              {{ userInitial() }}
+            <div class="user-menu-wrapper">
+              <button class="user-menu-trigger" [class.open]="userMenuOpen()"
+                      (click)="userMenuOpen.set(!userMenuOpen())"
+                      aria-label="Menú de usuario" [attr.aria-expanded]="userMenuOpen()">
+                <span class="hidden md:flex flex-col items-end leading-tight">
+                  <span class="text-sm font-semibold" style="color:rgb(var(--color-on-surface))">{{ primerNombre() }}</span>
+                  <span class="text-[10px] font-bold uppercase" style="letter-spacing:0.08em;color:rgb(var(--color-on-surface)/0.4)">{{ authService.rol() }}</span>
+                </span>
+                <div class="w-9 h-9 rounded-full flex items-center justify-center font-bold text-sm flex-shrink-0"
+                     style="background:rgb(var(--color-primary)/0.15);color:rgb(var(--color-primary))">
+                  {{ userInitial() }}
+                </div>
+                <svg class="hidden md:block w-3.5 h-3.5 flex-shrink-0" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"
+                     [style.transform]="userMenuOpen() ? 'rotate(180deg)' : 'rotate(0deg)'"
+                     style="transition:transform 0.2s;color:rgb(var(--color-on-surface)/0.4)">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/>
+                </svg>
+              </button>
+
+              @if (userMenuOpen()) {
+                <div class="user-menu-backdrop" (click)="userMenuOpen.set(false)"></div>
+                <div class="user-menu-panel">
+                  <div class="user-menu-header">
+                    <div class="w-10 h-10 rounded-full flex items-center justify-center font-bold flex-shrink-0"
+                         style="background:rgb(var(--color-primary)/0.15);color:rgb(var(--color-primary))">
+                      {{ userInitial() }}
+                    </div>
+                    <div class="min-w-0">
+                      <p class="text-sm font-bold truncate" style="color:rgb(var(--color-on-surface))">{{ authService.currentUser()?.username }}</p>
+                      <p class="text-xs font-semibold" style="color:rgb(var(--color-primary))">{{ authService.rol() }}</p>
+                    </div>
+                  </div>
+
+                  <div class="user-menu-divider"></div>
+                  <p class="user-menu-label">Apariencia</p>
+                  @for (theme of themeService.THEMES; track theme.id) {
+                    <button class="user-menu-item" [class.active]="themeService.currentTheme() === theme.id"
+                            (click)="themeService.setTheme(theme.id)">
+                      <span class="ent-theme-swatch" [style.background]="themeService.colorFor(theme.id)"></span>
+                      <span class="flex-1 text-left">{{ theme.nombre }}</span>
+                      @if (themeService.currentTheme() === theme.id) {
+                        <iconify-icon icon="tabler:check" width="14" height="14" style="color:currentColor"></iconify-icon>
+                      }
+                    </button>
+                  }
+
+                  <div class="user-menu-divider"></div>
+                  <button class="user-menu-item danger" (click)="authService.logout(); userMenuOpen.set(false)">
+                    <iconify-icon icon="tabler:logout" width="16" height="16" style="color:currentColor"></iconify-icon>
+                    <span class="flex-1 text-left">Cerrar sesión</span>
+                  </button>
+                </div>
+              }
             </div>
           </div>
         </header>
@@ -280,7 +273,7 @@ import { ICONOS_DISPONIBLES } from '../core/icons/app-icons.provider';
 export class ShellComponent {
   alertCount        = signal(0);
   sidebarOpen       = signal(false);
-  themeSelectorOpen = signal(false);
+  userMenuOpen      = signal(false);
   sucursales        = signal<Sucursal[]>([]);
 
   breadcrumbTitulo = toSignal(
@@ -307,11 +300,6 @@ export class ShellComponent {
   primerNombre = computed(() => {
     const u = this.authService.currentUser()?.username ?? '';
     return u.split('.')[0] ?? u;
-  });
-
-  currentThemeInfo = computed(() => {
-    const id = this.themeService.currentTheme();
-    return this.themeService.THEMES.find(t => t.id === id) ?? this.themeService.THEMES[0];
   });
 
   constructor(
@@ -344,14 +332,13 @@ export class ShellComponent {
     this.authService.elegirSucursal(sucursalId);
   }
 
-  openSidebar():        void { this.sidebarOpen.set(true);  document.body.style.overflow = 'hidden'; }
-  closeSidebar():       void { this.sidebarOpen.set(false); document.body.style.overflow = '';       }
-  toggleThemeSelector(): void { this.themeSelectorOpen.update(v => !v); }
+  openSidebar():  void { this.sidebarOpen.set(true);  document.body.style.overflow = 'hidden'; }
+  closeSidebar(): void { this.sidebarOpen.set(false); document.body.style.overflow = '';       }
 
   @HostListener('document:keydown.escape')
   onEscape(): void {
     this.closeSidebar();
-    this.themeSelectorOpen.set(false);
+    this.userMenuOpen.set(false);
   }
 
   @HostListener('window:resize', ['$event'])

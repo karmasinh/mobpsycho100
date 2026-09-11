@@ -97,7 +97,7 @@ import { PaginationComponent } from '../../shared/components/pagination.componen
         <div class="card p-0 overflow-hidden">
           <!-- Search -->
           <div class="p-4" style="border-bottom:1px solid rgb(var(--color-border))">
-            <input [(ngModel)]="busqueda" (ngModelChange)="pagina.set(1)" maxlength="100" class="input max-w-xs text-sm"
+            <input [ngModel]="busqueda()" (ngModelChange)="busqueda.set($event); pagina.set(1)" maxlength="100" class="input max-w-xs text-sm"
                    placeholder="Buscar insumo...">
           </div>
 
@@ -467,7 +467,7 @@ export class InventarioComponent implements OnInit {
   stockBajo          = signal<StockInsumo[]>([]);
   lotesPorVencer     = signal<LoteInsumo[]>([]);
   cargando           = signal(true);
-  busqueda           = '';
+  busqueda           = signal('');
   modalIngreso       = signal(false);
   modalConsumo       = signal(false);
   modalMinimo        = signal(false);
@@ -488,7 +488,7 @@ export class InventarioComponent implements OnInit {
   formAjusteFisico = { cantidad: 0, motivo: 'Conteo físico de inventario' };
 
   stockFiltrado = computed(() => {
-    const q = this.busqueda.toLowerCase();
+    const q = this.busqueda().toLowerCase();
     let lista = q
       ? this.stockList().filter(i =>
           i.nombre.toLowerCase().includes(q) || i.codigo.toLowerCase().includes(q)

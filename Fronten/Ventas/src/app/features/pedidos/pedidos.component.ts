@@ -76,7 +76,7 @@ type SortCol = 'fecha' | 'total' | 'estado';
               </button>
             }
           </div>
-          <input [(ngModel)]="busqueda" (ngModelChange)="pagina.set(1)"
+          <input [ngModel]="busqueda()" (ngModelChange)="busqueda.set($event); pagina.set(1)"
                  class="input w-52 text-sm"
                  placeholder="Buscar cliente, #ID..." maxlength="100">
         </div>
@@ -297,7 +297,7 @@ export class PedidosComponent implements OnInit, OnDestroy {
 
   vista        = signal<Vista>('activos');
   filtroEstado = signal<EstadoPedido | null>(null);
-  busqueda     = '';
+  busqueda     = signal('');
   sortCol      = signal<SortCol | ''>('fecha');
   sortDir      = signal<'asc' | 'desc'>('desc');
   pagina       = signal(1);
@@ -381,7 +381,7 @@ export class PedidosComponent implements OnInit, OnDestroy {
     if (this.filtroEstado())
       list = list.filter(p => p.estado === this.filtroEstado());
 
-    const q = this.busqueda.toLowerCase().trim();
+    const q = this.busqueda().toLowerCase().trim();
     if (q) {
       list = list.filter(p =>
         String(p.id).includes(q) ||

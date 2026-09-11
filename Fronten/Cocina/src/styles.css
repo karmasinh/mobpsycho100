@@ -362,7 +362,7 @@ body {
   tbody td { @apply px-4 py-3; }
 
   /* --- Stat card --- */
-  .stat-card { @apply card flex flex-col gap-1.5; }
+  .stat-card { @apply card flex flex-col items-start gap-1.5; }
   .stat-value { font-family: 'Outfit', sans-serif; color: rgb(var(--color-on-surface)); @apply text-3xl font-bold; }
   .stat-label { color: rgb(var(--color-muted)); @apply text-xs uppercase tracking-widest; }
 
@@ -835,6 +835,46 @@ body {
   width: 1rem; height: 1rem; border-radius: 0.3rem; flex-shrink: 0;
   border: 1px solid rgb(0 0 0 / 0.12);
 }
+
+/* Menú de usuario (topbar) — avatar + nombre/rol + apariencia + cerrar sesión */
+.user-menu-wrapper { position: relative; }
+.user-menu-trigger {
+  display: flex; align-items: center; gap: 0.5rem;
+  padding: 0.25rem 0.375rem 0.25rem 0.625rem; border-radius: 999px;
+  border: 1px solid transparent; background: transparent; cursor: pointer;
+  transition: all 0.15s;
+}
+.user-menu-trigger:hover, .user-menu-trigger.open {
+  background: rgb(var(--color-surface-2)); border-color: rgb(var(--color-border));
+}
+.user-menu-backdrop { position: fixed; inset: 0; z-index: 69; }
+.user-menu-panel {
+  position: absolute; top: calc(100% + 0.625rem); right: 0; z-index: 70;
+  width: 240px; padding: 0.75rem; border-radius: 1rem;
+  border: 1px solid rgb(var(--color-border)); background: rgb(var(--color-surface));
+  box-shadow: 0 16px 40px rgb(0 0 0 / 0.18);
+  animation: user-menu-pop 0.15s ease-out;
+}
+@keyframes user-menu-pop {
+  from { opacity: 0; transform: translateY(-6px) scale(0.97); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+.user-menu-header { display: flex; align-items: center; gap: 0.625rem; padding: 0.25rem 0.375rem 0.625rem; }
+.user-menu-divider { height: 1px; background: rgb(var(--color-border)); margin: 0.5rem -0.375rem; }
+.user-menu-label {
+  font-size: 0.68rem; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase;
+  color: rgb(var(--color-on-surface) / 0.35); padding: 0 0.375rem; margin-bottom: 0.25rem;
+}
+.user-menu-item {
+  display: flex; align-items: center; gap: 0.625rem; width: 100%;
+  padding: 0.5rem 0.625rem; border-radius: 0.6rem; border: none; background: transparent;
+  cursor: pointer; font-size: 0.82rem; font-weight: 600;
+  color: rgb(var(--color-on-surface) / 0.75); transition: all 0.12s;
+}
+.user-menu-item:hover { background: rgb(var(--color-surface-2)); color: rgb(var(--color-on-surface)); }
+.user-menu-item.active { background: rgb(var(--color-primary) / 0.1); color: rgb(var(--color-primary)); }
+.user-menu-item.danger { color: rgb(var(--color-danger)); }
+.user-menu-item.danger:hover { background: rgb(var(--color-danger) / 0.1); }
 
 .ent-switch-link {
   display: flex; align-items: center; justify-content: center; gap: 0.375rem;

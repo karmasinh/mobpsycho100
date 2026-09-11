@@ -202,19 +202,8 @@ export class LoginComponent {
     { icon: '❤️', label: 'HECHO CON PASIÓN'      },
   ];
 
-  /** Color primario (--color-primary) de cada tema, para el cuadradito del selector de apariencia. */
-  private readonly themeColors: Record<string, string> = {
-    entrerriana: '#C49A5A',
-    fuego: '#EA580C',
-    nocturno: '#6366F1',
-    aurora: '#34D399',
-    nube: '#6366F1',
-    rosa: '#F43F5E',
-    carbon: '#FAFAFA',
-  };
-
   swatchColor(themeId: string): string {
-    return this.themeColors[themeId] ?? '#999';
+    return this.themeService.colorFor(themeId);
   }
 
   constructor(

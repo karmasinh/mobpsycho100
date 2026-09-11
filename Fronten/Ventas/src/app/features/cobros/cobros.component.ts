@@ -26,7 +26,7 @@ type SortColCobro = 'nombre' | 'periodo' | 'total' | 'saldo';
           </p>
         </div>
         <div class="flex gap-2 flex-wrap">
-          <input [(ngModel)]="busqueda" (ngModelChange)="pagina.set(1)" class="input w-44 text-sm"
+          <input [ngModel]="busqueda()" (ngModelChange)="busqueda.set($event); pagina.set(1)" class="input w-44 text-sm"
                  placeholder="Buscar pensionado…" maxlength="100">
           <button (click)="cambiarVista('pendientes')"
                   [class.btn-primary]="vistaActiva()==='pendientes'"
@@ -253,7 +253,7 @@ export class CobrosComponent implements OnInit {
   formaPago         = 'EFECTIVO';
   guardando         = signal(false);
   errorModal        = signal('');
-  busqueda          = '';
+  busqueda          = signal('');
 
   sortCol = signal<SortColCobro | ''>('');
   sortDir = signal<'asc' | 'desc'>('asc');
@@ -268,7 +268,7 @@ export class CobrosComponent implements OnInit {
 
   cobrosVisibles = computed(() => {
     const base = this.vistaActiva() === 'pendientes' ? this.pendientes() : this.cobros();
-    const q = this.busqueda.toLowerCase().trim();
+    const q = this.busqueda().toLowerCase().trim();
     let lista = q
       ? base.filter(c =>
           `${c.pensionadoNombre} ${c.pensionadoApellido}`.toLowerCase().includes(q)

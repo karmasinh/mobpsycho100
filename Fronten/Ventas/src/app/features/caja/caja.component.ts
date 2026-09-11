@@ -2,8 +2,9 @@ import { Component, OnInit, signal, computed, CUSTOM_ELEMENTS_SCHEMA } from '@an
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { forkJoin } from 'rxjs';
-import { PlatoService, PedidoService, VentaService, ProduccionService } from '../../core/services/api.service';
+import { PlatoService, PedidoService, VentaService, ProduccionService, ConfiguracionTicketService } from '../../core/services/api.service';
 import { AuthService } from '../../core/services/auth.service';
+import { TicketPrintService } from '../../core/services/ticket-print.service';
 import { Plato, LineaProduccion } from '../../core/models';
 
 interface ItemCarrito {
@@ -31,7 +32,7 @@ interface ItemCarrito {
               Caja — Nueva Venta
             </h1>
           </div>
-          <input [(ngModel)]="busqueda" class="input w-48 text-sm" placeholder="Buscar plato..." maxlength="100">
+          <input [ngModel]="busqueda()" (ngModelChange)="busqueda.set($event)" class="input w-48 text-sm" placeholder="Buscar plato..." maxlength="100" data-cy="caja-busqueda">
         </div>
 
         <!-- Filtros por tipo -->
@@ -215,7 +216,7 @@ interface ItemCarrito {
           @if (formaPago() === 'EFECTIVO' || formaPago() === 'MIXTO') {
             <div>
               <label class="input-label">Monto recibido (Bs)</label>
-              <input [(ngModel)]="montoRecibido" type="number" class="input text-sm"
+              <input [ngModel]="montoRecibido()" (ngModelChange)="montoRecibido.set($event)" type="number" class="input text-sm"
                      [min]="total()" placeholder="0.00">
               @if (vuelto() > 0) {
                 <p class="text-sm mt-1 font-semibold" style="color: rgb(var(--color-success))">
@@ -236,7 +237,8 @@ interface ItemCarrito {
           <!-- Botón cobrar -->
           <button (click)="cobrar()"
                   [disabled]="carrito().length === 0 || procesando()"
-                  class="btn-primary w-full justify-center py-3 text-base">
+                  class="btn-primary w-full justify-center py-3 text-base"
+                  data-cy="btn-cobrar">
             @if (procesando()) {
               <span class="w-4 h-4 rounded-full border-2 border-white/30 border-t-white animate-spin inline-block"></span>
               Procesando...
@@ -255,7 +257,7 @@ interface ItemCarrito {
     <!-- ── Modal confirmación venta ─────────────────────────── -->
     @if (ventaExitosa()) {
       <div class="fixed inset-0 z-50 flex items-center justify-center p-4"
-           style="background: rgb(0 0 0 / 0.5)">
+           style="background: rgb(0 0 0 / 0.5)" data-cy="modal-venta-exitosa">
         <div class="card max-w-sm w-full text-center animate-pop">
           <div class="mb-4 flex justify-center"><iconify-icon icon="line-md:confirm-circle" width="56" height="56" style="color:currentColor"></iconify-icon></div>
           <h3 class="font-display text-xl font-bold mb-1">¡Venta registrada!</h3>
@@ -267,7 +269,7 @@ interface ItemCarrito {
               Vuelto: <strong>Bs {{ ventaExitosa()?.vuelto?.toFixed(2) }}</strong>
             </p>
           }
-          <button (click)="cerrarModal()" class="btn-primary w-full justify-center">
+          <button (click)="cerrarModal()" class="btn-primary w-full justify-center" data-cy="btn-nueva-venta">
             Nueva venta
           </button>
         </div>
@@ -404,10 +406,10 @@ export class CajaComponent implements OnInit {
   platos           = signal<Plato[]>([]);
   cargandoPlatos   = signal(true);
   carrito          = signal<ItemCarrito[]>([]);
-  busqueda         = '';
+  busqueda         = signal('');
   tipoSeleccionado = signal<string>('TODOS');
   formaPago        = signal<string>('EFECTIVO');
-  montoRecibido    = 0;
+  montoRecibido    = signal(0);
   nombreCliente    = '';
   procesando       = signal(false);
   errorMsg         = signal('');
@@ -449,8 +451,8 @@ export class CajaComponent implements OnInit {
     if (this.tipoSeleccionado() !== 'TODOS') {
       lista = lista.filter(p => p.tipo === this.tipoSeleccionado());
     }
-    if (this.busqueda.trim()) {
-      const q = this.busqueda.toLowerCase();
+    if (this.busqueda().trim()) {
+      const q = this.busqueda().toLowerCase();
       lista = lista.filter(p => p.nombre.toLowerCase().includes(q));
     }
     return lista;
@@ -461,7 +463,7 @@ export class CajaComponent implements OnInit {
   );
 
   vuelto = computed(() => {
-    const mv = Number(this.montoRecibido) || 0;
+    const mv = Number(this.montoRecibido()) || 0;
     return Math.max(mv - this.total(), 0);
   });
 
@@ -470,6 +472,8 @@ export class CajaComponent implements OnInit {
     private pedidoService: PedidoService,
     private ventaService: VentaService,
     private produccionService: ProduccionService,
+    private configuracionTicketService: ConfiguracionTicketService,
+    private ticketPrint: TicketPrintService,
     private auth: AuthService,
   ) {}
 
@@ -607,7 +611,7 @@ export class CajaComponent implements OnInit {
   cobrar(): void {
     if (this.carrito().length === 0) return;
     if ((this.formaPago() === 'EFECTIVO' || this.formaPago() === 'MIXTO')
-        && Number(this.montoRecibido) < this.total()) {
+        && Number(this.montoRecibido()) < this.total()) {
       this.errorMsg.set('El monto recibido es insuficiente.');
       return;
     }
@@ -634,12 +638,13 @@ export class CajaComponent implements OnInit {
 
     this.pedidoService.crear(pedidoBody).subscribe({
       next: pedido => {
-        const monto = Number(this.montoRecibido) || this.total();
+        const monto = Number(this.montoRecibido()) || this.total();
         this.ventaService.cobrar(pedido.id, monto, this.formaPago()).subscribe({
           next: venta => {
             this.ventaExitosa.set(venta);
             this.procesando.set(false);
             this.cargarDisponiblesHoy();
+            this.imprimirSiCorresponde(sucursalId, venta);
           },
           error: err => {
             this.errorMsg.set(err?.error?.mensaje ?? 'Error al cobrar');
@@ -654,10 +659,19 @@ export class CajaComponent implements OnInit {
     });
   }
 
+  private imprimirSiCorresponde(sucursalId: number, venta: any): void {
+    this.configuracionTicketService.obtener(sucursalId).subscribe({
+      next: config => {
+        if (config.imprimirAutomatico) this.ticketPrint.imprimir(venta, config);
+      },
+      error: () => {},
+    });
+  }
+
   cerrarModal(): void {
     this.ventaExitosa.set(null);
     this.limpiarCarrito();
-    this.montoRecibido = 0;
+    this.montoRecibido.set(0);
     this.nombreCliente = '';
   }
 

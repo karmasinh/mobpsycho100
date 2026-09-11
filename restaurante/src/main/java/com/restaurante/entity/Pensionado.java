@@ -57,6 +57,16 @@ public class Pensionado {
     @JoinColumn(name = "tipo_almuerzo_id")
     private TipoAlmuerzo tipoAlmuerzo;
 
+    /**
+     * Sucursal donde el pensionado está inscrito. Nullable por compatibilidad
+     * con filas existentes (ddl-auto=update), pero obligatorio para altas nuevas
+     * — ver PensionadoServiceImpl.registrar / SucursalAccessService.
+     */
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "sucursal_id")
+    @JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
+    private Sucursal sucursal;
+
     /** Saldo pendiente acumulado de meses anteriores */
     @Column(nullable = false)
     @Builder.Default

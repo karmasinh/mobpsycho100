@@ -10,7 +10,8 @@ import {
   Sucursal, TipoAlmuerzo, Insumo, AuditoriaLog, TopProductoDto,
   LineaProduccion, ProduccionDia, TipoLineaProduccion, EstadoProduccion,
   CierreCaja, RentabilidadPlato, VentaPorSucursal, MovimientoCaja, TipoMovimientoCaja,
-  Empresa, SolicitudAprobacion
+  Empresa, SolicitudAprobacion, ConfiguracionTicket,
+  ConfiguracionFacturacion, EstadoFacturacionDto, Factura
 } from '../models';
 
 const API = environment.apiUrl;
@@ -384,6 +385,79 @@ export class ProduccionService {
 
   disponiblesHoy(sucursalId: number, tipo: TipoLineaProduccion): Observable<LineaProduccion[]> {
     return this.http.get<LineaProduccion[]>(`${API}/produccion/hoy/disponibles`, { params: { sucursalId, tipo } });
+  }
+}
+
+// ── Configuración de ticket de venta ────────────────────────────
+@Injectable({ providedIn: 'root' })
+export class ConfiguracionTicketService {
+  constructor(private http: HttpClient) {}
+
+  obtener(sucursalId: number): Observable<ConfiguracionTicket> {
+    return this.http.get<ConfiguracionTicket>(`${API}/configuracion-ticket/${sucursalId}`);
+  }
+
+  guardar(sucursalId: number, body: Partial<ConfiguracionTicket>): Observable<ConfiguracionTicket> {
+    return this.http.put<ConfiguracionTicket>(`${API}/configuracion-ticket/${sucursalId}`, body);
+  }
+}
+
+// ── Facturación electrónica SIAT (cimientos, sin conexión real al SIN) ──
+@Injectable({ providedIn: 'root' })
+export class FacturacionService {
+  constructor(private http: HttpClient) {}
+
+  estado(sucursalId: number): Observable<EstadoFacturacionDto> {
+    return this.http.get<EstadoFacturacionDto>(`${API}/facturacion/estado/${sucursalId}`);
+  }
+
+  obtenerConfiguracion(sucursalId: number): Observable<ConfiguracionFacturacion> {
+    return this.http.get<ConfiguracionFacturacion>(`${API}/facturacion/configuracion/${sucursalId}`);
+  }
+
+  guardarConfiguracion(sucursalId: number, body: Partial<ConfiguracionFacturacion>): Observable<ConfiguracionFacturacion> {
+    return this.http.put<ConfiguracionFacturacion>(`${API}/facturacion/configuracion/${sucursalId}`, body);
+  }
+
+  solicitarCuis(sucursalId: number): Observable<ConfiguracionFacturacion> {
+    return this.http.post<ConfiguracionFacturacion>(`${API}/facturacion/cuis/${sucursalId}`, null);
+  }
+
+  renovarCufd(sucursalId: number): Observable<ConfiguracionFacturacion> {
+    return this.http.post<ConfiguracionFacturacion>(`${API}/facturacion/cufd/${sucursalId}`, null);
+  }
+
+  emitir(ventaId: number, body: { nitCliente: string; tipoDocumento?: number | null; razonSocialCliente: string; complemento?: string | null; correoCliente?: string | null }): Observable<Factura> {
+    return this.http.post<Factura>(`${API}/facturacion/emitir/${ventaId}`, body);
+  }
+
+  obtenerXml(facturaId: number): Observable<string> {
+    return this.http.get(`${API}/facturacion/${facturaId}/xml`, { responseType: 'text' });
+  }
+
+  /** Pide el PDF (formato SIAT, sin validez fiscal) y lo abre en una pestaña nueva. */
+  descargarPdf(facturaId: number): Observable<Blob> {
+    return this.http.get(`${API}/facturacion/${facturaId}/pdf`, { responseType: 'blob' });
+  }
+
+  reintentar(facturaId: number): Observable<Factura> {
+    return this.http.post<Factura>(`${API}/facturacion/${facturaId}/reintentar`, null);
+  }
+
+  anular(facturaId: number, motivoCodigo: number, detalle: string): Observable<Factura> {
+    return this.http.post<Factura>(`${API}/facturacion/${facturaId}/anular`, { motivoCodigo, detalle });
+  }
+
+  obtener(id: number): Observable<Factura> {
+    return this.http.get<Factura>(`${API}/facturacion/${id}`);
+  }
+
+  listar(sucursalId: number): Observable<Factura[]> {
+    return this.http.get<Factura[]>(`${API}/facturacion/sucursal/${sucursalId}`);
+  }
+
+  pendientes(sucursalId: number): Observable<Factura[]> {
+    return this.http.get<Factura[]>(`${API}/facturacion/pendientes/${sucursalId}`);
   }
 }
 

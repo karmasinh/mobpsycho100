@@ -35,7 +35,7 @@ const DIAS_SEMANA = [
           </p>
         </div>
         <div class="flex gap-2 w-full sm:w-auto">
-          <input [(ngModel)]="busqueda" (ngModelChange)="pagina.set(1)"
+          <input [ngModel]="busqueda()" (ngModelChange)="busqueda.set($event); pagina.set(1)"
                  class="input w-full sm:w-48 text-sm" maxlength="100"
                  placeholder="Buscar plan...">
           <button (click)="abrirCrear()" class="btn-primary whitespace-nowrap">+ Nuevo plan</button>
@@ -214,7 +214,7 @@ export class TiposAlmuerzoPensionadosComponent implements OnInit {
   guardando   = signal(false);
   errorModal  = signal('');
 
-  busqueda    = '';
+  busqueda    = signal('');
   pagina      = signal(1);
   readonly pageSize = 10;
   sortCol     = signal<string>('');
@@ -224,7 +224,7 @@ export class TiposAlmuerzoPensionadosComponent implements OnInit {
 
   listaFiltrada = computed(() => {
     let items = this.lista();
-    const q = this.busqueda.trim().toLowerCase();
+    const q = this.busqueda().trim().toLowerCase();
     if (q) items = items.filter(t =>
       t.nombre.toLowerCase().includes(q) ||
       (t.descripcion ?? '').toLowerCase().includes(q)

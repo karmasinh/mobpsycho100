@@ -230,6 +230,7 @@ export interface Pensionado {
   correo?: string;
   estado: 'ACTIVO' | 'INACTIVO' | 'BAJA_VOLUNTARIA' | 'BAJA_AUTOMATICA' | 'REACTIVADO';
   tipoAlmuerzo?: { id: number; nombre: string; precioMensual: number };
+  sucursal?: { id: number; nombre: string } | null;
   saldoPendiente?: number;
   fechaInscripcion: string;
 }
@@ -288,10 +289,90 @@ export interface Venta {
   formaPago: 'EFECTIVO' | 'QR' | 'MIXTO' | 'CREDITO_CUENTA';
   anulada: boolean;
   motivoAnulacion?: string;
+  numeroTicket?: string;
   cajero?: { id: number; username: string };
   usuarioAnulacion?: { id: number; username: string };
   creadoEn: string;
   anuladaEn?: string;
+}
+
+export interface ConfiguracionTicket {
+  id: number | null;
+  sucursal: { id: number; nombre: string };
+  razonSocial: string | null;
+  nit: string | null;
+  direccion: string | null;
+  telefono: string | null;
+  logoBase64: string | null;
+  mostrarCajero: boolean;
+  mostrarCliente: boolean;
+  mostrarFormaPago: boolean;
+  mostrarObservaciones: boolean;
+  mostrarNumeroPedido: boolean;
+  mensajePie: string | null;
+  leyendaLegal: string | null;
+  anchoMm: number;
+  copias: number;
+  imprimirAutomatico: boolean;
+  correlativoActual: number;
+  prefijo: string | null;
+}
+
+// ── Facturación electrónica SIAT (cimientos, sin conexión real al SIN) ──
+
+export type AmbienteFacturacion = 'PRUEBAS' | 'PRODUCCION';
+
+export interface ConfiguracionFacturacion {
+  id: number | null;
+  sucursal: { id: number; nombre: string };
+  nit: string | null;
+  razonSocial: string | null;
+  municipio: string | null;
+  leyendaFactura: string | null;
+  ambiente: AmbienteFacturacion;
+  facturacionHabilitada: boolean;
+  cuis: string | null;
+  cuisVigenteHasta: string | null;
+  cufd: string | null;
+  cufdCodigoControl: string | null;
+  cufdDireccion: string | null;
+  cufdVigenteHasta: string | null;
+  numeroFacturaActual: number;
+  actualizadoEn: string | null;
+  estadoHabilitacion: 'DESHABILITADA' | 'FALTA_NIT' | 'FALTA_CUIS' | 'CUFD_VENCIDO' | 'LISTA';
+}
+
+export interface EstadoFacturacionDto {
+  sucursalId: number;
+  habilitada: boolean;
+  conexionSin: boolean;
+  estado: string;
+  ambiente: AmbienteFacturacion;
+  cuisVigente: boolean;
+  cufdVigente: boolean;
+  mensaje: string;
+}
+
+export type EstadoFactura = 'PENDIENTE' | 'ACEPTADA' | 'RECHAZADA' | 'ANULADA';
+
+export interface Factura {
+  id: number;
+  venta: { id: number };
+  sucursal?: { id: number; nombre: string };
+  cuf: string | null;
+  numeroFactura: number;
+  fechaEmision: string;
+  nitCliente: string;
+  tipoDocumento: number | null;
+  razonSocialCliente: string;
+  complemento: string | null;
+  correoCliente: string | null;
+  montoTotal: number;
+  estado: EstadoFactura;
+  motivoAnulacionCodigo: number | null;
+  motivoAnulacionDetalle: string | null;
+  anuladaEn: string | null;
+  creadoEn: string;
 }
 
 export type EstadoCierreCaja = 'ABIERTO' | 'CERRADO';

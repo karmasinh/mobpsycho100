@@ -24,6 +24,14 @@ public class PensionadoRequest {
     @NotNull(message = "El tipo de almuerzo es obligatorio")
     private Long tipoAlmuerzoId;
 
+    /**
+     * Sucursal donde se inscribe el pensionado. Si el usuario autenticado tiene
+     * sucursal fija, el controller la sobrescribe con la suya (ver
+     * SucursalAccessService.resolver); solo ADMIN u operadores multi-sucursal
+     * pueden elegir libremente este valor.
+     */
+    private Long sucursalId;
+
     @NotNull(message = "La fecha de inscripción es obligatoria")
     private LocalDate fechaInscripcion;
 

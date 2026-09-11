@@ -33,7 +33,7 @@ import { CierreCaja, MovimientoCaja, TipoMovimientoCaja } from '../../core/model
           <div>
             <label class="input-label">Monto inicial en efectivo (Bs) *</label>
             <input [(ngModel)]="montoInicial" type="number" min="0" class="input"
-                   placeholder="0.00">
+                   placeholder="0.00" data-cy="input-monto-inicial">
           </div>
           @if (errorMsg()) {
             <p class="text-xs p-2 rounded-lg"
@@ -41,7 +41,7 @@ import { CierreCaja, MovimientoCaja, TipoMovimientoCaja } from '../../core/model
               {{ errorMsg() }}
             </p>
           }
-          <button (click)="abrirTurno()" [disabled]="procesando()" class="btn-primary w-full justify-center">
+          <button (click)="abrirTurno()" [disabled]="procesando()" class="btn-primary w-full justify-center" data-cy="btn-abrir-turno">
             @if (procesando()) {
               <span class="w-4 h-4 rounded-full border-2 border-white/30 border-t-white animate-spin inline-block"></span>
             } @else { Abrir turno }
@@ -107,14 +107,14 @@ import { CierreCaja, MovimientoCaja, TipoMovimientoCaja } from '../../core/model
                 </div>
                 <div class="sm:w-24">
                   <label class="input-label">Monto</label>
-                  <input [(ngModel)]="movMonto" type="number" min="0.01" class="input text-sm" placeholder="0.00">
+                  <input [(ngModel)]="movMonto" type="number" min="0.01" class="input text-sm" placeholder="0.00" data-cy="input-mov-monto">
                 </div>
               </div>
               <div class="flex-1">
                 <label class="input-label">Motivo</label>
-                <input [(ngModel)]="movMotivo" class="input text-sm" maxlength="255" placeholder="Opcional">
+                <input [(ngModel)]="movMotivo" class="input text-sm" maxlength="255" placeholder="Opcional" data-cy="input-mov-motivo">
               </div>
-              <button (click)="registrarMovimiento()" [disabled]="procesandoMov()" class="btn-secondary text-sm py-2 w-full sm:w-auto justify-center">
+              <button (click)="registrarMovimiento()" [disabled]="procesandoMov()" class="btn-secondary text-sm py-2 w-full sm:w-auto justify-center" data-cy="btn-registrar-movimiento">
                 Registrar
               </button>
             </div>
@@ -133,7 +133,7 @@ import { CierreCaja, MovimientoCaja, TipoMovimientoCaja } from '../../core/model
             <div>
               <label class="input-label">Efectivo contado al cerrar (Bs) *</label>
               <input [(ngModel)]="montoFinalDeclarado" type="number" min="0" class="input"
-                     placeholder="0.00">
+                     placeholder="0.00" data-cy="input-monto-final">
             </div>
             <div>
               <label class="input-label">Observaciones</label>
@@ -146,7 +146,7 @@ import { CierreCaja, MovimientoCaja, TipoMovimientoCaja } from '../../core/model
                 {{ errorMsg() }}
               </p>
             }
-            <button (click)="cerrarTurno()" [disabled]="procesando()" class="btn-primary w-full justify-center">
+            <button (click)="cerrarTurno()" [disabled]="procesando()" class="btn-primary w-full justify-center" data-cy="btn-cerrar-turno">
               @if (procesando()) {
                 <span class="w-4 h-4 rounded-full border-2 border-white/30 border-t-white animate-spin inline-block"></span>
               } @else { Cerrar turno }
@@ -272,7 +272,7 @@ import { CierreCaja, MovimientoCaja, TipoMovimientoCaja } from '../../core/model
                 <span>Diferencia</span><span class="font-mono">Bs {{ resultadoCierre()!.diferencia | number:'1.2-2' }}</span>
               </div>
             </div>
-            <button (click)="cerrarModalResultado()" class="btn-primary w-full justify-center">
+            <button (click)="cerrarModalResultado()" class="btn-primary w-full justify-center" data-cy="btn-entendido-cierre">
               Entendido
             </button>
           </div>

@@ -1,11 +1,14 @@
 import { Component, OnInit, signal, computed, CUSTOM_ELEMENTS_SCHEMA } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { HttpClient } from '@angular/common/http';
 import { PensionadoService } from '../../core/services/api.service';
 import { TipoAlmuerzoPensionadosService } from '../../core/services/api.service';
 import { ToastService } from '../../core/services/toast.service';
+import { AuthService } from '../../core/services/auth.service';
 import { PaginationComponent } from '../../shared/components/pagination.component';
-import { Pensionado, CobroMensual, AsistenciaPensionado, TipoAlmuerzo } from '../../core/models';
+import { Pensionado, CobroMensual, AsistenciaPensionado, TipoAlmuerzo, Sucursal } from '../../core/models';
+import { environment } from '../../../environments/environment';
 
 type Vista = 'lista' | 'asistencia' | 'cobros';
 
@@ -28,9 +31,9 @@ type Vista = 'lista' | 'asistencia' | 'cobros';
           </p>
         </div>
         <div class="flex gap-2">
-          <input [(ngModel)]="busqueda" (ngModelChange)="pagina.set(1)" class="input w-44 text-sm"
+          <input [ngModel]="busqueda()" (ngModelChange)="busqueda.set($event); pagina.set(1)" class="input w-44 text-sm"
                  placeholder="Buscar..." maxlength="100">
-          <button (click)="abrirRegistro()" class="btn-primary">+ Nuevo</button>
+          <button (click)="abrirRegistro()" class="btn-primary" data-cy="btn-nuevo-pensionado">+ Nuevo</button>
         </div>
       </div>
 
@@ -68,6 +71,9 @@ type Vista = 'lista' | 'asistencia' | 'cobros';
               <th (click)="sortBy('estado')" class="cursor-pointer select-none">
                 <div class="flex items-center gap-1">Estado <span class="text-xs opacity-40">{{ si('estado') }}</span></div>
               </th>
+              @if (authService.sucursalFija() == null) {
+                <th>Sucursal</th>
+              }
               <th>Acciones</th>
             </tr>
           </thead>
@@ -105,11 +111,15 @@ type Vista = 'lista' | 'asistencia' | 'cobros';
                   }
                 </td>
                 <td><span [class]="badgeEstado(p.estado)">{{ labelEstado(p.estado) }}</span></td>
+                @if (authService.sucursalFija() == null) {
+                  <td class="text-xs" style="color:rgb(var(--color-on-surface)/0.6)">{{ p.sucursal?.nombre || '—' }}</td>
+                }
                 <td>
                   <div class="flex gap-1 flex-wrap">
                     <button (click)="verAsistencia(p)"
                             class="text-xs py-1 px-2 rounded-lg inline-flex items-center gap-1"
-                            style="background:rgb(var(--color-success)/0.1);color:rgb(var(--color-success))">
+                            style="background:rgb(var(--color-success)/0.1);color:rgb(var(--color-success))"
+                            data-cy="btn-ver-asistencia">
                       <iconify-icon icon="tabler:user-check" width="14" height="14" style="color:currentColor"></iconify-icon>
                       Asistencia
                     </button>
@@ -138,7 +148,7 @@ type Vista = 'lista' | 'asistencia' | 'cobros';
             }
             @if (!cargando() && filtrados().length === 0) {
               <tr>
-                <td colspan="6" class="text-center py-12" style="color:rgb(var(--color-on-surface)/0.35)">
+                <td [attr.colspan]="authService.sucursalFija() == null ? 7 : 6" class="text-center py-12" style="color:rgb(var(--color-on-surface)/0.35)">
                   <p class="mb-2 flex justify-center">
                     <iconify-icon icon="tabler:home" width="30" height="30" style="color:currentColor"></iconify-icon>
                   </p>
@@ -177,15 +187,15 @@ type Vista = 'lista' | 'asistencia' | 'cobros';
           <div class="grid grid-cols-2 gap-3">
             <div>
               <label class="input-label">Nombre <span class="text-danger">*</span></label>
-              <input [(ngModel)]="regForm.nombre" class="input text-sm" placeholder="Juan" maxlength="100" required>
+              <input [(ngModel)]="regForm.nombre" class="input text-sm" placeholder="Juan" maxlength="100" required data-cy="input-pensionado-nombre">
             </div>
             <div>
               <label class="input-label">Apellido <span class="text-danger">*</span></label>
-              <input [(ngModel)]="regForm.apellido" class="input text-sm" placeholder="Pérez" maxlength="100" required>
+              <input [(ngModel)]="regForm.apellido" class="input text-sm" placeholder="Pérez" maxlength="100" required data-cy="input-pensionado-apellido">
             </div>
             <div>
               <label class="input-label">Cédula <span class="text-danger">*</span></label>
-              <input [(ngModel)]="regForm.cedula" class="input text-sm" placeholder="12345678" maxlength="20" required>
+              <input [(ngModel)]="regForm.cedula" class="input text-sm" placeholder="12345678" maxlength="20" required data-cy="input-pensionado-cedula">
             </div>
             <div>
               <label class="input-label">
@@ -202,13 +212,24 @@ type Vista = 'lista' | 'asistencia' | 'cobros';
             </div>
             <div class="col-span-2">
               <label class="input-label">Plan de almuerzo <span class="text-danger">*</span></label>
-              <select [(ngModel)]="regForm.tipoAlmuerzoId" class="input text-sm" required>
+              <select [(ngModel)]="regForm.tipoAlmuerzoId" class="input text-sm" required data-cy="select-pensionado-tipo-almuerzo">
                 <option [value]="null">— Seleccionar plan —</option>
                 @for (t of tiposAlmuerzo(); track t.id) {
                   <option [value]="t.id">{{ t.nombre }} — Bs {{ t.precioMensual | number:'1.2-2' }}/mes</option>
                 }
               </select>
             </div>
+            @if (authService.sucursalFija() == null) {
+              <div class="col-span-2">
+                <label class="input-label">Sucursal <span class="text-danger">*</span></label>
+                <select [(ngModel)]="regForm.sucursalId" class="input text-sm" required data-cy="select-pensionado-sucursal">
+                  <option [value]="null">Seleccionar...</option>
+                  @for (s of sucursales(); track s.id) {
+                    <option [value]="s.id">{{ s.nombre }}</option>
+                  }
+                </select>
+              </div>
+            }
             <div>
               <label class="input-label">Fecha de inscripción <span class="text-danger">*</span></label>
               <input [(ngModel)]="regForm.fechaInscripcion" class="input text-sm" type="date" required>
@@ -224,7 +245,7 @@ type Vista = 'lista' | 'asistencia' | 'cobros';
             <div class="col-span-2">
               <label class="input-label">Contraseña inicial <span class="text-danger">*</span></label>
               <input [(ngModel)]="regForm.passwordInicial" class="input text-sm" type="password"
-                     placeholder="Mínimo 6 caracteres" maxlength="100" required>
+                     placeholder="Mínimo 6 caracteres" maxlength="100" required data-cy="input-pensionado-password">
             </div>
           </div>
 
@@ -237,7 +258,7 @@ type Vista = 'lista' | 'asistencia' | 'cobros';
           }
           <div class="flex gap-2 pt-1">
             <button (click)="modalRegistro.set(false)" class="btn-secondary flex-1 justify-center">Cancelar</button>
-            <button (click)="registrar()" [disabled]="guardando()" class="btn-primary flex-1 justify-center">
+            <button (click)="registrar()" [disabled]="guardando()" class="btn-primary flex-1 justify-center" data-cy="btn-registrar-pensionado">
               @if (guardando()) {
                 <span class="w-4 h-4 rounded-full border-2 border-white/30 border-t-white animate-spin inline-block"></span>
               } @else { Registrar }
@@ -273,7 +294,8 @@ type Vista = 'lista' | 'asistencia' | 'cobros';
             <!-- Marcar hoy -->
             <button (click)="marcarAsistenciaHoy()"
                     class="btn-primary w-full justify-center"
-                    [disabled]="guardando()">
+                    [disabled]="guardando()"
+                    data-cy="btn-marcar-asistencia">
               @if (guardando()) {
                 <span class="w-4 h-4 rounded-full border-2 border-white/30 border-t-white animate-spin inline-block"></span>
               } @else {
@@ -461,6 +483,7 @@ type Vista = 'lista' | 'asistencia' | 'cobros';
 export class PensionadosComponent implements OnInit {
   lista              = signal<Pensionado[]>([]);
   tiposAlmuerzo      = signal<TipoAlmuerzo[]>([]);
+  sucursales         = signal<Sucursal[]>([]);
   asistencias        = signal<AsistenciaPensionado[]>([]);
   cobros             = signal<CobroMensual[]>([]);
   cargando           = signal(true);
@@ -473,7 +496,7 @@ export class PensionadosComponent implements OnInit {
   cobroActivo        = signal<CobroMensual | null>(null);
   error              = signal('');
   errorModal         = signal('');
-  busqueda           = '';
+  busqueda           = signal('');
   pagoMonto: number | null = null;
   pagoForma          = 'EFECTIVO';
 
@@ -485,6 +508,7 @@ export class PensionadosComponent implements OnInit {
   regForm = {
     nombre: '', apellido: '', cedula: '', telefono: '', correo: '',
     tipoAlmuerzoId: null as number | null,
+    sucursalId: null as number | null,
     fechaInscripcion: new Date().toISOString().split('T')[0],
     usernamePersonalizado: '', passwordInicial: '',
   };
@@ -493,7 +517,7 @@ export class PensionadosComponent implements OnInit {
   totalConSaldo = computed(() => this.lista().filter(p => (p.saldoPendiente ?? 0) > 0).length);
 
   filtrados = computed(() => {
-    const q = this.busqueda.toLowerCase().trim();
+    const q = this.busqueda().toLowerCase().trim();
     let lista = q
       ? this.lista().filter(p =>
           `${p.nombre} ${p.apellido} ${p.cedula}`.toLowerCase().includes(q)
@@ -522,11 +546,16 @@ export class PensionadosComponent implements OnInit {
     private service: PensionadoService,
     private tipoSvc: TipoAlmuerzoPensionadosService,
     private toastSvc: ToastService,
+    private http: HttpClient,
+    public authService: AuthService,
   ) {}
 
   ngOnInit(): void {
     this.cargar();
     this.tipoSvc.listar().subscribe({ next: ts => this.tiposAlmuerzo.set(ts), error: () => {} });
+    this.http.get<Sucursal[]>(`${environment.apiUrl}/sucursales`).subscribe({
+      next: ss => this.sucursales.set(ss), error: () => {},
+    });
   }
 
   cargar(): void {
@@ -541,6 +570,7 @@ export class PensionadosComponent implements OnInit {
     this.regForm = {
       nombre: '', apellido: '', cedula: '', telefono: '', correo: '',
       tipoAlmuerzoId: null,
+      sucursalId: this.authService.sucursalFija(),
       fechaInscripcion: new Date().toISOString().split('T')[0],
       usernamePersonalizado: '', passwordInicial: '',
     };
@@ -554,6 +584,9 @@ export class PensionadosComponent implements OnInit {
     }
     if (!this.regForm.tipoAlmuerzoId) {
       this.errorModal.set('Selecciona un plan de almuerzo.'); return;
+    }
+    if (this.authService.sucursalFija() == null && !this.regForm.sucursalId) {
+      this.errorModal.set('Selecciona una sucursal.'); return;
     }
     if (!this.regForm.passwordInicial) {
       this.errorModal.set('La contraseña inicial es obligatoria.'); return;
