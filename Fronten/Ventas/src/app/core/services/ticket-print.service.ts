@@ -12,8 +12,27 @@ export class TicketPrintService {
 
   constructor(private toastSvc: ToastService) {}
 
-  imprimir(venta: Venta, config: ConfiguracionTicket): void {
+  /**
+   * Abre la pestaña del ticket de inmediato, dentro del mismo gesto de click que la
+   * origina (antes de cualquier `subscribe` asíncrono) — así el navegador no la trata
+   * como popup no solicitado. Guardar el resultado y pasarlo luego a `imprimir()`.
+   */
+  abrirVentana(): Window | null {
     const ventana = window.open('', '_blank', 'width=340,height=600');
+    if (!ventana) {
+      this.toastSvc.error('No se pudo abrir el ticket — permite ventanas emergentes para este sitio.');
+    }
+    return ventana;
+  }
+
+  /**
+   * `ventanaPrevia` permite pasar una pestaña ya abierta de forma síncrona dentro del
+   * gesto de click original (ver `abrirVentana()`). Si se omite, se intenta abrir una
+   * nueva aquí — funciona solo si `imprimir()` en sí se llama de forma síncrona desde el
+   * click, no tras una respuesta HTTP (ahí el navegador la bloquea como popup).
+   */
+  imprimir(venta: Venta, config: ConfiguracionTicket, ventanaPrevia?: Window | null): void {
+    const ventana = ventanaPrevia ?? window.open('', '_blank', 'width=340,height=600');
     if (!ventana) {
       this.toastSvc.error('No se pudo abrir el ticket — permite ventanas emergentes para este sitio.');
       return;

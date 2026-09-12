@@ -25,7 +25,7 @@ import { ICONOS_DISPONIBLES } from '../../core/icons/app-icons.provider';
           </p>
         </div>
         <div class="flex gap-2 w-full sm:w-auto">
-          <input [(ngModel)]="busqueda" (ngModelChange)="pagina.set(1)"
+          <input [ngModel]="busqueda()" (ngModelChange)="busqueda.set($event); pagina.set(1)"
                  class="input w-full sm:w-48 text-sm" placeholder="Buscar módulo..."
                  maxlength="100">
           <button (click)="abrirCrearModal()" class="btn-primary text-sm py-2 px-3 whitespace-nowrap">
@@ -252,7 +252,7 @@ import { ICONOS_DISPONIBLES } from '../../core/icons/app-icons.provider';
 export class ModulosComponent implements OnInit {
   modulos      = signal<ModuloMenuDto[]>([]);
   cargando     = signal(true);
-  busqueda     = '';
+  busqueda     = signal('');
 
   modalAbierto = signal(false);
   modoEditar   = signal(false);
@@ -278,7 +278,7 @@ export class ModulosComponent implements OnInit {
   };
 
   modulosFiltrados = computed(() => {
-    const q = this.busqueda.trim().toLowerCase();
+    const q = this.busqueda().trim().toLowerCase();
     let lista = !q ? this.modulos() : this.modulos().filter(m =>
       m.nombre.toLowerCase().includes(q) ||
       m.codigo.toLowerCase().includes(q) ||

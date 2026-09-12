@@ -43,6 +43,10 @@ public class EmpleadoRequest {
      */
     private String usernamePersonalizado;
 
-    @NotBlank(message = "La contraseña inicial es obligatoria")
+    /**
+     * Solo obligatoria al crear (se usa para el Usuario nuevo del empleado) — no se
+     * valida aquí con @NotBlank porque este mismo DTO se reutiliza para actualizar,
+     * y actualizar() nunca toca la contraseña del usuario. Ver EmpleadoServiceImpl.crear().
+     */
     private String passwordInicial;
 }

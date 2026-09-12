@@ -95,7 +95,7 @@ import { ToastService } from '../../core/services/toast.service';
 
                   <!-- Cliente -->
                   <p class="text-sm font-medium" style="color: rgb(var(--color-on-surface))">
-                    {{ pedido.cliente?.nombre ?? pedido.pensionado?.nombre + ' ' + pedido.pensionado?.apellido ?? 'Cliente anónimo' }}
+                    {{ nombreCliente(pedido) }}
                   </p>
 
                   <!-- Detalles del pedido -->
@@ -205,8 +205,10 @@ export class ColaPedidosComponent implements OnInit, OnDestroy {
         this.cargarPedidos();
         if (evento.tipo === 'PEDIDO_NUEVO') {
           this.reproducirBeep();
-          this.toastSvc.info(`Nuevo pedido #${evento.pedido.id}`);
-          this.comandaPrint.imprimir(evento.pedido);
+          // No se imprime automático: sin un click real del usuario, el navegador
+          // bloquea la pestaña como popup no solicitado. Se avisa con beep + toast y
+          // el cocinero imprime la comanda con el botón de la fila (sí es un click real).
+          this.toastSvc.info(`Nuevo pedido #${evento.pedido.id} — usa "Imprimir" para la comanda`);
         }
       });
     }
@@ -214,6 +216,12 @@ export class ColaPedidosComponent implements OnInit, OnDestroy {
 
   imprimir(pedido: Pedido): void {
     this.comandaPrint.imprimir(pedido);
+  }
+
+  nombreCliente(pedido: Pedido): string {
+    if (pedido.cliente?.nombre) return pedido.cliente.nombre;
+    if (pedido.pensionado?.nombre) return `${pedido.pensionado.nombre} ${pedido.pensionado.apellido ?? ''}`.trim();
+    return 'Cliente anónimo';
   }
 
   private reproducirBeep(): void {

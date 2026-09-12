@@ -259,7 +259,7 @@ interface EmpleadoForm {
             <!-- Sucursal -->
             <div>
               <label class="input-label">Sucursal *</label>
-              <select [(ngModel)]="form.sucursalId" class="input text-sm">
+              <select [(ngModel)]="form.sucursalId" class="input text-sm" data-cy="select-empleado-sucursal">
                 <option [value]="null">Seleccionar...</option>
                 @for (s of sucursales(); track s.id) {
                   <option [value]="s.id">{{ s.nombre }}</option>
@@ -270,7 +270,7 @@ interface EmpleadoForm {
             <!-- Rol -->
             <div>
               <label class="input-label">Rol del sistema *</label>
-              <select [(ngModel)]="form.rolId" class="input text-sm">
+              <select [(ngModel)]="form.rolId" class="input text-sm" data-cy="select-empleado-rol">
                 <option [value]="null">Seleccionar rol...</option>
                 @for (r of roles(); track r.id) {
                   <option [value]="r.id">{{ r.nombre }}</option>

@@ -64,6 +64,9 @@ public class EmpleadoServiceImpl implements EmpleadoService {
         if (empleadoRepository.existsByCi(request.getCi())) {
             throw new DuplicadoException("Ya existe un empleado con CI: " + request.getCi());
         }
+        if (request.getPasswordInicial() == null || request.getPasswordInicial().isBlank()) {
+            throw new NegocioException("La contraseña inicial es obligatoria");
+        }
 
         Rol rol = rolRepository.findById(request.getRolId())
                 .orElseThrow(() -> new RecursoNoEncontradoException("Rol", request.getRolId()));

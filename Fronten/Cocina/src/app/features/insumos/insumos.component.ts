@@ -25,7 +25,7 @@ import { PaginationComponent } from '../../shared/components/pagination.componen
           </p>
         </div>
         <div class="flex gap-2 w-full sm:w-auto">
-          <input [(ngModel)]="busqueda" (ngModelChange)="pagina.set(1)" maxlength="100" class="input w-full sm:w-48 text-sm" placeholder="Buscar insumo...">
+          <input [ngModel]="busqueda()" (ngModelChange)="busqueda.set($event); pagina.set(1)" maxlength="100" class="input w-full sm:w-48 text-sm" placeholder="Buscar insumo...">
           <button (click)="abrirCrearModal()" class="btn-primary text-sm py-2 px-3 whitespace-nowrap">
             + Nuevo Insumo
           </button>
@@ -239,7 +239,7 @@ export class InsumosComponent implements OnInit {
   insumos      = signal<Insumo[]>([]);
   categorias   = signal<any[]>([]);
   cargando     = signal(true);
-  busqueda     = '';
+  busqueda     = signal('');
 
   pagina       = signal(1);
   readonly pageSize = 10;
@@ -264,7 +264,7 @@ export class InsumosComponent implements OnInit {
   };
 
   insumosFiltrados = computed(() => {
-    const q = this.busqueda.trim().toLowerCase();
+    const q = this.busqueda().trim().toLowerCase();
     let lista = q
       ? this.insumos().filter(i =>
           i.nombre.toLowerCase().includes(q) ||

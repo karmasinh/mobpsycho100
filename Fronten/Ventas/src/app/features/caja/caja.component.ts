@@ -5,7 +5,7 @@ import { forkJoin } from 'rxjs';
 import { PlatoService, PedidoService, VentaService, ProduccionService, ConfiguracionTicketService } from '../../core/services/api.service';
 import { AuthService } from '../../core/services/auth.service';
 import { TicketPrintService } from '../../core/services/ticket-print.service';
-import { Plato, LineaProduccion } from '../../core/models';
+import { Plato, LineaProduccion, ConfiguracionTicket } from '../../core/models';
 
 interface ItemCarrito {
   plato: Plato;
@@ -462,6 +462,10 @@ export class CajaComponent implements OnInit {
     this.carrito().reduce((s, i) => s + i.plato.precioVenta * i.cantidad, 0)
   );
 
+  // Config de ticket cacheada para poder abrir la pestaña de impresión de forma
+  // síncrona dentro del click de "Cobrar" (ver cobrar()) y no como popup bloqueado.
+  configTicket = signal<ConfiguracionTicket | null>(null);
+
   vuelto = computed(() => {
     const mv = Number(this.montoRecibido()) || 0;
     return Math.max(mv - this.total(), 0);
@@ -483,6 +487,13 @@ export class CajaComponent implements OnInit {
       error: () => this.cargandoPlatos.set(false),
     });
     this.cargarDisponiblesHoy();
+    const sucursalId = this.auth.sucursalActiva();
+    if (sucursalId != null) {
+      this.configuracionTicketService.obtener(sucursalId).subscribe({
+        next: config => this.configTicket.set(config),
+        error: () => {},
+      });
+    }
   }
 
   private cargarDisponiblesHoy(): void {
@@ -625,6 +636,12 @@ export class CajaComponent implements OnInit {
     this.procesando.set(true);
     this.errorMsg.set('');
 
+    // Si el ticket se imprime automáticamente, la pestaña se abre YA (síncrono, dentro
+    // de este click) para que el navegador no la bloquee como popup — se completa recién
+    // cuando la venta se confirma, más abajo en imprimirSiCorresponde().
+    const config = this.configTicket();
+    const ventanaTicket = config?.imprimirAutomatico ? this.ticketPrint.abrirVentana() : null;
+
     const pedidoBody = {
       sucursalId,
       observaciones: this.nombreCliente ? `Cliente: ${this.nombreCliente}` : '',
@@ -644,27 +661,31 @@ export class CajaComponent implements OnInit {
             this.ventaExitosa.set(venta);
             this.procesando.set(false);
             this.cargarDisponiblesHoy();
-            this.imprimirSiCorresponde(sucursalId, venta);
+            this.imprimirSiCorresponde(sucursalId, venta, ventanaTicket);
           },
           error: err => {
+            ventanaTicket?.close();
             this.errorMsg.set(err?.error?.mensaje ?? 'Error al cobrar');
             this.procesando.set(false);
           }
         });
       },
       error: err => {
+        ventanaTicket?.close();
         this.errorMsg.set(err?.error?.mensaje ?? 'Error al crear pedido');
         this.procesando.set(false);
       }
     });
   }
 
-  private imprimirSiCorresponde(sucursalId: number, venta: any): void {
+  private imprimirSiCorresponde(sucursalId: number, venta: any, ventanaTicket: Window | null): void {
     this.configuracionTicketService.obtener(sucursalId).subscribe({
       next: config => {
-        if (config.imprimirAutomatico) this.ticketPrint.imprimir(venta, config);
+        this.configTicket.set(config);
+        if (config.imprimirAutomatico && ventanaTicket) this.ticketPrint.imprimir(venta, config, ventanaTicket);
+        else ventanaTicket?.close();
       },
-      error: () => {},
+      error: () => ventanaTicket?.close(),
     });
   }
 

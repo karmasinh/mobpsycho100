@@ -1,6 +1,7 @@
 import { Component, OnInit, signal, effect, CUSTOM_ELEMENTS_SCHEMA } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
 import { FacturacionService } from '../../core/services/api.service';
 import { ConfiguracionFacturacion, EstadoFacturacionDto, Factura } from '../../core/models';
 import { AuthService } from '../../core/services/auth.service';
@@ -229,6 +230,30 @@ import { ToastService } from '../../core/services/toast.service';
           </div>
         </div>
       }
+
+      <!-- ── Modal de vista previa del PDF ─────────────────────────
+           Se muestra embebido en la misma pestaña (nunca window.open): así funciona
+           siempre, sin depender del bloqueador de popups del navegador, y es visible
+           en las grabaciones de Cypress (que no soporta múltiples pestañas). ── -->
+      @if (pdfPreviewUrl()) {
+        <div class="fixed inset-0 z-50 flex items-center justify-center p-4"
+             style="background:rgba(0,0,0,0.6)"
+             (click)="cerrarPdf()">
+          <div class="rounded-2xl overflow-hidden flex flex-col"
+               style="background:rgb(var(--color-surface-1));width:min(720px,100%);height:90vh"
+               (click)="$event.stopPropagation()">
+            <div class="flex items-center justify-between px-4 py-2.5" style="border-bottom:1px solid rgb(var(--color-border))">
+              <p class="font-semibold text-sm" style="color:rgb(var(--color-on-surface))">
+                Factura {{ pdfPreviewNumero() }}
+              </p>
+              <button (click)="cerrarPdf()" class="btn-ghost p-1.5" data-cy="btn-cerrar-pdf-preview">
+                <iconify-icon icon="tabler:x" width="16" height="16" style="color:currentColor"></iconify-icon>
+              </button>
+            </div>
+            <iframe [src]="pdfPreviewUrl()" class="flex-1 w-full" style="border:none" title="Vista previa de factura PDF"></iframe>
+          </div>
+        </div>
+      }
     </div>
   `,
 })
@@ -254,11 +279,16 @@ export class FacturacionComponent implements OnInit {
   };
 
   private sucursalId = 0;
+  private pdfObjectUrl: string | null = null;
+
+  pdfPreviewUrl    = signal<SafeResourceUrl | null>(null);
+  pdfPreviewNumero = signal('');
 
   constructor(
     private svc: FacturacionService,
     private authSvc: AuthService,
     private toastSvc: ToastService,
+    private sanitizer: DomSanitizer,
   ) {
     // Igual que en config-ticket: la sucursal activa del admin se resuelve async, así que
     // se reacciona al signal en vez de leerlo una sola vez (evita mandar sucursalId=0).
@@ -372,26 +402,24 @@ export class FacturacionComponent implements OnInit {
   }
 
   verPdf(f: Factura): void {
-    // La pestaña se abre YA, de forma síncrona dentro del handler del click: si se abre recién
-    // cuando llega la respuesta HTTP (async), la mayoría de navegadores la bloquea como popup.
-    // Se le asigna la URL del blob una vez que el PDF llega.
-    const pestana = window.open('', '_blank');
     this.svc.descargarPdf(f.id).subscribe({
       next: blob => {
-        const url = URL.createObjectURL(blob);
-        if (pestana && !pestana.closed) {
-          pestana.location.href = url;
-        } else {
-          window.open(url, '_blank');
-        }
-        // No se revoca el object URL enseguida: la pestaña sigue leyendo el blob al abrirse.
-        // El navegador lo libera solo al cerrar el documento/pestaña.
+        this.liberarPdfPrevio();
+        this.pdfObjectUrl = URL.createObjectURL(blob);
+        this.pdfPreviewUrl.set(this.sanitizer.bypassSecurityTrustResourceUrl(this.pdfObjectUrl));
+        this.pdfPreviewNumero.set(String(f.numeroFactura));
       },
-      error: () => {
-        pestana?.close();
-        this.toastSvc.error('No se pudo generar el PDF');
-      },
+      error: () => this.toastSvc.error('No se pudo generar el PDF'),
     });
+  }
+
+  cerrarPdf(): void {
+    this.pdfPreviewUrl.set(null);
+    this.liberarPdfPrevio();
+  }
+
+  private liberarPdfPrevio(): void {
+    if (this.pdfObjectUrl) { URL.revokeObjectURL(this.pdfObjectUrl); this.pdfObjectUrl = null; }
   }
 
   reintentar(f: Factura): void {

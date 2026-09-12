@@ -620,14 +620,18 @@ export class HistorialVentasComponent implements OnInit {
       this.toastSvc.error('Selecciona una sucursal antes de reimprimir.');
       return;
     }
+    // Abrir la pestaña YA, de forma síncrona dentro del click — si se abre recién cuando
+    // llegan las 2 respuestas HTTP (async), el navegador la bloquea como popup.
+    const ventana = this.ticketPrint.abrirVentana();
+    if (!ventana) return;
     this.ventaService.obtener(v.id).subscribe({
       next: detalle => {
         this.configuracionTicketService.obtener(sucursalId).subscribe({
-          next: config => this.ticketPrint.imprimir(detalle, config),
-          error: () => this.toastSvc.error('No se pudo cargar la configuración del ticket'),
+          next: config => this.ticketPrint.imprimir(detalle, config, ventana),
+          error: () => { ventana.close(); this.toastSvc.error('No se pudo cargar la configuración del ticket'); },
         });
       },
-      error: () => this.toastSvc.error('No se pudo cargar la venta'),
+      error: () => { ventana.close(); this.toastSvc.error('No se pudo cargar la venta'); },
     });
   }
 

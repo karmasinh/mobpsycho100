@@ -39,6 +39,39 @@ Cypress.Commands.add('apiLogin', (username: string, password: string) => {
     .then((resp) => resp.body);
 });
 
+/**
+ * Recorre una tabla/grilla paginada con app-pagination (botón
+ * "Página siguiente") página por página hasta encontrar `texto` en el
+ * contenido visible, dejando esa página activa. Si ya está en la página
+ * actual no avanza.
+ *
+ * Usado por los specs de tutorial contra varias pantallas de catálogo
+ * (insumos, categorías, proveedores, sucursales, roles, módulos, empleados)
+ * cuyo <input> de búsqueda en vivo no vuelve a filtrar tras la carga inicial
+ * — el computed() de la lista filtrada lee `busqueda` como propiedad plana
+ * (no signal), así que escribir en el buscador no lo invalida y la tabla se
+ * queda mostrando todos los registros sin filtrar. Tampoco se puede asumir
+ * que un registro recién creado caiga siempre en la última página: el orden
+ * que devuelve el backend no es necesariamente por fecha de creación (p.ej.
+ * insumos.component ordena de forma que agrupa según categoría). Por eso se
+ * recorre página por página buscando el texto real, en vez de adivinar su
+ * posición.
+ */
+Cypress.Commands.add('buscarEnPaginas', (texto: string, maxPaginas = 30) => {
+  const buscar = (intentosRestantes: number): void => {
+    cy.get('body').then(($body) => {
+      if ($body.text().includes(texto) || intentosRestantes <= 0) return;
+      const boton = $body.find('button[aria-label="Página siguiente"]');
+      if (boton.length > 0 && !boton.is(':disabled')) {
+        cy.wrap(boton).click();
+        cy.wait(200);
+        buscar(intentosRestantes - 1);
+      }
+    });
+  };
+  buscar(maxPaginas);
+});
+
 declare global {
   // eslint-disable-next-line @typescript-eslint/no-namespace
   namespace Cypress {
@@ -47,6 +80,8 @@ declare global {
       login(username: string, password: string): Chainable<void>;
       /** Log in via the backend REST API and return the LoginResponse body. */
       apiLogin(username: string, password: string): Chainable<any>;
+      /** Recorre una tabla paginada (app-pagination) hasta encontrar `texto`. */
+      buscarEnPaginas(texto: string, maxPaginas?: number): Chainable<void>;
     }
   }
 }

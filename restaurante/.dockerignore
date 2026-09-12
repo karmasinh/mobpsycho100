@@ -1,0 +1,6 @@
+target/
+bin/
+backend.log
+*.class
+.idea/
+.vscode/

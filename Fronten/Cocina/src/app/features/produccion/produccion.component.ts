@@ -1,7 +1,9 @@
 import { Component, OnInit, signal, computed, CUSTOM_ELEMENTS_SCHEMA } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { ProduccionService, PlatoService } from '../../core/services/api.service';
+import { forkJoin, of } from 'rxjs';
+import { catchError } from 'rxjs/operators';
+import { ProduccionService, PlatoService, RecetaService } from '../../core/services/api.service';
 import { AuthService } from '../../core/services/auth.service';
 import { ProduccionDia, LineaProduccion, EstadoProduccion, TipoLineaProduccion, Plato } from '../../core/models';
 
@@ -521,9 +523,12 @@ export class ProduccionComponent implements OnInit {
   cantidadProducidaInput = 0;
   errorEdicion          = signal('');
 
+  ingredientesCalc = signal<{ nombre: string; cantidad: number; unidad: string }[]>([]);
+
   constructor(
     private produccionService: ProduccionService,
     private platoService: PlatoService,
+    private recetaService: RecetaService,
     private auth: AuthService,
   ) {}
 
@@ -537,8 +542,39 @@ export class ProduccionComponent implements OnInit {
     if (sucursalId == null) { this.cargando.set(false); return; }
     this.cargando.set(true);
     this.produccionService.hoy(sucursalId).subscribe({
-      next: p => { this.produccionHoy.set(p); this.cargando.set(false); },
-      error: () => { this.produccionHoy.set(null); this.cargando.set(false); },
+      next: p => { this.produccionHoy.set(p); this.cargando.set(false); this.calcularIngredientes(p); },
+      error: () => { this.produccionHoy.set(null); this.cargando.set(false); this.ingredientesCalc.set([]); },
+    });
+  }
+
+  /**
+   * Suma los insumos que consumió lo YA producido hoy (cantidadProducida × receta activa
+   * de cada plato), agrupado por insumo — no hay endpoint de agregación en el backend, se
+   * arma client-side con la misma receta que ya usa la pantalla de Recetas.
+   */
+  private calcularIngredientes(p: ProduccionDia | null): void {
+    const lineasConProduccion = (p?.lineas ?? []).filter(l => l.cantidadProducida > 0);
+    if (lineasConProduccion.length === 0) { this.ingredientesCalc.set([]); return; }
+
+    const platoIds = [...new Set(lineasConProduccion.map(l => l.plato.id))];
+    forkJoin(
+      platoIds.map(id => this.recetaService.getActiva(id).pipe(catchError(() => of(null))))
+    ).subscribe(recetas => {
+      const porPlato = new Map(platoIds.map((id, i) => [id, recetas[i]]));
+      const acumulado = new Map<string, { nombre: string; cantidad: number; unidad: string }>();
+
+      for (const linea of lineasConProduccion) {
+        const receta = porPlato.get(linea.plato.id);
+        if (!receta) continue;
+        for (const ing of receta.ingredientes) {
+          const clave = `${ing.insumoNombre}|${ing.unidadMedida}`;
+          const cantidadUsada = ing.cantidad * linea.cantidadProducida;
+          const actual = acumulado.get(clave);
+          if (actual) actual.cantidad += cantidadUsada;
+          else acumulado.set(clave, { nombre: ing.insumoNombre, cantidad: cantidadUsada, unidad: ing.unidadMedida });
+        }
+      }
+      this.ingredientesCalc.set([...acumulado.values()].sort((a, b) => a.nombre.localeCompare(b.nombre)));
     });
   }
 
@@ -562,9 +598,7 @@ export class ProduccionComponent implements OnInit {
   }
 
   ingredientesAgregados(): { nombre: string; cantidad: number; unidad: string }[] {
-    // Usa las recetas ya calculadas en costoEstimado — aquí mostramos un indicador
-    // de que la funcionalidad existe pero requiere endpoint de cálculo adicional
-    return [];
+    return this.ingredientesCalc();
   }
 
   platosPorTipo(tipo: string): Plato[] {
@@ -651,6 +685,7 @@ export class ProduccionComponent implements OnInit {
     this.produccionService.crear(body).subscribe({
       next: p => {
         this.produccionHoy.set(p);
+        this.calcularIngredientes(p);
         this.modalNuevoPlan.set(false);
         this.guardando.set(false);
       },
@@ -677,10 +712,12 @@ export class ProduccionComponent implements OnInit {
       next: updated => {
         this.produccionHoy.update(p => {
           if (!p) return p;
-          return {
+          const actualizado = {
             ...p,
             lineas: p.lineas.map(l => l.id === updated.id ? { ...l, ...updated } : l),
           };
+          this.calcularIngredientes(actualizado);
+          return actualizado;
         });
         this.lineaEditando.set(null);
         this.guardando.set(false);

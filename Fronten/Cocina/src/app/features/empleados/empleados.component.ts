@@ -48,7 +48,7 @@ interface EmpleadoForm {
 
       <!-- Filtros -->
       <div class="flex gap-3 flex-wrap">
-        <input [(ngModel)]="busqueda" (ngModelChange)="pagina.set(1)" class="input w-48 text-sm"
+        <input [ngModel]="busqueda()" (ngModelChange)="busqueda.set($event); pagina.set(1)" class="input w-48 text-sm"
                placeholder="Buscar nombre o CI..." maxlength="100">
         <select [(ngModel)]="filtroTurno" (ngModelChange)="pagina.set(1)" class="input w-40 text-sm">
           <option value="">Todos los turnos</option>
@@ -388,7 +388,7 @@ export class EmpleadosComponent implements OnInit {
   editando         = signal(false);
   guardando        = signal(false);
   errorModal       = signal('');
-  busqueda         = '';
+  busqueda         = signal('');
   filtroTurno      = '';
   empleadoSeleccionado = signal<any>(null);
 
@@ -402,7 +402,7 @@ export class EmpleadosComponent implements OnInit {
 
   empleadosFiltrados = computed(() => {
     let lista = this.empleados();
-    const q = this.busqueda.toLowerCase();
+    const q = this.busqueda().toLowerCase();
     if (q) lista = lista.filter((e: any) =>
       `${e.nombre} ${e.apellido} ${e.ci}`.toLowerCase().includes(q)
     );

@@ -174,10 +174,10 @@ interface IngredienteForm {
 
             <!-- ── Tab Ingredientes ────────────────────────── -->
             @if (tab() === 'ingredientes') {
-              <div class="flex flex-col md:flex-row gap-4 flex-1 min-h-0">
+              <div class="flex flex-col gap-4 flex-1 min-h-0">
 
                 <!-- Selector de insumos -->
-                <div class="w-full md:w-72 flex-shrink-0 card flex flex-col gap-3">
+                <div class="w-full flex-shrink-0 card flex flex-col gap-3">
                   <p class="font-semibold text-sm" style="color:rgb(var(--color-on-surface))">
                     Insumos disponibles
                   </p>
@@ -185,7 +185,7 @@ interface IngredienteForm {
                          maxlength="100"
                          class="input text-xs"
                          placeholder="Buscar insumo...">
-                  <div class="flex-1 overflow-y-auto space-y-1" style="max-height:350px">
+                  <div class="flex-1 overflow-y-auto space-y-1" style="max-height:220px">
                     @if (cargandoInsumos()) {
                       <div class="text-xs text-center py-6" style="color:rgb(var(--color-on-surface)/0.35)">
                         Cargando...

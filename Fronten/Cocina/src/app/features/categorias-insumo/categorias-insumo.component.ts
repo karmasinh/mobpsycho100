@@ -23,7 +23,7 @@ import { PaginationComponent } from '../../shared/components/pagination.componen
           </p>
         </div>
         <div class="flex gap-2 w-full sm:w-auto">
-          <input [(ngModel)]="busqueda" (ngModelChange)="pagina.set(1)"
+          <input [ngModel]="busqueda()" (ngModelChange)="busqueda.set($event); pagina.set(1)"
                  class="input w-full sm:w-48 text-sm" placeholder="Buscar categoría..."
                  maxlength="100">
           <button (click)="abrirCrearModal()" class="btn-primary text-sm py-2 px-3 whitespace-nowrap">
@@ -183,7 +183,7 @@ import { PaginationComponent } from '../../shared/components/pagination.componen
 export class CategoriasInsumoComponent implements OnInit {
   categorias   = signal<any[]>([]);
   cargando     = signal(true);
-  busqueda     = '';
+  busqueda     = signal('');
 
   modalAbierto = signal(false);
   modoEditar   = signal(false);
@@ -204,7 +204,7 @@ export class CategoriasInsumoComponent implements OnInit {
   };
 
   categoriasFiltradas = computed(() => {
-    const q = this.busqueda.trim().toLowerCase();
+    const q = this.busqueda().trim().toLowerCase();
     let lista = !q ? this.categorias() : this.categorias().filter(c =>
       c.nombre.toLowerCase().includes(q) ||
       (c.descripcion && c.descripcion.toLowerCase().includes(q))

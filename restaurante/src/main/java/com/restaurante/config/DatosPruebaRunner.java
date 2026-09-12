@@ -383,8 +383,11 @@ public class DatosPruebaRunner implements CommandLineRunner {
             linea.setCantidadPlanificada(20);
             lineas.add(linea);
         }
-        // La sopa se marca con su tipo real (SOPA); el resto ya quedó en SEGUNDO arriba.
+        // La sopa se marca con su tipo real (SOPA); la milanesa se planifica como ESPECIAL
+        // del día (para que la card "Platos especiales" de Producción no quede vacía);
+        // el resto queda en SEGUNDO, como se asignó arriba.
         lineas.get(0).setTipo(TipoLineaProduccion.SOPA);
+        lineas.get(lineas.size() - 1).setTipo(TipoLineaProduccion.ESPECIAL);
         request.setLineas(lineas);
 
         ProduccionDia produccion = produccionService.crear(request);
