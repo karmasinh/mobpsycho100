@@ -1,5 +1,5 @@
 export const environment = {
   production: true,
-  apiUrl: 'https://api.tudominio.com/api',
-  cocinaUrl: 'https://cocina.tudominio.com',
+  apiUrl: 'https://shigeru-production.up.railway.app/api',
+  cocinaUrl: 'https://sistemadesk-cocina.netlify.app',
 };

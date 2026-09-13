@@ -14,6 +14,6 @@ adb install -r ventas-debug.apk
 adb install -r cocina-debug.apk
 ```
 
-Ambas apps apuntan al backend configurado en `environment.mobile.ts` de cada proyecto (por defecto, la IP LAN configurada al momento del build). Si el backend corre en otra dirección, hay que reconstruir la APK con `npm run build:mobile` tras actualizar ese archivo — ver `Fronten/Ventas/README.md` / `Fronten/Cocina/README.md` si existen, o el `AGENTS.md` raíz del proyecto.
+Ambas apps apuntan al backend real desplegado en Railway (`https://shigeru-production.up.railway.app/api`, configurado en `environment.mobile.ts` de cada proyecto) — funcionan en cualquier red con internet, sin depender de la IP LAN del equipo de desarrollo. Si el backend cambia de URL, hay que actualizar `environment.mobile.ts` y reconstruir con `npm run build -- --configuration mobile` + `npx cap sync android` + `gradlew assembleDebug`.
 
-Generadas: 2026-09-11.
+Generadas: 2026-09-12 (backend en producción, Railway).
