@@ -19,6 +19,7 @@ import com.restaurante.entity.TipoAlmuerzo;
 import com.restaurante.entity.Usuario;
 import com.restaurante.enums.EstadoCliente;
 import com.restaurante.enums.EstadoEmpleado;
+import com.restaurante.enums.EstadoProduccion;
 import com.restaurante.enums.FormaPago;
 import com.restaurante.enums.TipoLineaProduccion;
 import com.restaurante.enums.TurnoEmpleado;
@@ -162,7 +163,7 @@ public class DatosPruebaRunner implements CommandLineRunner {
         venderPedido(sucursalSur, clienteSur, sopaArroz, 1, segundoCarne, 2, usuarioCajeroSur.getId());
 
         TipoAlmuerzo tipoAlmuerzo = crearTipoAlmuerzo();
-        sembrarPensionadoConHistorial(tipoAlmuerzo, admin.getId());
+        sembrarPensionadoConHistorial(tipoAlmuerzo, casaMatriz, admin.getId());
 
         log.info("[DatosPrueba] Segunda semilla completa: sucursal '{}', {} insumos, 3 platos/recetas producidos " +
                         "en ambas sucursales, 2 pedidos vendidos, 1 cliente y 1 pensionado con historial de 2 meses.",
@@ -391,6 +392,7 @@ public class DatosPruebaRunner implements CommandLineRunner {
         request.setLineas(lineas);
 
         ProduccionDia produccion = produccionService.crear(request);
+        produccion = produccionService.cambiarEstado(produccion.getId(), EstadoProduccion.EN_CURSO);
 
         for (LineaProduccion linea : produccion.getLineas()) {
             produccionService.actualizarProducida(linea.getId(), 15, usuarioId);
@@ -458,7 +460,7 @@ public class DatosPruebaRunner implements CommandLineRunner {
                         .build()));
     }
 
-    private void sembrarPensionadoConHistorial(TipoAlmuerzo tipoAlmuerzo, Long usuarioId) {
+    private void sembrarPensionadoConHistorial(TipoAlmuerzo tipoAlmuerzo, Sucursal sucursal, Long usuarioId) {
         PensionadoRequest request = new PensionadoRequest();
         request.setNombre("Jorge");
         request.setApellido("Fernández Quiroga");
@@ -466,6 +468,7 @@ public class DatosPruebaRunner implements CommandLineRunner {
         request.setTelefono("70099887");
         request.setCorreo("jorge.fernandez.prueba@example.com");
         request.setTipoAlmuerzoId(tipoAlmuerzo.getId());
+        request.setSucursalId(sucursal.getId());
         request.setFechaInscripcion(LocalDate.now().minusMonths(2));
         request.setPasswordInicial("Pension123!");
 
