@@ -2,6 +2,32 @@
 
 Sistema de gestión para un restaurante con servicio de pensión (almuerzos mensuales): backend compartido en Spring Boot y dos frontends Angular independientes, uno para el área de Ventas/Caja y otro para Cocina/Inventario, ambos también empaquetados como apps móviles Android con Capacitor.
 
+## Demo en vivo
+
+Backend desplegado en el plan gratuito de [Railway](https://railway.app/) y frontends en el plan gratuito de [Netlify](https://www.netlify.com/) — pueden tardar unos segundos en responder tras un período de inactividad (comportamiento normal de un backend gratuito, no un error).
+
+| App | URL |
+|---|---|
+| Frontend Ventas | https://sistemadesk-ventas.netlify.app |
+| Frontend Cocina | https://sistemadesk-cocina.netlify.app |
+| API backend (Railway) | https://shigeru-production.up.railway.app/api |
+
+## Capturas de pantalla
+
+| Login | Dashboard Cocina | Dashboard Ventas |
+|---|---|---|
+| ![Login](capturas/login.png) | ![Dashboard Jefe de Cocina](capturas/cocina/dashboard.png) | ![Dashboard Admin](capturas/ventas/dashboard.png) |
+
+| Cola de Pedidos (Cocina) | Producción del Día (Cocina) | Inventario (Cocina) |
+|---|---|---|
+| ![Cola de Pedidos](capturas/cocina/cola-pedidos.png) | ![Produccion del Dia](capturas/cocina/produccion.png) | ![Inventario](capturas/cocina/inventario.png) |
+
+| Caja - Nueva Venta (Ventas) | Historial de Ventas (Ventas) | Pedidos (Ventas) |
+|---|---|---|
+| ![Caja Nueva Venta](capturas/ventas/caja-nueva-venta.png) | ![Historial de Ventas](capturas/ventas/historial-ventas.png) | ![Pedidos](capturas/ventas/pedidos.png) |
+
+Set completo de capturas (79 pantallas Cocina, 90 Ventas, web y móvil) documentado en `Luciana Docs/documentacion/borrador/12_CAPTURAS_Y_FLUJOS.md` y `Alison Docs/documentacion/borrador/12_CAPTURAS_Y_FLUJOS.md` (fuera de este repositorio).
+
 ## Estructura del repositorio
 
 ```
