@@ -36,7 +36,22 @@ public class UnidadConversionService {
             Map.entry("ml", "ml"), Map.entry("mililitro", "ml"), Map.entry("mililitros", "ml"),
             Map.entry("unidad", "unidad"), Map.entry("unidades", "unidad"), Map.entry("und", "unidad"),
             Map.entry("unid", "unidad"), Map.entry("pieza", "unidad"), Map.entry("piezas", "unidad"),
-            Map.entry("docena", "docena"), Map.entry("docenas", "docena")
+            Map.entry("docena", "docena"), Map.entry("docenas", "docena"),
+
+            // DEC-L-005: unidades adicionales (masa)
+            Map.entry("lb", "lb"), Map.entry("lbs", "lb"), Map.entry("libra", "lb"), Map.entry("libras", "lb"),
+            Map.entry("oz", "oz"), Map.entry("onza", "oz"), Map.entry("onzas", "oz"),
+            Map.entry("arroba", "arroba"), Map.entry("arrobas", "arroba"),
+            Map.entry("qq", "qq"), Map.entry("quintal", "qq"), Map.entry("quintales", "qq"),
+
+            // DEC-L-005: unidades adicionales (volumen)
+            Map.entry("ozfl", "ozfl"), Map.entry("ozliq", "ozfl"), Map.entry("onzaliquida", "ozfl"), Map.entry("onzasliquidas", "ozfl"),
+            Map.entry("taza", "taza"), Map.entry("tazas", "taza"),
+            Map.entry("cucharada", "cucharada"), Map.entry("cucharadas", "cucharada"), Map.entry("cda", "cucharada"),
+            Map.entry("cucharadita", "cucharadita"), Map.entry("cucharaditas", "cucharadita"), Map.entry("cdta", "cucharadita"),
+
+            // DEC-L-005: unidades adicionales (unidad)
+            Map.entry("par", "par"), Map.entry("pares", "par")
     );
 
     /** Normaliza texto libre ("Kg.", " litros ") al código canónico del catálogo, si se reconoce. */

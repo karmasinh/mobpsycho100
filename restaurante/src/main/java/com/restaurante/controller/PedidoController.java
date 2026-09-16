@@ -42,6 +42,12 @@ public class PedidoController {
                     + "or @perm.tiene(authentication, 'MOD_CAJA') "
                     + "or @perm.tiene(authentication, 'MOD_PEDIDOS_COCINA')";
 
+    // DEC-L-004: avanzar el estado del pedido (PENDIENTE→EN_PREPARACION→LISTO→ENTREGADO)
+    // queda restringido a cocina — CAJERO/VENDEDOR (Ventas) sólo consultan (ROLES_PEDIDOS).
+    private static final String ROLES_CAMBIAR_ESTADO_PEDIDO =
+            "hasAnyRole('COCINERO','JEFE_COCINA','ADMIN') "
+                    + "or @perm.tiene(authentication, 'MOD_PEDIDOS_COCINA')";
+
     @GetMapping("/{id}")
     @PreAuthorize(ROLES_PEDIDOS)
     public ResponseEntity<Pedido> obtener(@PathVariable Long id,
@@ -76,7 +82,7 @@ public class PedidoController {
     }
 
     @PatchMapping("/{id}/estado")
-    @PreAuthorize(ROLES_PEDIDOS)
+    @PreAuthorize(ROLES_CAMBIAR_ESTADO_PEDIDO)
     @Operation(summary = "Avanzar estado del pedido (cocina: PENDIENTE→EN_PREPARACION→LISTO)")
     public ResponseEntity<Pedido> cambiarEstado(@PathVariable Long id,
                                                  @RequestParam EstadoPedido nuevoEstado,

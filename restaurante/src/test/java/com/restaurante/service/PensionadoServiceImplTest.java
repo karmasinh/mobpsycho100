@@ -2,11 +2,14 @@ package com.restaurante.service;
 
 import com.restaurante.dto.request.CobroMensualRequest;
 import com.restaurante.dto.request.PensionadoRequest;
+import com.restaurante.entity.CicloPensionado;
 import com.restaurante.entity.CobroMensual;
 import com.restaurante.entity.Pensionado;
 import com.restaurante.entity.Rol;
 import com.restaurante.entity.Sucursal;
 import com.restaurante.entity.TipoAlmuerzo;
+import com.restaurante.enums.EstadoCiclo;
+import com.restaurante.enums.ModoFacturacionPensionado;
 import com.restaurante.exception.NegocioException;
 import com.restaurante.repository.*;
 import com.restaurante.service.impl.PensionadoServiceImpl;
@@ -17,6 +20,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
+import java.time.LocalDate;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -37,6 +41,7 @@ class PensionadoServiceImplTest {
     @Mock private UsuarioRepository usuarioRepository;
     @Mock private RolRepository rolRepository;
     @Mock private SucursalRepository sucursalRepository;
+    @Mock private CicloPensionadoRepository cicloPensionadoRepository;
     @Mock private PasswordEncoder passwordEncoder;
 
     private PensionadoServiceImpl pensionadoService;
@@ -47,7 +52,8 @@ class PensionadoServiceImplTest {
     void setUp() {
         pensionadoService = new PensionadoServiceImpl(
                 pensionadoRepository, asistenciaRepository, cobroMensualRepository,
-                tipoAlmuerzoRepository, usuarioRepository, rolRepository, sucursalRepository, passwordEncoder);
+                tipoAlmuerzoRepository, usuarioRepository, rolRepository, sucursalRepository,
+                cicloPensionadoRepository, passwordEncoder);
 
         TipoAlmuerzo tipo = TipoAlmuerzo.builder().id(1L).nombre("Completo").precioMensual(100.0).build();
         Sucursal sucursal = Sucursal.builder().id(1L).nombre("Casa Matriz").build();
@@ -237,5 +243,79 @@ class PensionadoServiceImplTest {
         request.setMontoPagado(10.0);
 
         assertThrows(NegocioException.class, () -> pensionadoService.registrarPago(request, 99L));
+    }
+
+    @Test
+    void registrarAsistencia_cicloSinActivoRechazaConMensajeExacto() {
+        pensionado.setModoFacturacion(ModoFacturacionPensionado.CICLO_26D);
+        when(pensionadoRepository.findById(20L)).thenReturn(Optional.of(pensionado));
+        when(asistenciaRepository.existsByPensionado_IdAndFecha(20L, LocalDate.of(2026, 3, 1))).thenReturn(false);
+        when(cicloPensionadoRepository.findByPensionado_IdAndEstado(20L, EstadoCiclo.ACTIVO))
+                .thenReturn(Optional.empty());
+
+        NegocioException ex = assertThrows(NegocioException.class,
+                () -> pensionadoService.registrarAsistencia(20L, LocalDate.of(2026, 3, 1), 99L));
+
+        assertThat(ex.getMessage()).isEqualTo("El pensionado no tiene ciclo activo. Debe renovar su pensión.");
+    }
+
+    @Test
+    void registrarAsistencia_consumeUnDiaDelCicloYNoRompeModoMensual() {
+        // Modo MENSUAL (comportamiento por defecto): no debe tocar CicloPensionadoRepository
+        when(pensionadoRepository.findById(20L)).thenReturn(Optional.of(pensionado));
+        when(asistenciaRepository.existsByPensionado_IdAndFecha(20L, LocalDate.of(2026, 3, 1))).thenReturn(false);
+        when(usuarioRepository.findById(99L)).thenReturn(Optional.empty());
+        when(asistenciaRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
+
+        pensionadoService.registrarAsistencia(20L, LocalDate.of(2026, 3, 1), 99L);
+
+        verify(cicloPensionadoRepository, never()).findByPensionado_IdAndEstado(any(), any());
+        verify(cicloPensionadoRepository, never()).save(any());
+    }
+
+    @Test
+    void registrarAsistencia_cicloLlegaA26YSeMarcaCompletado() {
+        pensionado.setModoFacturacion(ModoFacturacionPensionado.CICLO_26D);
+        CicloPensionado ciclo = CicloPensionado.builder()
+                .id(5L).pensionado(pensionado).fechaInicio(LocalDate.of(2026, 2, 1))
+                .diasTotal(26).diasConsumidos(25).estado(EstadoCiclo.ACTIVO).montoPagado(100.0)
+                .build();
+
+        when(pensionadoRepository.findById(20L)).thenReturn(Optional.of(pensionado));
+        when(asistenciaRepository.existsByPensionado_IdAndFecha(20L, LocalDate.of(2026, 3, 1))).thenReturn(false);
+        when(cicloPensionadoRepository.findByPensionado_IdAndEstado(20L, EstadoCiclo.ACTIVO))
+                .thenReturn(Optional.of(ciclo));
+        when(usuarioRepository.findById(99L)).thenReturn(Optional.empty());
+        when(asistenciaRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
+        when(cicloPensionadoRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
+
+        pensionadoService.registrarAsistencia(20L, LocalDate.of(2026, 3, 1), 99L);
+
+        assertThat(ciclo.getDiasConsumidos()).isEqualTo(26);
+        assertThat(ciclo.getEstado()).isEqualTo(EstadoCiclo.COMPLETADO);
+        assertThat(ciclo.getFechaFin()).isEqualTo(LocalDate.of(2026, 3, 1));
+    }
+
+    @Test
+    void renovarCiclo_cierraElAnteriorYAbreUnoNuevoCon26Dias() {
+        CicloPensionado anterior = CicloPensionado.builder()
+                .id(4L).pensionado(pensionado).fechaInicio(LocalDate.of(2026, 1, 1))
+                .diasTotal(26).diasConsumidos(20).estado(EstadoCiclo.ACTIVO).montoPagado(100.0)
+                .build();
+
+        when(pensionadoRepository.findById(20L)).thenReturn(Optional.of(pensionado));
+        when(cicloPensionadoRepository.findByPensionado_IdAndEstado(20L, EstadoCiclo.ACTIVO))
+                .thenReturn(Optional.of(anterior));
+        when(usuarioRepository.findById(99L)).thenReturn(Optional.empty());
+        when(cicloPensionadoRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
+
+        CicloPensionado nuevo = pensionadoService.renovarCiclo(20L, 100.0, 99L);
+
+        assertThat(anterior.getEstado()).isEqualTo(EstadoCiclo.COMPLETADO);
+        assertThat(anterior.getFechaFin()).isNotNull();
+        assertThat(nuevo.getEstado()).isEqualTo(EstadoCiclo.ACTIVO);
+        assertThat(nuevo.getDiasConsumidos()).isEqualTo(0);
+        assertThat(nuevo.getDiasTotal()).isEqualTo(26);
+        assertThat(nuevo.getMontoPagado()).isEqualTo(100.0);
     }
 }

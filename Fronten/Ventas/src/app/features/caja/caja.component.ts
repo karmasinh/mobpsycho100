@@ -1,4 +1,4 @@
-import { Component, OnInit, signal, computed, CUSTOM_ELEMENTS_SCHEMA } from '@angular/core';
+import { Component, OnInit, signal, computed, effect, CUSTOM_ELEMENTS_SCHEMA } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { forkJoin } from 'rxjs';
@@ -479,21 +479,27 @@ export class CajaComponent implements OnInit {
     private configuracionTicketService: ConfiguracionTicketService,
     private ticketPrint: TicketPrintService,
     private auth: AuthService,
-  ) {}
+  ) {
+    // Re-carga los platos disponibles hoy y la config de ticket cada vez que cambia
+    // la sucursal activa — antes quedaban "pegados" a la sucursal vigente al montar
+    // el componente, dejando vender platos que no corresponden a la sucursal elegida.
+    effect(() => {
+      const sucursalId = this.auth.sucursalActiva();
+      this.cargarDisponiblesHoy();
+      if (sucursalId != null) {
+        this.configuracionTicketService.obtener(sucursalId).subscribe({
+          next: config => this.configTicket.set(config),
+          error: () => {},
+        });
+      }
+    });
+  }
 
   ngOnInit(): void {
     this.platoService.listar().subscribe({
       next: ps => { this.platos.set(ps); this.cargandoPlatos.set(false); },
       error: () => this.cargandoPlatos.set(false),
     });
-    this.cargarDisponiblesHoy();
-    const sucursalId = this.auth.sucursalActiva();
-    if (sucursalId != null) {
-      this.configuracionTicketService.obtener(sucursalId).subscribe({
-        next: config => this.configTicket.set(config),
-        error: () => {},
-      });
-    }
   }
 
   private cargarDisponiblesHoy(): void {

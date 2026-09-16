@@ -163,7 +163,7 @@ type SortCol = 'fecha' | 'total' | 'estado';
                                 class="btn-ghost text-xs px-2 py-1" title="Ver detalle">
                           <iconify-icon icon="tabler:eye" width="16" height="16" style="color:currentColor"></iconify-icon>
                         </button>
-                        @if (p.estado === 'LISTO') {
+                        @if (p.estado === 'LISTO' && puedeCambiarEstado()) {
                           <button (click)="marcarEntregado(p)"
                                   class="btn-ghost text-xs px-2 py-1 text-success"
                                   title="Marcar como entregado"
@@ -323,6 +323,13 @@ export class PedidosComponent implements OnInit, OnDestroy {
   ];
 
   private realtimeSub?: Subscription;
+
+  // DEC-L-004: cambiar el estado del pedido (PATCH /pedidos/{id}/estado) ahora
+  // sólo lo permite el backend a COCINERO, JEFE_COCINA y ADMIN — Cajero/Vendedor
+  // sólo consultan. Se oculta el control para el resto de roles.
+  puedeCambiarEstado = computed(() =>
+    ['COCINERO', 'JEFE_COCINA', 'ADMIN'].includes(this.auth.rol())
+  );
 
   constructor(
     private pedidoService: PedidoService,

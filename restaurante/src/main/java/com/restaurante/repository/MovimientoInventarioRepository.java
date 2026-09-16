@@ -65,4 +65,14 @@ public interface MovimientoInventarioRepository extends JpaRepository<Movimiento
     /** Último movimiento de un insumo en una sucursal antes de una fecha (saldo inicial del Kárdex) */
     List<MovimientoInventario> findTop1ByInsumoIdAndSucursalIdAndCreadoEnBeforeOrderByCreadoEnDesc(
             Long insumoId, Long sucursalId, LocalDateTime corte);
+
+    /** Total de mermas (cantidad y valor) por sucursal en un período — para el comparativo entre sucursales (ADMIN) */
+    @Query("""
+        SELECT m.sucursal.id, m.sucursal.nombre, COALESCE(SUM(m.cantidad), 0), COALESCE(SUM(m.valorEconomico), 0)
+        FROM MovimientoInventario m
+        WHERE m.tipo = com.restaurante.enums.TipoMovimientoInventario.MERMA
+          AND m.creadoEn BETWEEN :desde AND :hasta
+        GROUP BY m.sucursal.id, m.sucursal.nombre
+        """)
+    List<Object[]> sumMermasPorSucursal(@Param("desde") LocalDateTime desde, @Param("hasta") LocalDateTime hasta);
 }

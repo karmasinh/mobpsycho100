@@ -100,7 +100,7 @@ export interface DetallePedido {
 }
 
 export type TipoLineaProduccion = 'SOPA' | 'SEGUNDO' | 'ESPECIAL';
-export type EstadoProduccion = 'PLANIFICADO' | 'EN_CURSO' | 'CERRADO';
+export type EstadoProduccion = 'PLANIFICADO' | 'EN_CURSO' | 'CERRADO' | 'CANCELADO';
 
 export interface LineaProduccion {
   id: number;
@@ -233,6 +233,19 @@ export interface Pensionado {
   sucursal?: { id: number; nombre: string } | null;
   saldoPendiente?: number;
   fechaInscripcion: string;
+  modoFacturacion?: 'MENSUAL' | 'CICLO_26D';
+}
+
+export interface CicloPensionado {
+  id: number;
+  pensionadoId: number;
+  fechaInicio: string;
+  fechaFin: string | null;
+  diasTotal: number;
+  diasConsumidos: number;
+  estado: 'ACTIVO' | 'COMPLETADO';
+  montoPagado: number;
+  creadoEn: string;
 }
 
 export interface CobroMensual {
@@ -329,6 +342,7 @@ export interface ConfiguracionFacturacion {
   razonSocial: string | null;
   municipio: string | null;
   leyendaFactura: string | null;
+  logoBase64: string | null;
   ambiente: AmbienteFacturacion;
   facturacionHabilitada: boolean;
   cuis: string | null;

@@ -99,12 +99,14 @@ public class ProduccionServiceImpl implements ProduccionService {
     }
 
     /**
-     * Transiciones válidas del estado de producción del día: sólo hacia
-     * adelante y sin saltos (PLANIFICADO → EN_CURSO → CERRADO). AUD-L-005.
+     * Transiciones válidas del estado de producción del día: hacia adelante y
+     * sin saltos (PLANIFICADO → EN_CURSO → CERRADO), más la cancelación como
+     * salida alternativa desde cualquier estado no terminal (PLANIFICADO o
+     * EN_CURSO → CANCELADO). CERRADO y CANCELADO son terminales. AUD-L-005.
      */
-    private static final java.util.Map<EstadoProduccion, EstadoProduccion> SIGUIENTE_ESTADO = java.util.Map.of(
-            EstadoProduccion.PLANIFICADO, EstadoProduccion.EN_CURSO,
-            EstadoProduccion.EN_CURSO, EstadoProduccion.CERRADO
+    private static final java.util.Map<EstadoProduccion, java.util.Set<EstadoProduccion>> TRANSICIONES_VALIDAS = java.util.Map.of(
+            EstadoProduccion.PLANIFICADO, java.util.Set.of(EstadoProduccion.EN_CURSO, EstadoProduccion.CANCELADO),
+            EstadoProduccion.EN_CURSO, java.util.Set.of(EstadoProduccion.CERRADO, EstadoProduccion.CANCELADO)
     );
 
     @Override
@@ -112,7 +114,8 @@ public class ProduccionServiceImpl implements ProduccionService {
     public ProduccionDia cambiarEstado(Long id, EstadoProduccion nuevoEstado) {
         ProduccionDia produccion = obtenerPorId(id);
         EstadoProduccion actual = produccion.getEstado();
-        if (!nuevoEstado.equals(SIGUIENTE_ESTADO.get(actual))) {
+        java.util.Set<EstadoProduccion> permitidos = TRANSICIONES_VALIDAS.get(actual);
+        if (permitidos == null || !permitidos.contains(nuevoEstado)) {
             throw new NegocioException(
                     "Transición inválida: no se puede pasar de " + actual + " a " + nuevoEstado + ".");
         }

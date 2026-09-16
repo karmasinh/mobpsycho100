@@ -56,6 +56,41 @@ import { ToastService } from '../../core/services/toast.service';
           <div class="card space-y-4">
             <h2 class="font-display font-bold" style="color:rgb(var(--color-on-surface))">Datos fiscales</h2>
 
+            <!-- ── Logo del encabezado de la factura ─────────────── -->
+            <div class="flex items-center gap-3 p-3 rounded-lg" style="background:rgb(var(--color-surface-2))">
+              @if (form.logoBase64) {
+                <img [src]="form.logoBase64" alt="Logo" style="width:56px;height:56px;object-fit:contain">
+              } @else {
+                <svg viewBox="0 0 80 80" xmlns="http://www.w3.org/2000/svg" fill="none"
+                     style="width:56px;height:56px;color:rgb(var(--color-on-surface)/0.7)">
+                  <circle cx="40" cy="40" r="36" stroke="currentColor" stroke-width="2"/>
+                  <circle cx="40" cy="40" r="28" stroke="currentColor" stroke-width="0.75" opacity="0.4"/>
+                  <ellipse cx="33" cy="11" rx="2.5" ry="4.5" fill="currentColor" opacity="0.7" transform="rotate(-18 33 11)"/>
+                  <ellipse cx="40" cy="9"  rx="2.5" ry="5"   fill="currentColor" opacity="0.85"/>
+                  <ellipse cx="47" cy="11" rx="2.5" ry="4.5" fill="currentColor" opacity="0.7" transform="rotate(18 47 11)"/>
+                  <line x1="40" y1="14" x2="40" y2="22" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+                  <text x="40" y="58" text-anchor="middle" font-family="Georgia,'Times New Roman',serif" font-size="32" font-weight="700" fill="currentColor">E</text>
+                </svg>
+              }
+              <div class="flex-1">
+                <p class="text-xs font-semibold" style="color:rgb(var(--color-on-surface)/0.6)">Logo de la factura</p>
+                <p class="text-[11px]" style="color:rgb(var(--color-on-surface)/0.4)">
+                  Si no subís uno, se imprime el emblema de La Entrerriana.
+                </p>
+                <div class="flex gap-1.5 mt-1.5">
+                  <button type="button" (click)="logoInput.click()" class="btn-secondary text-[11px] px-2 py-1" data-cy="btn-subir-logo-factura">
+                    Subir logo
+                  </button>
+                  @if (form.logoBase64) {
+                    <button type="button" (click)="quitarLogo()" class="btn-ghost text-[11px] px-2 py-1" data-cy="btn-quitar-logo-factura">
+                      Quitar
+                    </button>
+                  }
+                </div>
+              </div>
+              <input #logoInput type="file" accept="image/png,image/jpeg,image/svg+xml" (change)="onLogoSeleccionado($event)" hidden>
+            </div>
+
             <div>
               <label class="input-label">Razón social</label>
               <input [(ngModel)]="form.razonSocial" class="input text-sm" maxlength="200" placeholder="La Entrerriana" data-cy="input-facturacion-razon-social">
@@ -274,9 +309,13 @@ export class FacturacionComponent implements OnInit {
     razonSocial: '' as string | null,
     municipio: '' as string | null,
     leyendaFactura: '' as string | null,
+    logoBase64: null as string | null,
     ambiente: 'PRUEBAS' as 'PRUEBAS' | 'PRODUCCION',
     facturacionHabilitada: false,
   };
+
+  /** Tamaño máximo permitido para el logo, para no inflar el registro de configuración. */
+  private static readonly LOGO_MAX_BYTES = 500 * 1024;
 
   private sucursalId = 0;
   private pdfObjectUrl: string | null = null;
@@ -325,6 +364,7 @@ export class FacturacionComponent implements OnInit {
       razonSocial: c.razonSocial,
       municipio: c.municipio,
       leyendaFactura: c.leyendaFactura,
+      logoBase64: c.logoBase64,
       ambiente: c.ambiente,
       facturacionHabilitada: c.facturacionHabilitada,
     };
@@ -348,6 +388,37 @@ export class FacturacionComponent implements OnInit {
         this.error.set(err?.error?.mensaje ?? 'Error al guardar');
       },
     });
+  }
+
+  onLogoSeleccionado(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    const archivo = input.files?.[0] ?? null;
+    if (!archivo) return;
+
+    if (!archivo.type.startsWith('image/')) {
+      this.toastSvc.error('El logo debe ser una imagen (PNG, JPG o SVG).');
+      input.value = '';
+      return;
+    }
+    if (archivo.size > FacturacionComponent.LOGO_MAX_BYTES) {
+      this.toastSvc.error('El logo no puede pesar más de 500 KB.');
+      input.value = '';
+      return;
+    }
+
+    const lector = new FileReader();
+    lector.onload = () => {
+      this.form.logoBase64 = lector.result as string;
+    };
+    lector.onerror = () => {
+      this.toastSvc.error('No se pudo leer la imagen seleccionada.');
+    };
+    lector.readAsDataURL(archivo);
+    input.value = '';
+  }
+
+  quitarLogo(): void {
+    this.form.logoBase64 = null;
   }
 
   solicitarCuis(): void {

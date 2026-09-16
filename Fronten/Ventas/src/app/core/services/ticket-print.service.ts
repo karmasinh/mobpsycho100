@@ -64,7 +64,7 @@ export class TicketPrintService {
     ).join('');
 
     const encabezado = `
-      ${config.logoBase64 ? `<div class="logo"><img src="${config.logoBase64}" alt="logo"></div>` : ''}
+      <div class="logo">${config.logoBase64 ? `<img src="${config.logoBase64}" alt="logo">` : this.emblemaPorDefecto()}</div>
       ${config.razonSocial ? `<div class="centrado negrita">${this.escapar(config.razonSocial)}</div>` : ''}
       ${config.nit ? `<div class="centrado">NIT: ${this.escapar(config.nit)}</div>` : ''}
       ${config.direccion ? `<div class="centrado">${this.escapar(config.direccion)}</div>` : ''}
@@ -82,7 +82,9 @@ export class TicketPrintService {
           body { font-family: 'Courier New', monospace; font-size: 12px; width: ${config.anchoMm}mm; margin: 0; padding: 4mm; }
           .centrado { text-align: center; }
           .negrita { font-weight: bold; }
-          .logo img { max-width: 100%; display: block; margin: 0 auto 4px; }
+          .logo { text-align: center; margin-bottom: 4px; }
+          .logo img { max-width: 100%; display: block; margin: 0 auto; }
+          .logo svg { width: 30mm; height: 30mm; color: #000; margin: 0 auto; display: block; }
           .linea { border-top: 1px dashed #000; margin: 6px 0; }
           .meta { font-size: 11px; }
           .item { display: flex; justify-content: space-between; }
@@ -112,6 +114,24 @@ export class TicketPrintService {
         ${config.leyendaLegal ? `<div class="pie">${this.escapar(config.leyendaLegal)}</div>` : ''}
       </body>
       </html>
+    `;
+  }
+
+  /**
+   * Emblema vectorial de "La Entrerriana" — mismo SVG que login.component.ts (líneas
+   * 72-88), usado como logo por defecto del ticket cuando la sucursal no subió el suyo.
+   */
+  private emblemaPorDefecto(): string {
+    return `
+      <svg viewBox="0 0 80 80" xmlns="http://www.w3.org/2000/svg" fill="none">
+        <circle cx="40" cy="40" r="36" stroke="currentColor" stroke-width="2"/>
+        <circle cx="40" cy="40" r="28" stroke="currentColor" stroke-width="0.75" opacity="0.4"/>
+        <ellipse cx="33" cy="11" rx="2.5" ry="4.5" fill="currentColor" opacity="0.7" transform="rotate(-18 33 11)"/>
+        <ellipse cx="40" cy="9"  rx="2.5" ry="5"   fill="currentColor" opacity="0.85"/>
+        <ellipse cx="47" cy="11" rx="2.5" ry="4.5" fill="currentColor" opacity="0.7" transform="rotate(18 47 11)"/>
+        <line x1="40" y1="14" x2="40" y2="22" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+        <text x="40" y="58" text-anchor="middle" font-family="Georgia,'Times New Roman',serif" font-size="32" font-weight="700" fill="currentColor">E</text>
+      </svg>
     `;
   }
 

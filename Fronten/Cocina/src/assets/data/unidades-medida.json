@@ -1,0 +1,27 @@
+{
+  "categorias": [
+    { "id": "MASA", "nombre": "Peso", "unidadBase": "g" },
+    { "id": "VOLUMEN", "nombre": "Volumen", "unidadBase": "ml" },
+    { "id": "UNIDAD", "nombre": "Cantidad", "unidadBase": "unidad" }
+  ],
+  "unidades": [
+    { "codigo": "g", "nombre": "Gramo", "categoria": "MASA", "factorABase": 1, "porDefectoBolivia": true },
+    { "codigo": "kg", "nombre": "Kilogramo", "categoria": "MASA", "factorABase": 1000, "porDefectoBolivia": true },
+    { "codigo": "mg", "nombre": "Miligramo", "categoria": "MASA", "factorABase": 0.001, "porDefectoBolivia": false },
+    { "codigo": "lb", "nombre": "Libra", "categoria": "MASA", "factorABase": 453.592, "porDefectoBolivia": false },
+    { "codigo": "oz", "nombre": "Onza", "categoria": "MASA", "factorABase": 28.3495, "porDefectoBolivia": false },
+    { "codigo": "arroba", "nombre": "Arroba", "categoria": "MASA", "factorABase": 11502.9, "porDefectoBolivia": false },
+    { "codigo": "qq", "nombre": "Quintal", "categoria": "MASA", "factorABase": 46000, "porDefectoBolivia": false },
+
+    { "codigo": "ml", "nombre": "Mililitro", "categoria": "VOLUMEN", "factorABase": 1, "porDefectoBolivia": true },
+    { "codigo": "l", "nombre": "Litro", "categoria": "VOLUMEN", "factorABase": 1000, "porDefectoBolivia": true },
+    { "codigo": "ozfl", "nombre": "Onza líquida", "categoria": "VOLUMEN", "factorABase": 29.5735, "porDefectoBolivia": false },
+    { "codigo": "taza", "nombre": "Taza", "categoria": "VOLUMEN", "factorABase": 240, "porDefectoBolivia": false },
+    { "codigo": "cucharada", "nombre": "Cucharada", "categoria": "VOLUMEN", "factorABase": 15, "porDefectoBolivia": false },
+    { "codigo": "cucharadita", "nombre": "Cucharadita", "categoria": "VOLUMEN", "factorABase": 5, "porDefectoBolivia": false },
+
+    { "codigo": "unidad", "nombre": "Unidad", "categoria": "UNIDAD", "factorABase": 1, "porDefectoBolivia": true },
+    { "codigo": "docena", "nombre": "Docena", "categoria": "UNIDAD", "factorABase": 12, "porDefectoBolivia": false },
+    { "codigo": "par", "nombre": "Par", "categoria": "UNIDAD", "factorABase": 2, "porDefectoBolivia": false }
+  ]
+}

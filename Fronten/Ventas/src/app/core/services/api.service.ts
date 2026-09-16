@@ -5,7 +5,7 @@ import { map } from 'rxjs/operators';
 import { environment } from '../../../environments/environment';
 import {
   Cliente, EstadoCliente, Pensionado, Venta,
-  CobroMensual, AsistenciaPensionado, Pedido, Plato, AlertaSistema,
+  CobroMensual, AsistenciaPensionado, Pedido, Plato, AlertaSistema, CicloPensionado,
   Proveedor, Rol, Empleado, CategoriaPlato, ModuloMenuDto,
   Sucursal, TipoAlmuerzo, Insumo, AuditoriaLog, TopProductoDto,
   LineaProduccion, ProduccionDia, TipoLineaProduccion, EstadoProduccion,
@@ -59,9 +59,15 @@ export class PensionadoService {
     return this.http.post<CobroMensual>(`${API}/pensionados/${id}/cobro/generar`, null, { params: { mes, anio } });
   }
   listarCobros(id: number): Observable<CobroMensual[]>      { return this.http.get<CobroMensual[]>(`${API}/pensionados/${id}/cobros`); }
+  obtenerQr(id: number): Observable<{ qrToken: string }>    { return this.http.get<{ qrToken: string }>(`${API}/pensionados/${id}/qr`); }
   cobrosPendientes(): Observable<CobroMensual[]>            { return this.http.get<CobroMensual[]>(`${API}/pensionados/cobros/pendientes`); }
   cobrosPorMes(mes: number, anio: number): Observable<CobroMensual[]> { return this.http.get<CobroMensual[]>(`${API}/pensionados/cobros/por-mes`, { params: { mes, anio } }); }
   registrarPago(body: any): Observable<CobroMensual>        { return this.http.post<CobroMensual>(`${API}/pensionados/cobro/pagar`, body); }
+
+  renovarCiclo(id: number, montoPagado: number): Observable<CicloPensionado> {
+    return this.http.post<CicloPensionado>(`${API}/pensionados/${id}/ciclo/renovar`, { montoPagado });
+  }
+  consultarCiclo(id: number): Observable<CicloPensionado> { return this.http.get<CicloPensionado>(`${API}/pensionados/${id}/ciclo`); }
 }
 
 // ── Pedidos ───────────────────────────────────────────────────
@@ -250,6 +256,12 @@ export class ModuloMenuService {
   constructor(private http: HttpClient) {}
 
   listarActivos(): Observable<ModuloMenuDto[]>            { return this.http.get<ModuloMenuDto[]>(`${API}/modulos`); }
+  listarGestion(): Observable<ModuloMenuDto[]>            { return this.http.get<ModuloMenuDto[]>(`${API}/modulos/gestion`); }
+  crear(modulo: any): Observable<ModuloMenuDto>           { return this.http.post<ModuloMenuDto>(`${API}/modulos`, modulo); }
+  actualizar(id: number, modulo: any): Observable<ModuloMenuDto> {
+    return this.http.put<ModuloMenuDto>(`${API}/modulos/${id}`, modulo);
+  }
+  desactivar(id: number): Observable<void>                { return this.http.delete<void>(`${API}/modulos/${id}`); }
 }
 
 // ── Usuarios / Empleados Admin ────────────────────────────────

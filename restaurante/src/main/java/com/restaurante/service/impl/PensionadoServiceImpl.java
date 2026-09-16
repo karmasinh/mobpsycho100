@@ -2,8 +2,11 @@ package com.restaurante.service.impl;
 
 import com.restaurante.dto.request.CobroMensualRequest;
 import com.restaurante.dto.request.PensionadoRequest;
+import com.restaurante.dto.response.PensionadoPublicoResponse;
 import com.restaurante.entity.*;
+import com.restaurante.enums.EstadoCiclo;
 import com.restaurante.enums.EstadoPensionado;
+import com.restaurante.enums.ModoFacturacionPensionado;
 import com.restaurante.exception.DuplicadoException;
 import com.restaurante.exception.NegocioException;
 import com.restaurante.exception.RecursoNoEncontradoException;
@@ -19,6 +22,9 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDate;
 import java.time.YearMonth;
 import java.util.List;
+import java.util.Optional;
+import java.util.UUID;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -33,6 +39,7 @@ public class PensionadoServiceImpl implements PensionadoService {
     private final UsuarioRepository usuarioRepository;
     private final RolRepository rolRepository;
     private final SucursalRepository sucursalRepository;
+    private final CicloPensionadoRepository cicloPensionadoRepository;
     private final PasswordEncoder passwordEncoder;
 
     @Override
@@ -62,6 +69,9 @@ public class PensionadoServiceImpl implements PensionadoService {
         TipoAlmuerzo tipoAlmuerzo = tipoAlmuerzoRepository.findById(request.getTipoAlmuerzoId())
                 .orElseThrow(() -> new RecursoNoEncontradoException("TipoAlmuerzo", request.getTipoAlmuerzoId()));
 
+        ModoFacturacionPensionado modoFacturacion = request.getModoFacturacion() != null
+                ? request.getModoFacturacion() : ModoFacturacionPensionado.MENSUAL;
+
         Pensionado pensionado = Pensionado.builder()
                 .nombre(request.getNombre())
                 .apellido(request.getApellido())
@@ -73,9 +83,22 @@ public class PensionadoServiceImpl implements PensionadoService {
                 .fechaInscripcion(request.getFechaInscripcion())
                 .estado(EstadoPensionado.ACTIVO)
                 .saldoPendiente(0.0)
+                .qrToken(UUID.randomUUID().toString())
+                .modoFacturacion(modoFacturacion)
                 .build();
 
         pensionado = pensionadoRepository.save(pensionado);
+
+        if (modoFacturacion == ModoFacturacionPensionado.CICLO_26D) {
+            cicloPensionadoRepository.save(CicloPensionado.builder()
+                    .pensionado(pensionado)
+                    .fechaInicio(request.getFechaInscripcion())
+                    .diasTotal(26)
+                    .diasConsumidos(0)
+                    .estado(EstadoCiclo.ACTIVO)
+                    .montoPagado(0.0)
+                    .build());
+        }
 
         // Crear usuario automáticamente
         String username = resolverUsername(request.getUsernamePersonalizado(),
@@ -164,14 +187,134 @@ public class PensionadoServiceImpl implements PensionadoService {
             throw new DuplicadoException("Ya se registró asistencia para este pensionado en la fecha: " + fecha);
         }
 
-        Usuario registradoPor = usuarioRepository.findById(usuarioId).orElse(null);
+        CicloPensionado ciclo = null;
+        if (pensionado.getModoFacturacion() == ModoFacturacionPensionado.CICLO_26D) {
+            ciclo = cicloPensionadoRepository.findByPensionado_IdAndEstado(pensionadoId, EstadoCiclo.ACTIVO)
+                    .filter(c -> c.getDiasConsumidos() < c.getDiasTotal())
+                    .orElseThrow(() -> new NegocioException(
+                            "El pensionado no tiene ciclo activo. Debe renovar su pensión."));
+        }
 
-        return asistenciaRepository.save(AsistenciaPensionado.builder()
+        Usuario registradoPor = usuarioId != null
+                ? usuarioRepository.findById(usuarioId).orElse(null)
+                : null;
+
+        AsistenciaPensionado asistencia = asistenciaRepository.save(AsistenciaPensionado.builder()
                 .pensionado(pensionado)
                 .fecha(fecha)
                 .asistio(true)
                 .registradoPor(registradoPor)
                 .build());
+
+        if (ciclo != null) {
+            ciclo.setDiasConsumidos(ciclo.getDiasConsumidos() + 1);
+            if (ciclo.getDiasConsumidos() >= ciclo.getDiasTotal()) {
+                ciclo.setEstado(EstadoCiclo.COMPLETADO);
+                ciclo.setFechaFin(fecha);
+            }
+            cicloPensionadoRepository.save(ciclo);
+        }
+
+        return asistencia;
+    }
+
+    // ─── Ciclo prepago de 26 días ───────────────────────────────────
+
+    @Override
+    @Transactional
+    public CicloPensionado renovarCiclo(Long pensionadoId, Double montoPagado, Long usuarioId) {
+        Pensionado pensionado = obtenerPorId(pensionadoId);
+
+        cicloPensionadoRepository.findByPensionado_IdAndEstado(pensionadoId, EstadoCiclo.ACTIVO)
+                .ifPresent(anterior -> {
+                    anterior.setEstado(EstadoCiclo.COMPLETADO);
+                    anterior.setFechaFin(LocalDate.now());
+                    cicloPensionadoRepository.save(anterior);
+                });
+
+        Usuario registradoPor = usuarioId != null
+                ? usuarioRepository.findById(usuarioId).orElse(null)
+                : null;
+
+        CicloPensionado nuevo = CicloPensionado.builder()
+                .pensionado(pensionado)
+                .fechaInicio(LocalDate.now())
+                .diasTotal(26)
+                .diasConsumidos(0)
+                .estado(EstadoCiclo.ACTIVO)
+                .montoPagado(montoPagado)
+                .registradoPor(registradoPor)
+                .build();
+
+        return cicloPensionadoRepository.save(nuevo);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Optional<CicloPensionado> consultarCiclo(Long pensionadoId) {
+        return cicloPensionadoRepository.findByPensionado_IdAndEstado(pensionadoId, EstadoCiclo.ACTIVO);
+    }
+
+    // ─── Autoservicio QR ────────────────────────────────────────────
+
+    @Override
+    @Transactional
+    public String obtenerOGenerarQrToken(Long id) {
+        Pensionado pensionado = obtenerPorId(id);
+        if (pensionado.getQrToken() == null || pensionado.getQrToken().isBlank()) {
+            pensionado.setQrToken(UUID.randomUUID().toString());
+            pensionado = pensionadoRepository.save(pensionado);
+        }
+        return pensionado.getQrToken();
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public PensionadoPublicoResponse obtenerPublicoPorQrToken(String qrToken) {
+        Pensionado pensionado = resolverPorQrTokenActivo(qrToken);
+
+        List<PensionadoPublicoResponse.AsistenciaResumen> ultimas = asistenciaRepository
+                .findByPensionado_IdOrderByFechaDesc(pensionado.getId())
+                .stream()
+                .limit(5)
+                .map(a -> PensionadoPublicoResponse.AsistenciaResumen.builder()
+                        .fecha(a.getFecha())
+                        .asistio(a.getAsistio())
+                        .build())
+                .collect(Collectors.toList());
+
+        return PensionadoPublicoResponse.builder()
+                .nombre(pensionado.getNombre())
+                .apellido(pensionado.getApellido())
+                .tipoAlmuerzo(pensionado.getTipoAlmuerzo() != null
+                        ? pensionado.getTipoAlmuerzo().getNombre() : null)
+                .estado(pensionado.getEstado())
+                .saldoPendiente(pensionado.getSaldoPendiente())
+                .ultimasAsistencias(ultimas)
+                .build();
+    }
+
+    @Override
+    @Transactional
+    public AsistenciaPensionado registrarAsistenciaPorQrToken(String qrToken) {
+        Pensionado pensionado = resolverPorQrTokenActivo(qrToken);
+        return registrarAsistencia(pensionado.getId(), LocalDate.now(), null);
+    }
+
+    /**
+     * Resuelve un pensionado por qrToken para el autoservicio público, tratando
+     * "token inexistente" y "pensionado existe pero no está activo" como el MISMO
+     * 404 genérico — no hay que dejar adivinar, por el mensaje de error, si un
+     * token corresponde a un pensionado real dado de baja.
+     */
+    private Pensionado resolverPorQrTokenActivo(String qrToken) {
+        Pensionado pensionado = pensionadoRepository.findByQrToken(qrToken)
+                .orElseThrow(() -> new RecursoNoEncontradoException("Pensionado no encontrado"));
+        if (pensionado.getEstado() != EstadoPensionado.ACTIVO
+                && pensionado.getEstado() != EstadoPensionado.REACTIVADO) {
+            throw new RecursoNoEncontradoException("Pensionado no encontrado");
+        }
+        return pensionado;
     }
 
     @Override

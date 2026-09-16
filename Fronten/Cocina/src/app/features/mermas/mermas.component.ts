@@ -1,6 +1,7 @@
 import { Component, OnInit, signal, computed, CUSTOM_ELEMENTS_SCHEMA } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { ActivatedRoute } from '@angular/router';
 import { MermaService, InventarioService, Merma } from '../../core/services/api.service';
 import { AuthService } from '../../core/services/auth.service';
 import { StockInsumo } from '../../core/models';
@@ -335,14 +336,32 @@ export class MermasComponent implements OnInit {
     private inventarioService: InventarioService,
     private toastSvc: ToastService,
     private auth: AuthService,
+    private route: ActivatedRoute,
   ) {}
 
   ngOnInit() {
     const sucursalId = this.auth.sucursalActiva();
     if (sucursalId != null) {
-      this.inventarioService.stock(sucursalId).subscribe(ins => this.insumos.set(ins));
+      this.inventarioService.stock(sucursalId).subscribe(ins => {
+        this.insumos.set(ins);
+        this.prellenarDesdeQueryParams();
+      });
     }
     this.cargarMermas();
+  }
+
+  /**
+   * Al llegar desde la sugerencia de merma de Inventario (DEC-L-005), abre el
+   * modal con el insumo preseleccionado si viene ?insumoId= en la URL — solo
+   * un atajo de UI, el registro sigue siendo una acción explícita del usuario.
+   */
+  private prellenarDesdeQueryParams(): void {
+    const insumoId = this.route.snapshot.queryParamMap.get('insumoId');
+    if (!insumoId) return;
+    const ins = this.insumos().find(i => i.insumoId === +insumoId);
+    if (!ins) return;
+    this.abrirModal();
+    this.form.insumoId = ins.insumoId;
   }
 
   sortBy(col: string): void {

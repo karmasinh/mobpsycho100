@@ -2,6 +2,9 @@ package com.restaurante.controller;
 
 import com.restaurante.dto.request.EmpleadoRequest;
 import com.restaurante.dto.response.EmpleadoResponse;
+import com.restaurante.enums.TurnoEmpleado;
+import com.restaurante.security.SucursalAccessService;
+import com.restaurante.security.UserDetailsImpl;
 import com.restaurante.service.EmpleadoService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -10,6 +13,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -22,6 +26,7 @@ import java.util.Map;
 public class EmpleadoController {
 
     private final EmpleadoService empleadoService;
+    private final SucursalAccessService sucursalAccessService;
 
     @PostMapping
     @PreAuthorize("hasRole('ADMIN') or hasRole('GERENTE_SUCURSAL') or @perm.tiene(authentication, 'MOD_EMPLEADOS')")
@@ -46,8 +51,12 @@ public class EmpleadoController {
 
     @GetMapping
     @PreAuthorize("hasRole('ADMIN') or hasRole('GERENTE_SUCURSAL') or @perm.tiene(authentication, 'MOD_EMPLEADOS')")
-    public ResponseEntity<List<EmpleadoResponse>> listar() {
-        return ResponseEntity.ok(empleadoService.listarActivos());
+    public ResponseEntity<List<EmpleadoResponse>> listar(
+            @RequestParam(required = false) TurnoEmpleado turno,
+            @RequestParam(required = false) Long sucursalId,
+            @AuthenticationPrincipal UserDetailsImpl user) {
+        Long efectiva = sucursalAccessService.resolver(user, sucursalId);
+        return ResponseEntity.ok(empleadoService.listarActivos(turno, efectiva));
     }
 
     @DeleteMapping("/{id}")

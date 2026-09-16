@@ -46,6 +46,11 @@ import { ProduccionDia, LineaProduccion, EstadoProduccion, TipoLineaProduccion, 
                 Cerrar día
               </button>
             }
+            @if (produccionHoy()!.estado === 'PLANIFICADO' || produccionHoy()!.estado === 'EN_CURSO') {
+              <button (click)="cancelarProduccion()" class="btn-ghost text-sm text-danger">
+                ✕ Cancelar
+              </button>
+            }
           </div>
         }
       </div>
@@ -610,6 +615,7 @@ export class ProduccionComponent implements OnInit {
       PLANIFICADO: 'rgb(var(--color-info)/0.15)',
       EN_CURSO:    'rgb(var(--color-warning)/0.15)',
       CERRADO:     'rgb(var(--color-success)/0.15)',
+      CANCELADO:   'rgb(var(--color-danger)/0.15)',
     };
     return m[e] ?? 'rgb(var(--color-surface-2))';
   }
@@ -619,12 +625,13 @@ export class ProduccionComponent implements OnInit {
       PLANIFICADO: 'rgb(var(--color-info))',
       EN_CURSO:    'rgb(var(--color-warning))',
       CERRADO:     'rgb(var(--color-success))',
+      CANCELADO:   'rgb(var(--color-danger))',
     };
     return m[e] ?? 'rgb(var(--color-on-surface))';
   }
 
   estadoLabel(e: EstadoProduccion): string {
-    return { PLANIFICADO: 'Planificado', EN_CURSO: 'En curso', CERRADO: 'Cerrado' }[e] ?? e;
+    return { PLANIFICADO: 'Planificado', EN_CURSO: 'En curso', CERRADO: 'Cerrado', CANCELADO: 'Cancelado' }[e] ?? e;
   }
 
   cambiarEstado(nuevoEstado: EstadoProduccion): void {
@@ -633,6 +640,11 @@ export class ProduccionComponent implements OnInit {
     this.produccionService.cambiarEstado(p.id, nuevoEstado).subscribe({
       next: updated => this.produccionHoy.set(updated),
     });
+  }
+
+  cancelarProduccion(): void {
+    if (!confirm('¿Cancelar la producción de hoy? Esta acción no se puede deshacer.')) return;
+    this.cambiarEstado('CANCELADO');
   }
 
   // ── Nuevo plan ──────────────────────────────────────────────

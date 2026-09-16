@@ -56,13 +56,18 @@ interface VentaDiaria {
 
         @if (auth.sucursalFija() == null && seccion() !== 'sucursales') {
           <select [(ngModel)]="sucursalFiltro" (ngModelChange)="onCambioSucursalFiltro()"
-                  class="input text-xs py-2 ml-auto" style="width:auto">
+                  class="input text-xs py-2" style="width:auto">
             <option [ngValue]="null">Todas las sucursales</option>
             @for (s of sucursales(); track s.id) {
               <option [ngValue]="s.id">{{ s.nombre }}</option>
             }
           </select>
         }
+
+        <button (click)="descargarPdf()" class="btn-secondary text-xs ml-auto inline-flex items-center gap-1">
+          <iconify-icon icon="tabler:file-type-pdf" width="14" height="14" style="color:currentColor"></iconify-icon>
+          Descargar PDF
+        </button>
       </div>
 
       <!-- ══ CALENDARIO ══ -->
@@ -1035,5 +1040,127 @@ export class ReportesComponent implements OnInit {
 
   private isoDate(d: Date): string {
     return d.toISOString().substring(0, 10);
+  }
+
+  // ── Exportar PDF ─────────────────────────────────────────────
+  async descargarPdf(): Promise<void> {
+    const secc = this.seccion();
+    let titulo = '';
+    let subtitulo = '';
+    let headers: string[] = [];
+    let rows: string[][] = [];
+
+    switch (secc) {
+      case 'calendario':
+        titulo = 'VENTAS DEL MES';
+        subtitulo = this.mesLabel(this.calMes(), this.calAnio());
+        headers = ['Día', 'Total (Bs)', 'Cant. ventas'];
+        rows = this.diasCalendario()
+          .filter(d => d.dia !== null)
+          .map(d => [String(d.dia), d.total.toFixed(2), String(d.cantidad)]);
+        break;
+      case 'ventas':
+        titulo = 'VENTAS POR RANGO DE FECHAS';
+        subtitulo = `Período: ${this.ventaDesde} al ${this.ventaHasta}`;
+        headers = ['Fecha', 'Cant. ventas', 'Total (Bs)', 'Promedio (Bs)'];
+        rows = this.ventasDiarias().map(d => [
+          d.fecha, String(d.cantidad), d.total.toFixed(2), (d.total / d.cantidad).toFixed(2),
+        ]);
+        break;
+      case 'cobros':
+        titulo = 'COBROS DE PENSIONADOS';
+        subtitulo = this.mesLabel(this.cobroMes, this.cobroAnio);
+        headers = ['Pensionado', 'Monto base (Bs)', 'Saldo restante (Bs)', 'Estado', 'Forma pago'];
+        rows = this.cobros().map(c => [
+          `${c.pensionadoNombre} ${c.pensionadoApellido}`,
+          c.montoBase.toFixed(2), c.saldoRestante.toFixed(2),
+          c.pagado ? 'Pagado' : (c.saldoRestante < c.totalCobrado ? 'Parcial' : 'Pendiente'),
+          c.formaPago ?? '—',
+        ]);
+        break;
+      case 'productos':
+        titulo = 'PRODUCTOS MÁS VENDIDOS';
+        subtitulo = `Período: ${this.prodDesde} al ${this.prodHasta}`;
+        headers = ['#', 'Producto', 'Cant. vendida', 'Ingresos (Bs)'];
+        rows = this.topProductos().map((p, i) => [
+          String(i + 1), p.platoNombre, String(p.cantidadVendida), p.totalIngresos.toFixed(2),
+        ]);
+        break;
+      case 'pensionados':
+        titulo = 'REPORTE DE PENSIONADOS';
+        subtitulo = this.mesLabel(this.pensMes, this.pensAnio);
+        headers = ['Pensionado', 'Días asistidos', 'Monto base (Bs)', 'Total cobrado (Bs)', 'Saldo (Bs)', 'Estado'];
+        rows = this.cobrosPens().map(c => [
+          `${c.pensionadoNombre} ${c.pensionadoApellido}`,
+          String(c.diasAsistidos), c.montoBase.toFixed(2), c.totalCobrado.toFixed(2),
+          c.saldoRestante.toFixed(2), c.pagado ? 'Pagado' : 'Pendiente',
+        ]);
+        break;
+      case 'rentabilidad':
+        titulo = 'RENTABILIDAD POR PLATO';
+        subtitulo = `Período: ${this.rentDesde} al ${this.rentHasta}`;
+        headers = ['Plato', 'Cant.', 'Ingresos (Bs)', 'Costo (Bs)', 'Margen (Bs)', 'Margen %'];
+        rows = this.rentabilidad().map(r => [
+          r.platoNombre, String(r.cantidadVendida), r.totalIngresos.toFixed(2),
+          r.costoTotalEstimado.toFixed(2), r.margenTotal.toFixed(2), r.margenPct.toFixed(0) + '%',
+        ]);
+        break;
+      case 'sucursales':
+        titulo = 'VENTAS POR SUCURSAL';
+        subtitulo = `Período: ${this.sucDesde} al ${this.sucHasta}`;
+        headers = ['Sucursal', 'Total (Bs)', 'Cant. ventas'];
+        rows = this.comparativo().map(c => [c.sucursalNombre, c.total.toFixed(2), String(c.cantidad)]);
+        break;
+    }
+
+    if (rows.length === 0) {
+      this.toastSvc.error('No hay datos para exportar en esta sección');
+      return;
+    }
+
+    const { jsPDF } = await import('jspdf');
+    const doc = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a4' });
+
+    doc.setFillColor(37, 99, 235);
+    doc.rect(0, 0, 297, 24, 'F');
+    doc.setTextColor(255, 255, 255);
+    doc.setFontSize(15);
+    doc.setFont('helvetica', 'bold');
+    doc.text(titulo, 148.5, 10, { align: 'center' });
+    doc.setFontSize(9);
+    doc.setFont('helvetica', 'normal');
+    doc.text(subtitulo, 148.5, 17, { align: 'center' });
+    doc.text(`Generado: ${new Date().toLocaleString('es-BO')}`, 148.5, 22, { align: 'center' });
+
+    let y = 34;
+    const marginX = 10;
+    const tableWidth = 277;
+    const colWidth = tableWidth / headers.length;
+    const cols = headers.map((_, i) => marginX + i * colWidth + 2);
+
+    doc.setFillColor(37, 99, 235);
+    doc.rect(marginX, y - 5, tableWidth, 8, 'F');
+    doc.setTextColor(255, 255, 255);
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(8.5);
+    headers.forEach((h, i) => doc.text(h, cols[i], y));
+
+    y += 7;
+    doc.setFont('helvetica', 'normal');
+    rows.forEach((row, idx) => {
+      if (y > 190) {
+        doc.addPage();
+        y = 15;
+      }
+      if (idx % 2 === 0) {
+        doc.setFillColor(240, 244, 255);
+        doc.rect(marginX, y - 4, tableWidth, 7, 'F');
+      }
+      doc.setTextColor(50, 50, 50);
+      row.forEach((val, i) => doc.text(val.substring(0, 30), cols[i], y));
+      y += 7;
+    });
+
+    doc.save(`reporte-${secc}-${this.isoDate(new Date())}.pdf`);
   }
 }

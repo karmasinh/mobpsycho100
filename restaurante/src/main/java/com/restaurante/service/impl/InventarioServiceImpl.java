@@ -1,6 +1,8 @@
 package com.restaurante.service.impl;
 
+import com.restaurante.dto.response.InventarioComparativoSucursalDto;
 import com.restaurante.dto.response.StockInsumoDto;
+import com.restaurante.dto.response.SugerenciaMermaDto;
 import com.restaurante.entity.*;
 import com.restaurante.enums.TipoMovimientoInventario;
 import com.restaurante.exception.NegocioException;
@@ -9,6 +11,7 @@ import com.restaurante.exception.StockInsuficienteException;
 import com.restaurante.repository.*;
 import com.restaurante.service.InventarioService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -28,6 +31,20 @@ public class InventarioServiceImpl implements InventarioService {
     private final ProveedorRepository proveedorRepository;
     private final UsuarioRepository usuarioRepository;
     private final AuditoriaLogRepository auditoriaLogRepository;
+
+    /**
+     * Umbral global de merma sugerida (DEC-L-005): porcentaje del remanente de
+     * un lote, respecto a su cantidadInicial, bajo el cual se sugiere (no se
+     * fuerza) registrar merma. 5% es un valor por defecto razonable para
+     * insumos de cocina; ver nota en {@link #sugerenciaMermaLote}.
+     *
+     * MEJORA FUTURA: hacerlo configurable por Insumo (ej. campo
+     * `umbralMermaPorcentaje` o `umbralMermaCantidadMinima` en la entidad
+     * Insumo) en vez de un único umbral global — se dejó fuera de esta tarea
+     * para no ampliar el modelo de datos más de lo necesario.
+     */
+    @Value("${app.inventario.umbral-merma-porcentaje:5.0}")
+    private double umbralMermaPorcentaje;
 
     @Override
     @Transactional
@@ -224,6 +241,115 @@ public class InventarioServiceImpl implements InventarioService {
                 .findByTipoConInsumoYUsuario(TipoMovimientoInventario.MERMA, sucursalId);
     }
 
+    // ─── Devolución a proveedor ──────────────────────────────────
+
+    @Override
+    @Transactional
+    public MovimientoInventario registrarDevolucion(Long insumoId, Long sucursalId, Long loteId, Double cantidad,
+                                                     String motivo, String numeroDevolucion, Long usuarioId) {
+        Insumo insumo = insumoRepository.findById(insumoId)
+                .orElseThrow(() -> new RecursoNoEncontradoException("Insumo", insumoId));
+        Sucursal sucursal = obtenerSucursal(sucursalId);
+        StockInsumo stock = obtenerOCrearStock(insumo, sucursal);
+
+        LoteInsumo lote = loteInsumoRepository.findById(loteId)
+                .orElseThrow(() -> new RecursoNoEncontradoException("LoteInsumo", loteId));
+        if (Boolean.TRUE.equals(lote.getEliminado())) {
+            throw new NegocioException("El lote #" + loteId + " fue eliminado y ya no admite operaciones.");
+        }
+        if (!lote.getInsumo().getId().equals(insumoId) || !lote.getSucursal().getId().equals(sucursalId)) {
+            throw new NegocioException("El lote #" + loteId + " no corresponde al insumo/sucursal indicados.");
+        }
+        if (lote.getCantidadDisponible() < cantidad) {
+            throw new StockInsuficienteException(insumo.getNombre(), lote.getCantidadDisponible(), cantidad);
+        }
+        if (stock.getStockActual() < cantidad) {
+            throw new StockInsuficienteException(insumo.getNombre(), stock.getStockActual(), cantidad);
+        }
+
+        lote.setCantidadDisponible(lote.getCantidadDisponible() - cantidad);
+        if (lote.getCantidadDisponible() <= 0) lote.setActivo(false);
+        loteInsumoRepository.save(lote);
+
+        double stockAnterior = stock.getStockActual();
+        double valorEconomico = cantidad * insumo.getPrecioUnitario();
+        stock.setStockActual(stockAnterior - cantidad);
+        stockInsumoRepository.save(stock);
+
+        Usuario usuario = usuarioId != null ? usuarioRepository.findById(usuarioId).orElse(null) : null;
+
+        MovimientoInventario devolucion = movimientoInventarioRepository.save(MovimientoInventario.builder()
+                .insumo(insumo)
+                .lote(lote)
+                .sucursal(sucursal)
+                .tipo(TipoMovimientoInventario.DEVOLUCION_PROVEEDOR)
+                .cantidad(cantidad)
+                .stockAnterior(stockAnterior)
+                .stockPosterior(stock.getStockActual())
+                .motivo(motivo)
+                .observaciones(numeroDevolucion)
+                .valorEconomico(valorEconomico)
+                .usuario(usuario)
+                .build());
+
+        registrarAuditoria(insumo, sucursal, usuarioId, "DEVOLUCION_PROVEEDOR",
+                stockAnterior + " " + insumo.getUnidadMedida(),
+                cantidad + " " + insumo.getUnidadMedida() + " (motivo: " + motivo + ")");
+
+        return devolucion;
+    }
+
+    // ─── Eliminación lógica de lote ──────────────────────────────
+
+    @Override
+    @Transactional
+    public MovimientoInventario eliminarLote(Long loteId, String motivo, Long usuarioId) {
+        if (motivo == null || motivo.isBlank()) {
+            throw new NegocioException("Debe indicar el motivo de la eliminación del lote.");
+        }
+        LoteInsumo lote = loteInsumoRepository.findById(loteId)
+                .orElseThrow(() -> new RecursoNoEncontradoException("LoteInsumo", loteId));
+        if (Boolean.TRUE.equals(lote.getEliminado())) {
+            throw new NegocioException("El lote #" + loteId + " ya fue eliminado.");
+        }
+
+        Insumo insumo = lote.getInsumo();
+        Sucursal sucursal = lote.getSucursal();
+        double remanente = lote.getCantidadDisponible() != null ? lote.getCantidadDisponible() : 0.0;
+
+        double stockAnterior = 0.0;
+        double stockPosterior = 0.0;
+        if (remanente > 0) {
+            StockInsumo stock = obtenerOCrearStock(insumo, sucursal);
+            stockAnterior = stock.getStockActual();
+            stockPosterior = Math.max(0.0, stockAnterior - remanente);
+            stock.setStockActual(stockPosterior);
+            stockInsumoRepository.save(stock);
+        }
+
+        lote.setEliminado(true);
+        loteInsumoRepository.save(lote);
+
+        MovimientoInventario movimiento = movimientoInventarioRepository.save(MovimientoInventario.builder()
+                .insumo(insumo)
+                .lote(lote)
+                .sucursal(sucursal)
+                .tipo(TipoMovimientoInventario.AJUSTE_MANUAL)
+                .cantidad(remanente)
+                .stockAnterior(stockAnterior)
+                .stockPosterior(stockPosterior)
+                .motivo("Eliminación lógica de lote #" + loteId + " (" + lote.getNumeroLote() + "): " + motivo)
+                .valorEconomico(remanente * insumo.getPrecioUnitario())
+                .usuario(usuarioId != null ? usuarioRepository.findById(usuarioId).orElse(null) : null)
+                .build());
+
+        registrarAuditoria(insumo, sucursal, usuarioId, "ELIMINACION_LOTE",
+                remanente + " " + insumo.getUnidadMedida() + " (lote #" + loteId + ")",
+                "eliminado (motivo: " + motivo + ")");
+
+        return movimiento;
+    }
+
     @Override
     @Transactional(readOnly = true)
     public List<MovimientoInventario> listarMermasPorInsumo(Long insumoId, Long sucursalId) {
@@ -303,6 +429,70 @@ public class InventarioServiceImpl implements InventarioService {
         result.put("valorTotal",          valorTotal);
         result.put("movimientos",         lineas);
         return result;
+    }
+
+    // ─── Sugerencia de merma (DEC-L-005) ────────────────────────────
+
+    @Override
+    @Transactional(readOnly = true)
+    public SugerenciaMermaDto sugerenciaMermaLote(Long loteId) {
+        LoteInsumo lote = loteInsumoRepository.findById(loteId)
+                .orElseThrow(() -> new RecursoNoEncontradoException("LoteInsumo", loteId));
+        if (Boolean.TRUE.equals(lote.getEliminado())) {
+            throw new NegocioException("El lote #" + loteId + " fue eliminado y ya no admite operaciones.");
+        }
+        return toSugerenciaMermaDto(lote);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<SugerenciaMermaDto> lotesEnRiesgoPorInsumo(Long insumoId, Long sucursalId) {
+        return loteInsumoRepository.findByInsumo_IdAndSucursal_IdAndActivoTrueAndEliminadoFalse(insumoId, sucursalId)
+                .stream()
+                .map(this::toSugerenciaMermaDto)
+                .filter(SugerenciaMermaDto::sugerirMerma)
+                .toList();
+    }
+
+    private SugerenciaMermaDto toSugerenciaMermaDto(LoteInsumo lote) {
+        Insumo insumo = lote.getInsumo();
+        double inicial = lote.getCantidadInicial() != null ? lote.getCantidadInicial() : 0.0;
+        double restante = lote.getCantidadDisponible() != null ? lote.getCantidadDisponible() : 0.0;
+        double porcentaje = inicial > 0 ? (restante / inicial) * 100.0 : 0.0;
+        boolean sugerir = restante > 0 && porcentaje < umbralMermaPorcentaje;
+        return new SugerenciaMermaDto(
+                lote.getId(), lote.getNumeroLote(),
+                insumo.getId(), insumo.getNombre(),
+                sugerir, restante, porcentaje, insumo.getUnidadMedida());
+    }
+
+    // ─── Comparativo entre sucursales (ADMIN) ───────────────────────
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<InventarioComparativoSucursalDto> comparativoSucursales(LocalDate desde, LocalDate hasta) {
+        LocalDateTime desdeTs = desde.atStartOfDay();
+        LocalDateTime hastaTs = hasta.atTime(23, 59, 59);
+
+        Map<Long, Object[]> mermasPorSucursal = new LinkedHashMap<>();
+        for (Object[] fila : movimientoInventarioRepository.sumMermasPorSucursal(desdeTs, hastaTs)) {
+            mermasPorSucursal.put((Long) fila[0], fila);
+        }
+        Map<Long, Double> valorStockPorSucursal = new LinkedHashMap<>();
+        for (Object[] fila : stockInsumoRepository.sumValorStockPorSucursal()) {
+            valorStockPorSucursal.put((Long) fila[0], (Double) fila[2]);
+        }
+
+        return sucursalRepository.findByActivoTrue().stream()
+                .map(s -> {
+                    Object[] merma = mermasPorSucursal.get(s.getId());
+                    double totalMermas = merma != null ? (Double) merma[2] : 0.0;
+                    double valorMermas = merma != null ? (Double) merma[3] : 0.0;
+                    double valorStock = valorStockPorSucursal.getOrDefault(s.getId(), 0.0);
+                    return new InventarioComparativoSucursalDto(
+                            s.getId(), s.getNombre(), totalMermas, valorMermas, valorStock);
+                })
+                .toList();
     }
 
     // ─── helpers ───────────────────────────────────────────────────

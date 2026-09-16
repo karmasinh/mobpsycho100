@@ -145,6 +145,47 @@ class InventarioServiceImplTest {
         assertThat(captor.getValue().getAccion()).isEqualTo("MERMA");
     }
 
+    // ── Devolución a proveedor ────────────────────────────────────
+
+    @Test
+    void registrarDevolucion_creaMovimientoYDescuentaStock() {
+        StockInsumo stockA = StockInsumo.builder().insumo(insumo).sucursal(sucursalA).stockActual(20.0).stockMinimo(0.0).build();
+        when(stockInsumoRepository.findByInsumo_IdAndSucursal_Id(1L, 1L)).thenReturn(Optional.of(stockA));
+
+        LoteInsumo lote = LoteInsumo.builder().id(9L).insumo(insumo).sucursal(sucursalA)
+                .cantidadDisponible(12.0).activo(true).build();
+        when(loteInsumoRepository.findById(9L)).thenReturn(Optional.of(lote));
+        when(movimientoInventarioRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
+
+        MovimientoInventario resultado = inventarioService.registrarDevolucion(
+                1L, 1L, 9L, 5.0, "Producto en mal estado", "DEV-001", null);
+
+        assertThat(lote.getCantidadDisponible()).isEqualTo(7.0);
+        assertThat(stockA.getStockActual()).isEqualTo(15.0);
+        assertThat(resultado.getTipo()).isEqualTo(TipoMovimientoInventario.DEVOLUCION_PROVEEDOR);
+        assertThat(resultado.getObservaciones()).isEqualTo("DEV-001");
+
+        ArgumentCaptor<MovimientoInventario> captor = ArgumentCaptor.forClass(MovimientoInventario.class);
+        verify(movimientoInventarioRepository).save(captor.capture());
+        assertThat(captor.getValue().getTipo()).isEqualTo(TipoMovimientoInventario.DEVOLUCION_PROVEEDOR);
+        assertThat(captor.getValue().getLote()).isEqualTo(lote);
+    }
+
+    @Test
+    void registrarDevolucion_rechazaSiExcedeElRemanenteDelLote() {
+        StockInsumo stockA = StockInsumo.builder().insumo(insumo).sucursal(sucursalA).stockActual(20.0).stockMinimo(0.0).build();
+        when(stockInsumoRepository.findByInsumo_IdAndSucursal_Id(1L, 1L)).thenReturn(Optional.of(stockA));
+
+        LoteInsumo lote = LoteInsumo.builder().id(9L).insumo(insumo).sucursal(sucursalA)
+                .cantidadDisponible(3.0).activo(true).build();
+        when(loteInsumoRepository.findById(9L)).thenReturn(Optional.of(lote));
+
+        assertThrows(StockInsuficienteException.class, () ->
+                inventarioService.registrarDevolucion(1L, 1L, 9L, 5.0, "motivo", "DEV-002", null));
+
+        verify(movimientoInventarioRepository, never()).save(any());
+    }
+
     // ── Kárdex (AUD-L-007): saldo final debe conciliar con entradas/salidas ──
 
     @Test

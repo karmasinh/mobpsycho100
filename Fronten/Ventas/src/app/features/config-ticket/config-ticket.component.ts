@@ -160,6 +160,33 @@ const VENTA_EJEMPLO: Venta = {
             <p class="text-xs font-semibold mb-3" style="color:rgb(var(--color-on-surface)/0.5)">Vista previa</p>
             <div class="mx-auto rounded-lg overflow-hidden" style="background:#fff;max-width:280px;box-shadow:0 4px 20px rgb(0 0 0 / 0.15)">
               <div class="p-3" style="font-family:'Courier New',monospace;font-size:11px;color:#111;line-height:1.5">
+                <div class="flex flex-col items-center gap-2 mb-2">
+                  @if (form.logoBase64) {
+                    <img [src]="form.logoBase64" alt="Logo" style="max-width:90px;max-height:90px;display:block">
+                  } @else {
+                    <svg viewBox="0 0 80 80" xmlns="http://www.w3.org/2000/svg" fill="none"
+                         style="width:60px;height:60px;color:#111">
+                      <circle cx="40" cy="40" r="36" stroke="currentColor" stroke-width="2"/>
+                      <circle cx="40" cy="40" r="28" stroke="currentColor" stroke-width="0.75" opacity="0.4"/>
+                      <ellipse cx="33" cy="11" rx="2.5" ry="4.5" fill="currentColor" opacity="0.7" transform="rotate(-18 33 11)"/>
+                      <ellipse cx="40" cy="9"  rx="2.5" ry="5"   fill="currentColor" opacity="0.85"/>
+                      <ellipse cx="47" cy="11" rx="2.5" ry="4.5" fill="currentColor" opacity="0.7" transform="rotate(18 47 11)"/>
+                      <line x1="40" y1="14" x2="40" y2="22" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+                      <text x="40" y="58" text-anchor="middle" font-family="Georgia,'Times New Roman',serif" font-size="32" font-weight="700" fill="currentColor">E</text>
+                    </svg>
+                  }
+                  <div class="flex gap-1.5">
+                    <button type="button" (click)="logoInput.click()" class="btn-secondary text-[11px] px-2 py-1" data-cy="btn-subir-logo-ticket">
+                      Subir logo
+                    </button>
+                    @if (form.logoBase64) {
+                      <button type="button" (click)="quitarLogo()" class="btn-ghost text-[11px] px-2 py-1" data-cy="btn-quitar-logo-ticket">
+                        Quitar
+                      </button>
+                    }
+                  </div>
+                  <input #logoInput type="file" accept="image/png,image/jpeg,image/svg+xml" (change)="onLogoSeleccionado($event)" hidden>
+                </div>
                 @if (form.razonSocial) {
                   <div class="text-center font-bold">{{ form.razonSocial }}</div>
                 }
@@ -203,6 +230,7 @@ export class ConfigTicketComponent implements OnInit {
     nit: '' as string | null,
     direccion: '' as string | null,
     telefono: '' as string | null,
+    logoBase64: null as string | null,
     prefijo: '' as string | null,
     correlativoActual: 0,
     anchoMm: 80,
@@ -256,6 +284,7 @@ export class ConfigTicketComponent implements OnInit {
       nit: c.nit,
       direccion: c.direccion,
       telefono: c.telefono,
+      logoBase64: c.logoBase64,
       prefijo: c.prefijo,
       correlativoActual: c.correlativoActual,
       anchoMm: c.anchoMm,
@@ -306,8 +335,41 @@ export class ConfigTicketComponent implements OnInit {
       id: null,
       sucursal: { id: this.sucursalId, nombre: '' },
       ...this.form,
-      logoBase64: null,
     };
     this.ticketPrint.imprimir(VENTA_EJEMPLO, config);
+  }
+
+  /** Tamaño máximo permitido para el logo, para no inflar el registro de configuración. */
+  private static readonly LOGO_MAX_BYTES = 500 * 1024;
+
+  onLogoSeleccionado(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    const archivo = input.files?.[0] ?? null;
+    if (!archivo) return;
+
+    if (!archivo.type.startsWith('image/')) {
+      this.toastSvc.error('El logo debe ser una imagen (PNG, JPG o SVG).');
+      input.value = '';
+      return;
+    }
+    if (archivo.size > ConfigTicketComponent.LOGO_MAX_BYTES) {
+      this.toastSvc.error('El logo no puede pesar más de 500 KB.');
+      input.value = '';
+      return;
+    }
+
+    const lector = new FileReader();
+    lector.onload = () => {
+      this.form.logoBase64 = lector.result as string;
+    };
+    lector.onerror = () => {
+      this.toastSvc.error('No se pudo leer la imagen seleccionada.');
+    };
+    lector.readAsDataURL(archivo);
+    input.value = '';
+  }
+
+  quitarLogo(): void {
+    this.form.logoBase64 = null;
   }
 }

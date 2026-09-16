@@ -21,6 +21,7 @@ public interface LoteInsumoRepository extends JpaRepository<LoteInsumo, Long> {
         WHERE l.insumo.id = :insumoId
           AND l.sucursal.id = :sucursalId
           AND l.activo = true
+          AND l.eliminado = false
           AND l.cantidadDisponible > 0
         ORDER BY COALESCE(l.fechaVencimiento, '9999-12-31') ASC
     """)
@@ -32,6 +33,7 @@ public interface LoteInsumoRepository extends JpaRepository<LoteInsumo, Long> {
     @Query("""
         SELECT l FROM LoteInsumo l
         WHERE l.activo = true
+          AND l.eliminado = false
           AND l.cantidadDisponible > 0
           AND l.fechaVencimiento IS NOT NULL
           AND l.fechaVencimiento <= :fechaLimite
@@ -41,5 +43,7 @@ public interface LoteInsumoRepository extends JpaRepository<LoteInsumo, Long> {
     List<LoteInsumo> findLotesProximosVencer(@Param("fechaLimite") LocalDate fechaLimite,
                                               @Param("sucursalId") Long sucursalId);
 
-    List<LoteInsumo> findByInsumoIdAndActivoTrue(Long insumoId);
+    List<LoteInsumo> findByInsumoIdAndActivoTrueAndEliminadoFalse(Long insumoId);
+
+    List<LoteInsumo> findByInsumo_IdAndSucursal_IdAndActivoTrueAndEliminadoFalse(Long insumoId, Long sucursalId);
 }

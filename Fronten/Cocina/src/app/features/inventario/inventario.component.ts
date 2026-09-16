@@ -1,9 +1,10 @@
 import { Component, OnInit, signal, computed, CUSTOM_ELEMENTS_SCHEMA } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { Router } from '@angular/router';
 import { InventarioService, InsumoService, ProveedorService } from '../../core/services/api.service';
 import { AuthService } from '../../core/services/auth.service';
-import { StockInsumo, LoteInsumo, Proveedor, Insumo } from '../../core/models';
+import { StockInsumo, LoteInsumo, Proveedor, Insumo, SugerenciaMerma } from '../../core/models';
 import { ToastService } from '../../core/services/toast.service';
 import { PaginationComponent } from '../../shared/components/pagination.component';
 
@@ -14,6 +15,32 @@ import { PaginationComponent } from '../../shared/components/pagination.componen
   schemas: [CUSTOM_ELEMENTS_SCHEMA],
   template: `
     <div class="space-y-5 animate-fade-up">
+
+      <!-- Banner: sugerencia de merma (DEC-L-005) — no bloqueante, el usuario decide -->
+      @if (sugerenciasMerma().length > 0) {
+        <div class="rounded-xl p-3 flex items-start gap-3 flex-wrap"
+             style="background:rgb(var(--color-warning)/0.1);border:1px solid rgb(var(--color-warning)/0.3)">
+          <iconify-icon icon="tabler:alert-triangle" width="18" height="18" class="mt-0.5 flex-shrink-0"
+                        style="color:rgb(var(--color-warning))"></iconify-icon>
+          <div class="flex-1 min-w-[200px] space-y-1">
+            @for (s of sugerenciasMerma(); track s.loteId) {
+              <p class="text-sm" style="color:rgb(var(--color-on-surface)/0.85)">
+                Quedan {{ s.cantidadRestante | number:'1.2-2' }} {{ s.unidad }}
+                ({{ s.porcentajeRestante | number:'1.0-1' }}%) del lote {{ s.numeroLote }} de
+                <strong>{{ s.insumoNombre }}</strong> — ¿registrar como merma?
+              </p>
+            }
+          </div>
+          <div class="flex gap-2 flex-shrink-0">
+            <button (click)="irARegistrarMerma()" class="btn-secondary text-xs py-1.5 px-3">
+              Registrar merma
+            </button>
+            <button (click)="sugerenciasMerma.set([])" class="btn-ghost text-xs py-1.5 px-2" aria-label="Descartar aviso">
+              <iconify-icon icon="line-md:close" width="14" height="14" style="color:currentColor"></iconify-icon>
+            </button>
+          </div>
+        </div>
+      }
 
       <!-- Header -->
       <div class="flex items-center justify-between flex-wrap gap-3">
@@ -235,6 +262,16 @@ import { PaginationComponent } from '../../shared/components/pagination.componen
               <div [class]="getVencimientoBadge(lote.fechaVencimiento!)">
                 {{ getVencimientoLabel(lote.fechaVencimiento!) }}
               </div>
+              <button (click)="abrirDevolucion(lote)"
+                      class="text-xs py-1.5 px-2.5 rounded-lg transition-all flex-shrink-0"
+                      style="background:rgb(var(--color-surface));border:1px solid rgb(var(--color-border));color:rgb(var(--color-on-surface)/0.6)">
+                Devolver a proveedor
+              </button>
+              <button (click)="abrirEliminarLote(lote)"
+                      class="text-xs py-1.5 px-2.5 rounded-lg transition-all flex-shrink-0 text-danger"
+                      style="background:rgb(var(--color-danger)/0.08);border:1px solid rgb(var(--color-danger)/0.25)">
+                Eliminar lote
+              </button>
             </div>
           }
           @if (lotesPorVencer().length === 0) {
@@ -457,6 +494,101 @@ import { PaginationComponent } from '../../shared/components/pagination.componen
         </div>
       </div>
     }
+
+    <!-- Modal Devolución a proveedor -->
+    @if (modalDevolucion()) {
+      <div class="fixed inset-0 z-50 flex items-center justify-center p-4"
+           style="background:rgba(0,0,0,0.6)" (click)="cerrarModal()">
+        <div class="card max-w-sm w-full space-y-4 animate-fade-up"
+             (click)="$event.stopPropagation()">
+          <h3 class="font-display font-bold inline-flex items-center gap-1.5" style="color:rgb(var(--color-on-surface))">
+            <iconify-icon icon="tabler:truck-return" width="18" height="18" style="color:currentColor"></iconify-icon>
+            Devolver a proveedor
+          </h3>
+          <p class="text-sm" style="color:rgb(var(--color-on-surface)/0.6)">
+            Lote: <strong>{{ loteSeleccionado()?.numeroLote }}</strong> ·
+            {{ loteSeleccionado()?.insumo?.nombre }} ·
+            Disponible: {{ loteSeleccionado()?.cantidadDisponible | number:'1.2-2' }} {{ loteSeleccionado()?.insumo?.unidadMedida }}
+          </p>
+          <div class="space-y-3">
+            <div>
+              <label class="input-label">Cantidad a devolver *</label>
+              <input [(ngModel)]="formDevolucion.cantidad" type="number" min="0.01"
+                     class="input" placeholder="0.00">
+            </div>
+            <div>
+              <label class="input-label">Motivo *</label>
+              <input [(ngModel)]="formDevolucion.motivo" maxlength="250" class="input text-sm"
+                     placeholder="Producto en mal estado / vencido">
+            </div>
+            <div>
+              <label class="input-label">Número de devolución</label>
+              <input [(ngModel)]="formDevolucion.numeroDevolucion" maxlength="100" class="input text-sm"
+                     placeholder="Opcional">
+            </div>
+          </div>
+          @if (errorModal()) {
+            <p class="text-xs p-2 rounded-lg"
+               style="background:rgb(var(--color-danger)/0.1);color:rgb(var(--color-danger))">
+              {{ errorModal() }}
+            </p>
+          }
+          <div class="flex gap-2">
+            <button (click)="cerrarModal()" class="btn-secondary flex-1 justify-center">Cancelar</button>
+            <button (click)="confirmarDevolucion()" [disabled]="guardando()"
+                    class="btn-primary flex-1 justify-center">
+              @if (guardando()) {
+                <span class="w-4 h-4 rounded-full border-2 border-white/30 border-t-white animate-spin inline-block"></span>
+              } @else { Confirmar }
+            </button>
+          </div>
+        </div>
+      </div>
+    }
+
+    <!-- Modal Eliminar lote (eliminación lógica) -->
+    @if (modalEliminarLote()) {
+      <div class="fixed inset-0 z-50 flex items-center justify-center p-4"
+           style="background:rgba(0,0,0,0.6)" (click)="cerrarModal()">
+        <div class="card max-w-sm w-full space-y-4 animate-fade-up"
+             (click)="$event.stopPropagation()">
+          <h3 class="font-display font-bold inline-flex items-center gap-1.5 text-danger">
+            <iconify-icon icon="tabler:trash" width="18" height="18" style="color:currentColor"></iconify-icon>
+            Eliminar lote
+          </h3>
+          <p class="text-sm" style="color:rgb(var(--color-on-surface)/0.6)">
+            Lote: <strong>{{ loteSeleccionado()?.numeroLote }}</strong> ·
+            {{ loteSeleccionado()?.insumo?.nombre }} ·
+            Disponible: {{ loteSeleccionado()?.cantidadDisponible | number:'1.2-2' }} {{ loteSeleccionado()?.insumo?.unidadMedida }}
+          </p>
+          <p class="text-xs p-2 rounded-lg"
+             style="background:rgb(var(--color-danger)/0.08);color:rgb(var(--color-danger))">
+            Esta acción no se puede deshacer. El remanente del lote se descontará del stock de la sucursal, pero
+            su historial de movimientos se conserva.
+          </p>
+          <div>
+            <label class="input-label">Motivo *</label>
+            <input [(ngModel)]="formEliminarLote.motivo" maxlength="250" class="input text-sm"
+                   placeholder="Lote cargado por error">
+          </div>
+          @if (errorModal()) {
+            <p class="text-xs p-2 rounded-lg"
+               style="background:rgb(var(--color-danger)/0.1);color:rgb(var(--color-danger))">
+              {{ errorModal() }}
+            </p>
+          }
+          <div class="flex gap-2">
+            <button (click)="cerrarModal()" class="btn-secondary flex-1 justify-center">Cancelar</button>
+            <button (click)="confirmarEliminarLote()" [disabled]="guardando()"
+                    class="btn-primary flex-1 justify-center" style="background:rgb(var(--color-danger))">
+              @if (guardando()) {
+                <span class="w-4 h-4 rounded-full border-2 border-white/30 border-t-white animate-spin inline-block"></span>
+              } @else { Eliminar }
+            </button>
+          </div>
+        </div>
+      </div>
+    }
   `,
 })
 export class InventarioComponent implements OnInit {
@@ -472,7 +604,10 @@ export class InventarioComponent implements OnInit {
   modalConsumo       = signal(false);
   modalMinimo        = signal(false);
   modalAjusteFisico  = signal(false);
+  modalDevolucion    = signal(false);
+  modalEliminarLote  = signal(false);
   itemSeleccionado   = signal<StockInsumo | null>(null);
+  loteSeleccionado   = signal<LoteInsumo | null>(null);
   guardando          = signal(false);
   errorModal         = signal('');
 
@@ -486,6 +621,11 @@ export class InventarioComponent implements OnInit {
   formConsumo = { cantidad: 0, motivo: 'Consumo en producción' };
   formMinimo: number | null = null;
   formAjusteFisico = { cantidad: 0, motivo: 'Conteo físico de inventario' };
+  formDevolucion = { cantidad: 0, motivo: '', numeroDevolucion: '' };
+  formEliminarLote = { motivo: '' };
+
+  /** DEC-L-005: lotes en riesgo detectados tras el último consumo/ajuste (banner no bloqueante). */
+  sugerenciasMerma = signal<SugerenciaMerma[]>([]);
 
   stockFiltrado = computed(() => {
     const q = this.busqueda().toLowerCase();
@@ -517,6 +657,7 @@ export class InventarioComponent implements OnInit {
     private proveedorService: ProveedorService,
     private toastSvc: ToastService,
     public auth: AuthService,
+    private router: Router,
   ) {}
 
   ngOnInit(): void {
@@ -582,6 +723,20 @@ export class InventarioComponent implements OnInit {
     this.modalAjusteFisico.set(true);
   }
 
+  abrirDevolucion(lote: LoteInsumo): void {
+    this.loteSeleccionado.set(lote);
+    this.formDevolucion = { cantidad: 0, motivo: '', numeroDevolucion: '' };
+    this.errorModal.set('');
+    this.modalDevolucion.set(true);
+  }
+
+  abrirEliminarLote(lote: LoteInsumo): void {
+    this.loteSeleccionado.set(lote);
+    this.formEliminarLote = { motivo: '' };
+    this.errorModal.set('');
+    this.modalEliminarLote.set(true);
+  }
+
   consumirStock(item: StockInsumo): void {
     this.itemSeleccionado.set(item);
     this.formConsumo = { cantidad: 0, motivo: 'Consumo en producción' };
@@ -632,6 +787,7 @@ export class InventarioComponent implements OnInit {
         this.cerrarModal();
         this.toastSvc.success(`Consumo registrado — ${item.nombre}`);
         this.cargar();
+        this.verificarSugerenciasMerma(item.insumoId, sucursalId);
       },
       error: err => {
         this.guardando.set(false);
@@ -682,6 +838,7 @@ export class InventarioComponent implements OnInit {
         this.cerrarModal();
         this.toastSvc.success(`Stock ajustado — ${item.nombre}`);
         this.cargar();
+        this.verificarSugerenciasMerma(item.insumoId, sucursalId);
       },
       error: err => {
         this.guardando.set(false);
@@ -690,11 +847,88 @@ export class InventarioComponent implements OnInit {
     });
   }
 
+  confirmarDevolucion(): void {
+    const lote = this.loteSeleccionado();
+    const sucursalId = this.auth.sucursalActiva();
+    if (!lote || this.formDevolucion.cantidad <= 0) {
+      this.errorModal.set('Ingrese una cantidad válida.');
+      return;
+    }
+    if (this.formDevolucion.cantidad > lote.cantidadDisponible) {
+      this.errorModal.set('La cantidad supera el remanente disponible del lote.');
+      return;
+    }
+    if (!this.formDevolucion.motivo.trim()) {
+      this.errorModal.set('Indique un motivo para la devolución.');
+      return;
+    }
+    if (sucursalId == null) { this.errorModal.set('Selecciona una sucursal.'); return; }
+    this.guardando.set(true);
+    this.inventarioService.registrarDevolucion(lote.insumo.id, sucursalId, {
+      loteId: lote.id,
+      cantidad: this.formDevolucion.cantidad,
+      motivo: this.formDevolucion.motivo,
+      numeroDevolucion: this.formDevolucion.numeroDevolucion || undefined,
+    }).subscribe({
+      next: () => {
+        this.guardando.set(false);
+        this.cerrarModal();
+        this.toastSvc.success(`Devolución registrada — ${lote.insumo.nombre}`);
+        this.cargar();
+      },
+      error: err => {
+        this.guardando.set(false);
+        this.errorModal.set(err?.error?.mensaje ?? 'Error al registrar la devolución');
+      }
+    });
+  }
+
+  confirmarEliminarLote(): void {
+    const lote = this.loteSeleccionado();
+    if (!lote) return;
+    if (!this.formEliminarLote.motivo.trim()) {
+      this.errorModal.set('Indique el motivo de la eliminación.');
+      return;
+    }
+    this.guardando.set(true);
+    this.inventarioService.eliminarLote(lote.id, this.formEliminarLote.motivo).subscribe({
+      next: () => {
+        this.guardando.set(false);
+        this.cerrarModal();
+        this.toastSvc.success(`Lote eliminado — ${lote.insumo.nombre} (${lote.numeroLote})`);
+        this.cargar();
+      },
+      error: err => {
+        this.guardando.set(false);
+        this.errorModal.set(err?.error?.mensaje ?? 'Error al eliminar el lote');
+      }
+    });
+  }
+
+  /** DEC-L-005: tras consumir/ajustar, consulta si algún lote del insumo quedó bajo el umbral de merma sugerida. */
+  private verificarSugerenciasMerma(insumoId: number, sucursalId: number): void {
+    this.inventarioService.lotesEnRiesgo(insumoId, sucursalId).subscribe({
+      next: sugerencias => {
+        if (sugerencias.length > 0) this.sugerenciasMerma.set(sugerencias);
+      },
+      error: () => {},
+    });
+  }
+
+  /** Navega a Mermas — el registro real sigue siendo una acción explícita del usuario allí. */
+  irARegistrarMerma(): void {
+    const primera = this.sugerenciasMerma()[0];
+    this.sugerenciasMerma.set([]);
+    this.router.navigate(['/mermas'], primera ? { queryParams: { insumoId: primera.insumoId } } : undefined);
+  }
+
   cerrarModal(): void {
     this.modalIngreso.set(false);
     this.modalConsumo.set(false);
     this.modalMinimo.set(false);
     this.modalAjusteFisico.set(false);
+    this.modalDevolucion.set(false);
+    this.modalEliminarLote.set(false);
     this.errorModal.set('');
   }
 

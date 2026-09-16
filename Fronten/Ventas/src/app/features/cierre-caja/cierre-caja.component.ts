@@ -1,4 +1,4 @@
-import { Component, OnInit, signal, WritableSignal, CUSTOM_ELEMENTS_SCHEMA } from '@angular/core';
+import { Component, OnInit, signal, WritableSignal, effect, CUSTOM_ELEMENTS_SCHEMA } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { CierreCajaService, SolicitudAprobacionService } from '../../core/services/api.service';
@@ -313,7 +313,14 @@ export class CierreCajaComponent implements OnInit {
     private solicitudService: SolicitudAprobacionService,
     private auth: AuthService,
     private toastSvc: ToastService,
-  ) {}
+  ) {
+    // Re-carga los turnos abiertos de la vista admin cada vez que cambia la sucursal
+    // activa — antes solo se leía una vez en ngOnInit y quedaba pegada a la primera.
+    effect(() => {
+      this.auth.sucursalActiva();
+      if (this.esAdmin()) this.cargarTurnosAbiertosAdmin();
+    });
+  }
 
   ngOnInit(): void {
     this.cierreCajaService.obtenerAbierto().subscribe({
@@ -324,8 +331,6 @@ export class CierreCajaComponent implements OnInit {
       },
       error: () => { this.turnoAbierto.set(null); this.cargando.set(false); },
     });
-
-    if (this.esAdmin()) this.cargarTurnosAbiertosAdmin();
   }
 
   esAdmin(): boolean {

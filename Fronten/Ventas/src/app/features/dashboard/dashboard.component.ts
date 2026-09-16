@@ -1,4 +1,4 @@
-import { Component, OnInit, signal, computed, CUSTOM_ELEMENTS_SCHEMA } from '@angular/core';
+import { Component, signal, computed, effect, CUSTOM_ELEMENTS_SCHEMA } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
 import { VentaService, PensionadoService, ClienteService, AlertaService } from '../../core/services/api.service';
@@ -263,7 +263,7 @@ interface DiaTendencia { etiqueta: string; total: number; }
     </div>
   `,
 })
-export class DashboardComponent implements OnInit {
+export class DashboardComponent {
   cargando          = signal(true);
   cargandoBi        = signal(true);
   totalHoy          = signal(0);
@@ -299,11 +299,15 @@ export class DashboardComponent implements OnInit {
     private clienteService: ClienteService,
     private alertaService: AlertaService,
     public authService: AuthService,
-  ) {}
-
-  ngOnInit(): void {
-    this.cargarDatos();
-    this.cargarDatosBi();
+  ) {
+    // Re-consulta ventas/tendencia/top-productos cada vez que cambia la sucursal
+    // activa (selector de ADMIN/GERENTE_SUCURSAL) — antes solo se leía una vez
+    // en ngOnInit y la data quedaba "pegada" a la primera sucursal elegida.
+    effect(() => {
+      this.authService.sucursalActiva();
+      this.cargarDatos();
+      this.cargarDatosBi();
+    });
   }
 
   esAdmin(): boolean {

@@ -8,13 +8,14 @@ import { AuthService } from '../core/services/auth.service';
 import { ThemeService } from '../core/services/theme.service';
 import { AlertaService, SucursalService } from '../core/services/api.service';
 import { ToastContainerComponent } from '../shared/components/toast-container.component';
+import { CalculadoraUnidadesComponent } from '../shared/components/calculadora-unidades.component';
 import { Sucursal } from '../core/models';
 import { ICONOS_DISPONIBLES } from '../core/icons/app-icons.provider';
 
 @Component({
   selector: 'app-shell',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterOutlet, RouterModule, ToastContainerComponent],
+  imports: [CommonModule, FormsModule, RouterOutlet, RouterModule, ToastContainerComponent, CalculadoraUnidadesComponent],
   schemas: [CUSTOM_ELEMENTS_SCHEMA],
   template: `
     <div class="app-shell" [style.background]="'rgb(var(--color-surface))'">
@@ -169,6 +170,13 @@ import { ICONOS_DISPONIBLES } from '../core/icons/app-icons.provider';
               </select>
             }
 
+            <button (click)="calculadoraAbierta.set(true)"
+                    class="btn-icon"
+                    [style.color]="'rgb(var(--color-on-surface) / 0.55)'"
+                    title="Calculadora de unidades">
+              <iconify-icon icon="tabler:calculator" width="18" height="18" style="color:currentColor"></iconify-icon>
+            </button>
+
             <button [routerLink]="['/alertas']"
                     class="btn-icon relative"
                     [style.color]="'rgb(var(--color-on-surface) / 0.55)'"
@@ -253,6 +261,9 @@ import { ICONOS_DISPONIBLES } from '../core/icons/app-icons.provider';
     <!-- TOAST GLOBAL -->
     <app-toast-container />
 
+    <!-- CALCULADORA DE UNIDADES (DEC-L-005) -->
+    <app-calculadora-unidades [abierto]="calculadoraAbierta()" (cerrado)="calculadoraAbierta.set(false)" />
+
     <!-- BOTTOM NAV (solo mobile, ver @media en styles.css) -->
     <nav class="bottom-nav">
       @for (item of bottomNavItems(); track item.id) {
@@ -275,6 +286,7 @@ export class ShellComponent {
   sidebarOpen       = signal(false);
   userMenuOpen      = signal(false);
   sucursales        = signal<Sucursal[]>([]);
+  calculadoraAbierta = signal(false);
 
   breadcrumbTitulo = toSignal(
     this.router.events.pipe(

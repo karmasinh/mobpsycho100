@@ -8,6 +8,7 @@ import {
 import { Insumo } from '../../core/models';
 import { ToastService } from '../../core/services/toast.service';
 import { PaginationComponent } from '../../shared/components/pagination.component';
+import { ConvertirUnidadPopoverComponent } from '../../shared/components/convertir-unidad-popover.component';
 
 interface IngredienteForm {
   insumoId: number;
@@ -22,7 +23,7 @@ interface IngredienteForm {
 @Component({
   selector: 'app-recetas',
   standalone: true,
-  imports: [CommonModule, FormsModule, PaginationComponent],
+  imports: [CommonModule, FormsModule, PaginationComponent, ConvertirUnidadPopoverComponent],
   schemas: [CUSTOM_ELEMENTS_SCHEMA],
   template: `
     <div class="flex flex-col gap-5 h-full animate-slide-up">
@@ -263,11 +264,14 @@ interface IngredienteForm {
                                        class="input text-xs text-center w-20 py-1 px-2">
                               </td>
                               <td class="py-2 px-2">
-                                <input type="text"
-                                       maxlength="20"
-                                       [value]="ing.unidadMedida"
-                                       (input)="actualizarUnidad(i, $any($event.target).value)"
-                                       class="input text-xs text-center w-16 py-1 px-2">
+                                <div class="flex items-center gap-1">
+                                  <input type="text"
+                                         maxlength="20"
+                                         [value]="ing.unidadMedida"
+                                         (input)="actualizarUnidad(i, $any($event.target).value)"
+                                         class="input text-xs text-center w-16 py-1 px-2">
+                                  <app-convertir-unidad-popover [cantidad]="ing.cantidad" [unidadOrigen]="ing.unidadMedida" />
+                                </div>
                               </td>
                               <td class="py-2 pl-2 text-right font-mono font-semibold"
                                   style="color:rgb(var(--color-warning))">

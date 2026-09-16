@@ -48,4 +48,25 @@ class VentaControllerTest {
 
         assertThat(ctrl.obtener(1L, user).getBody()).isNotNull();
     }
+
+    @Test
+    void obtener_permiteCualquierSucursalParaUsuarioSinSucursalFija() {
+        VentaController ctrl = new VentaController(ventaService, sucursalAccessService);
+        when(ventaService.obtenerPorId(1L)).thenReturn(ventaDeSucursal(2L));
+        when(user.getSucursalId()).thenReturn(null);
+
+        assertThat(ctrl.obtener(1L, user).getBody()).isNotNull();
+    }
+
+    @Test
+    void listar_resuelveSiempreALaSucursalFijaDelUsuarioIgnorandoLaSolicitada() {
+        VentaController ctrl = new VentaController(ventaService, sucursalAccessService);
+        when(user.getSucursalId()).thenReturn(1L);
+        java.time.LocalDateTime desde = java.time.LocalDateTime.now().minusDays(1);
+        java.time.LocalDateTime hasta = java.time.LocalDateTime.now();
+
+        ctrl.listar(desde, hasta, 2L, user); // pide sucursal 2, pero el usuario está fijo a la 1
+
+        org.mockito.Mockito.verify(ventaService).listarEntreFechas(desde, hasta, 1L);
+    }
 }

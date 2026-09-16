@@ -23,6 +23,7 @@ import com.lowagie.text.pdf.PdfGState;
 import com.lowagie.text.pdf.PdfPCell;
 import com.lowagie.text.pdf.PdfPTable;
 import com.lowagie.text.pdf.PdfPageEventHelper;
+import com.lowagie.text.pdf.PdfTemplate;
 import com.lowagie.text.pdf.PdfWriter;
 import com.restaurante.entity.ConfiguracionFacturacion;
 import com.restaurante.entity.DetallePedido;
@@ -31,12 +32,14 @@ import com.restaurante.entity.Venta;
 import org.springframework.stereotype.Component;
 
 import java.awt.Color;
+import java.awt.geom.AffineTransform;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.time.format.DateTimeFormatter;
+import java.util.Base64;
 import java.util.EnumMap;
 import java.util.List;
 import java.util.Locale;
@@ -79,6 +82,22 @@ public class FacturaPdfBuilder {
     private static final Font FUENTE_PEQUENA = FontFactory.getFont(FontFactory.HELVETICA, 7, GRIS_TEXTO);
     private static final Font FUENTE_LEGAL = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 7.5f, Color.BLACK);
 
+    /** Fuente serif en negrita para la "E" del emblema vectorial por defecto (ver
+     *  {@link #emblemaPorDefecto}), replicando la tipografía Georgia/Times del SVG original. */
+    private static final com.lowagie.text.pdf.BaseFont FUENTE_EMBLEMA_E = crearFuenteEmblema();
+
+    private static com.lowagie.text.pdf.BaseFont crearFuenteEmblema() {
+        try {
+            return com.lowagie.text.pdf.BaseFont.createFont(
+                    com.lowagie.text.pdf.BaseFont.TIMES_BOLD,
+                    com.lowagie.text.pdf.BaseFont.WINANSI, false);
+        } catch (DocumentException | IOException e) {
+            // TIMES_BOLD es una de las 14 fuentes estándar embebidas en el propio OpenPDF:
+            // no debería fallar nunca en una JVM normal.
+            throw new IllegalStateException("No se pudo cargar la fuente del emblema por defecto", e);
+        }
+    }
+
     /**
      * Construye el PDF completo de la factura.
      *
@@ -95,7 +114,7 @@ public class FacturaPdfBuilder {
             writer.setPageEvent(new MarcaDeAguaYPie());
             documento.open();
 
-            agregarEncabezado(documento, factura, config);
+            agregarEncabezado(documento, factura, config, writer);
             agregarDatosDocumento(documento, factura);
             agregarDatosComprador(documento, factura);
             agregarDetalle(documento, factura);
@@ -112,15 +131,35 @@ public class FacturaPdfBuilder {
 
     // ─── Secciones ──────────────────────────────────────────────
 
-    private void agregarEncabezado(Document doc, Factura f, ConfiguracionFacturacion c) throws DocumentException {
-        // Sin logo/imagen propio en el proyecto (se revisó Fronten/Ventas/src/assets/): se usa
-        // el nombre estilizado con el color dorado del tema "Entrerriana" ya usado en el ticket.
+    private void agregarEncabezado(Document doc, Factura f, ConfiguracionFacturacion c, PdfWriter writer)
+            throws DocumentException {
+        // Logo: el que subió la sucursal si existe (base64/data URL), o si no el emblema
+        // vectorial por defecto de "La Entrerriana" (mismo diseño que login.component.ts),
+        // dibujado con primitivas de PdfContentByte — nunca queda un espacio vacío.
         PdfPTable cabecera = new PdfPTable(2);
         cabecera.setWidthPercentage(100);
         cabecera.setWidths(new float[]{2f, 1f});
 
         PdfPCell celdaLogo = new PdfPCell();
         celdaLogo.setBorder(Rectangle.NO_BORDER);
+        celdaLogo.setVerticalAlignment(Element.ALIGN_MIDDLE);
+
+        Image logo = null;
+        if (esTexto(c.getLogoBase64())) {
+            try {
+                logo = Image.getInstance(decodificarBase64(c.getLogoBase64()));
+            } catch (Exception e) {
+                // Logo subido corrupto/no decodificable: se sigue con el emblema por defecto
+                // en vez de interrumpir la generación de la factura.
+                logo = null;
+            }
+        }
+        if (logo == null) {
+            logo = emblemaPorDefecto(writer.getDirectContent(), 50f);
+        }
+        logo.scaleToFit(55, 55);
+        celdaLogo.addElement(logo);
+        celdaLogo.addElement(espacio(2));
         celdaLogo.addElement(new Paragraph(nombreEmisor(c), FUENTE_LOGO));
         celdaLogo.addElement(espacio(2));
         celdaLogo.addElement(new Paragraph("NIT: " + valorODefault(c.getNit()), FUENTE_VALOR));
@@ -286,6 +325,110 @@ public class FacturaPdfBuilder {
 
     private String nombreEmisor(ConfiguracionFacturacion c) {
         return valorOVacio(c.getRazonSocial()).isEmpty() ? "La Entrerriana" : c.getRazonSocial();
+    }
+
+    private boolean esTexto(String valor) {
+        return valor != null && !valor.isBlank();
+    }
+
+    /** El frontend guarda el logo como data URL completa ({@code data:image/png;base64,...}). */
+    private byte[] decodificarBase64(String valor) {
+        String base64 = valor.contains(",") ? valor.substring(valor.indexOf(',') + 1) : valor;
+        return Base64.getDecoder().decode(base64.trim());
+    }
+
+    // ─── Emblema vectorial por defecto ────────────────────────────
+
+    /**
+     * Dibuja el emblema vectorial de "La Entrerriana" — el mismo diseño que
+     * {@code login.component.ts} (líneas 72-88 del frontend Ventas): dos círculos
+     * concéntricos, tres elipses arriba (motivo tipo espiga), una línea corta y la letra
+     * "E" centrada. Se dibuja con primitivas de {@link PdfContentByte} sobre un
+     * {@link PdfTemplate} (un XObject vectorial embebido en el PDF), no como una imagen
+     * rasterizada, y se usa cuando la sucursal no subió su propio logo.
+     *
+     * <p>El {@code viewBox} del SVG original es 80x80; acá se escala a {@code tamano}
+     * puntos manteniendo las proporciones. El eje Y se invierte coordenada por coordenada
+     * (el SVG crece hacia abajo, el PDF hacia arriba), así que las dos elipses rotadas del
+     * SVG (±18°) se dibujan con el ángulo invertido para que la inclinación se vea igual
+     * tras el volteo del eje.
+     */
+    private Image emblemaPorDefecto(PdfContentByte contenidoDirecto, float tamano) throws DocumentException {
+        PdfTemplate t = contenidoDirecto.createTemplate(tamano, tamano);
+        float escala = tamano / 80f;
+
+        // Círculo exterior
+        t.setColorStroke(DORADO);
+        t.setLineWidth(2f * escala);
+        t.circle(px(40, escala), py(40, escala, tamano), 36 * escala);
+        t.stroke();
+
+        // Círculo interior, semitransparente
+        t.saveState();
+        PdfGState gCirculoInterior = new PdfGState();
+        gCirculoInterior.setStrokeOpacity(0.4f);
+        t.setGState(gCirculoInterior);
+        t.setLineWidth(0.75f * escala);
+        t.circle(px(40, escala), py(40, escala, tamano), 28 * escala);
+        t.stroke();
+        t.restoreState();
+
+        // Motivo superior: elipse central + dos elipses laterales inclinadas
+        dibujarElipseEmblema(t, escala, tamano, 40, 9, 2.5f, 5f, 0f, 0.85f);
+        dibujarElipseEmblema(t, escala, tamano, 33, 11, 2.5f, 4.5f, 18f, 0.7f);
+        dibujarElipseEmblema(t, escala, tamano, 47, 11, 2.5f, 4.5f, -18f, 0.7f);
+
+        // Línea corta debajo del motivo
+        t.setColorStroke(DORADO);
+        t.setLineCap(PdfContentByte.LINE_CAP_ROUND);
+        t.setLineWidth(1.5f * escala);
+        t.moveTo(px(40, escala), py(14, escala, tamano));
+        t.lineTo(px(40, escala), py(22, escala, tamano));
+        t.stroke();
+
+        // Letra "E" centrada
+        t.beginText();
+        t.setFontAndSize(FUENTE_EMBLEMA_E, 32f * escala);
+        t.setColorFill(DORADO);
+        t.showTextAligned(Element.ALIGN_CENTER, "E", px(40, escala), py(58, escala, tamano), 0);
+        t.endText();
+
+        return Image.getInstance(t);
+    }
+
+    /** Dibuja una de las tres elipses del motivo superior del emblema, con su inclinación
+     *  y opacidad propias, aplicando la rotación alrededor de su propio centro. */
+    private void dibujarElipseEmblema(PdfTemplate t, float escala, float tamano,
+                                       float cx, float cy, float rx, float ry,
+                                       float anguloGrados, float opacidad) {
+        t.saveState();
+        if (anguloGrados != 0f) {
+            float cxP = px(cx, escala);
+            float cyP = py(cy, escala, tamano);
+            t.transform(AffineTransform.getRotateInstance(Math.toRadians(anguloGrados), cxP, cyP));
+        }
+        PdfGState gElipse = new PdfGState();
+        gElipse.setFillOpacity(opacidad);
+        t.setGState(gElipse);
+        t.setColorFill(DORADO);
+        float x1 = px(cx - rx, escala);
+        float x2 = px(cx + rx, escala);
+        float y1 = py(cy - ry, escala, tamano);
+        float y2 = py(cy + ry, escala, tamano);
+        t.ellipse(Math.min(x1, x2), Math.min(y1, y2), Math.max(x1, x2), Math.max(y1, y2));
+        t.fill();
+        t.restoreState();
+    }
+
+    /** Convierte una coordenada X del viewBox SVG (80x80) a puntos del template PDF. */
+    private float px(float svgX, float escala) {
+        return svgX * escala;
+    }
+
+    /** Convierte una coordenada Y del viewBox SVG (80x80, crece hacia abajo) a puntos del
+     *  template PDF (crece hacia arriba). */
+    private float py(float svgY, float escala, float tamano) {
+        return tamano - svgY * escala;
     }
 
     private String tipoDocumentoLabel(Integer tipoDocumento) {

@@ -58,4 +58,34 @@ class ProduccionControllerTest {
 
         org.mockito.Mockito.verify(produccionService).listarPorSucursal(1L);
     }
+
+    @Test
+    void obtener_permiteCualquierSucursalParaUsuarioSinSucursalFija() {
+        ProduccionController ctrl = new ProduccionController(produccionService, sucursalAccessService);
+        when(produccionService.obtenerPorId(1L)).thenReturn(produccionDeSucursal(2L));
+        when(user.getSucursalId()).thenReturn(null);
+
+        assertThat(ctrl.obtener(1L, user).getBody()).isNotNull();
+    }
+
+    @Test
+    void hoy_resuelveSiempreALaSucursalFijaDelUsuarioIgnorandoLaSolicitada() {
+        ProduccionController ctrl = new ProduccionController(produccionService, sucursalAccessService);
+        when(user.getSucursalId()).thenReturn(1L);
+
+        ctrl.hoy(2L, user); // pide sucursal 2, pero el usuario está fijo a la 1
+
+        org.mockito.Mockito.verify(produccionService).obtenerHoy(1L);
+    }
+
+    @Test
+    void disponiblesHoy_resuelveSiempreALaSucursalFijaDelUsuarioIgnorandoLaSolicitada() {
+        ProduccionController ctrl = new ProduccionController(produccionService, sucursalAccessService);
+        when(user.getSucursalId()).thenReturn(1L);
+
+        ctrl.disponiblesHoy(2L, com.restaurante.enums.TipoLineaProduccion.SOPA, user);
+
+        org.mockito.Mockito.verify(produccionService)
+                .disponiblesHoy(1L, com.restaurante.enums.TipoLineaProduccion.SOPA);
+    }
 }

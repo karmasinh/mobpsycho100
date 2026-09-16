@@ -70,4 +70,37 @@ class PedidoControllerTest {
         assertThatThrownBy(() -> ctrl.cambiarEstado(1L, com.restaurante.enums.EstadoPedido.EN_PREPARACION, user))
                 .isInstanceOf(AccessDeniedException.class);
     }
+
+    @Test
+    void cambiarEstado_permitePedidoDeLaMismaSucursal() {
+        PedidoController ctrl = new PedidoController(pedidoService, sucursalAccessService);
+        when(pedidoService.obtenerPorId(1L)).thenReturn(pedidoDeSucursal(1L));
+        when(user.getSucursalId()).thenReturn(1L);
+        when(pedidoService.cambiarEstado(1L, com.restaurante.enums.EstadoPedido.EN_PREPARACION, 0L))
+                .thenReturn(pedidoDeSucursal(1L));
+
+        assertThat(ctrl.cambiarEstado(1L, com.restaurante.enums.EstadoPedido.EN_PREPARACION, user).getBody())
+                .isNotNull();
+    }
+
+    @Test
+    void listarPorEstado_resuelveSiempreALaSucursalFijaDelUsuarioIgnorandoLaSolicitada() {
+        PedidoController ctrl = new PedidoController(pedidoService, sucursalAccessService);
+        when(user.getSucursalId()).thenReturn(1L);
+
+        ctrl.listarPorEstado(com.restaurante.enums.EstadoPedido.PENDIENTE, 2L, user); // pide sucursal 2
+
+        org.mockito.Mockito.verify(pedidoService)
+                .listarPorEstado(com.restaurante.enums.EstadoPedido.PENDIENTE, 1L);
+    }
+
+    @Test
+    void listarActivos_resuelveSiempreALaSucursalFijaDelUsuarioIgnorandoLaSolicitada() {
+        PedidoController ctrl = new PedidoController(pedidoService, sucursalAccessService);
+        when(user.getSucursalId()).thenReturn(1L);
+
+        ctrl.listarActivos(2L, user); // pide sucursal 2, pero el usuario está fijo a la 1
+
+        org.mockito.Mockito.verify(pedidoService).listarActivos(1L);
+    }
 }

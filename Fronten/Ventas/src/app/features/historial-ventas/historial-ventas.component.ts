@@ -1,4 +1,4 @@
-import { Component, OnInit, signal, computed, CUSTOM_ELEMENTS_SCHEMA } from '@angular/core';
+import { Component, OnInit, signal, computed, effect, CUSTOM_ELEMENTS_SCHEMA } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { VentaService, SolicitudAprobacionService, ConfiguracionTicketService, FacturacionService } from '../../core/services/api.service';
@@ -487,7 +487,14 @@ export class HistorialVentasComponent implements OnInit {
     private ticketPrint: TicketPrintService,
     public auth: AuthService,
     private toastSvc: ToastService,
-  ) {}
+  ) {
+    // Re-busca cada vez que cambia la sucursal activa (selector de ADMIN/GERENTE_SUCURSAL) —
+    // antes buscar() nunca enviaba sucursalId y siempre traía el historial de todas las sucursales.
+    effect(() => {
+      this.auth.sucursalActiva();
+      this.buscar();
+    });
+  }
 
   ngOnInit(): void {
     this.setEsteMes();
@@ -526,7 +533,7 @@ export class HistorialVentasComponent implements OnInit {
     this.pagina.set(1);
     const desdeISO = `${this.desde}T00:00:00`;
     const hastaISO = `${this.hasta}T23:59:59`;
-    this.ventaService.listar(desdeISO, hastaISO).subscribe({
+    this.ventaService.listar(desdeISO, hastaISO, this.auth.sucursalActiva()).subscribe({
       next: vs => {
         this.ventas.set(vs);
         this.buscado.set(true);

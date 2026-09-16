@@ -14,6 +14,9 @@ public class ConfiguracionFacturacionRequest {
     @Size(max = 100) private String municipio;
     @Size(max = 500) private String leyendaFactura;
 
+    /** Logo propio de la sucursal (data URL base64) para el encabezado de la factura. */
+    private String logoBase64;
+
     private AmbienteFacturacion ambiente;
     private Boolean facturacionHabilitada;
 

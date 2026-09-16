@@ -8,7 +8,7 @@ import {
   MovimientoInventario, Plato, AlertaSistema, ModuloMenuDto,
   Proveedor, Rol, Empleado, Sucursal,
   LineaProduccion, ProduccionDia, TipoLineaProduccion, EstadoProduccion,
-  AuditoriaLog
+  AuditoriaLog, SugerenciaMerma, SolicitudCompra, EstadoSolicitudCompra
 } from '../models';
 
 const API = environment.apiUrl;
@@ -104,6 +104,39 @@ export class InventarioService {
     return this.http.patch<void>(`${API}/inventario/insumos/${insumoId}/stock-minimo`, null,
       { params: { sucursalId, valor } });
   }
+
+  /** DEC-L-005: sugerencia (no automática) de merma sobre el remanente de un lote. */
+  sugerenciaMermaLote(loteId: number): Observable<SugerenciaMerma> {
+    return this.http.get<SugerenciaMerma>(`${API}/inventario/lotes/${loteId}/sugerencia-merma`);
+  }
+
+  /** DEC-L-005: lotes de un insumo cuyo remanente cayó bajo el umbral de merma sugerida — consultar tras consumir/ajustar. */
+  lotesEnRiesgo(insumoId: number, sucursalId: number): Observable<SugerenciaMerma[]> {
+    return this.http.get<SugerenciaMerma[]>(`${API}/inventario/insumos/${insumoId}/lotes-en-riesgo`, { params: { sucursalId } });
+  }
+
+  registrarDevolucion(insumoId: number, sucursalId: number, body: {
+    loteId: number; cantidad: number; motivo: string; numeroDevolucion?: string;
+  }): Observable<Merma> {
+    return this.http.post<Merma>(`${API}/inventario/insumos/${insumoId}/devolucion`, body, { params: { sucursalId } });
+  }
+
+  comparativoSucursales(desde: string, hasta: string): Observable<ComparativoSucursal[]> {
+    return this.http.get<ComparativoSucursal[]>(`${API}/inventario/comparativo-sucursales`, { params: { desde, hasta } });
+  }
+
+  /** Eliminación lógica de un lote (p. ej. cargado por error) — conserva su historial de movimientos. */
+  eliminarLote(loteId: number, motivo: string): Observable<Merma> {
+    return this.http.delete<Merma>(`${API}/inventario/lotes/${loteId}`, { body: { motivo } });
+  }
+}
+
+export interface ComparativoSucursal {
+  sucursalId: number;
+  sucursalNombre: string;
+  totalMermas: number;
+  valorMermas: number;
+  valorStockActual: number;
 }
 
 // ── Sucursales ───────────────────────────────────────────────
@@ -482,5 +515,61 @@ export class ModuloMenuService {
 
   desactivar(id: number): Observable<void> {
     return this.http.delete<void>(`${API}/modulos/${id}`);
+  }
+}
+
+// ── Solicitudes de compra ────────────────────────────────────
+export interface CrearSolicitudCompraItemRequest {
+  insumoId: number;
+  cantidadSolicitada: number;
+  observaciones?: string;
+}
+
+export interface CrearSolicitudCompraRequest {
+  proveedorId: number;
+  sucursalId?: number;
+  items: CrearSolicitudCompraItemRequest[];
+}
+
+export interface AvanzarEstadoSolicitudCompraItemRequest {
+  itemId: number;
+  numeroLote?: string;
+  precioUnitario?: number;
+  fechaVencimiento?: string;
+}
+
+export interface AvanzarEstadoSolicitudCompraRequest {
+  estado: EstadoSolicitudCompra;
+  motivoRechazo?: string;
+  fechaRecepcion?: string;
+  items?: AvanzarEstadoSolicitudCompraItemRequest[];
+}
+
+@Injectable({ providedIn: 'root' })
+export class SolicitudCompraService {
+  constructor(private http: HttpClient) {}
+
+  crear(body: CrearSolicitudCompraRequest, sucursalId?: number | null): Observable<SolicitudCompra> {
+    let params = new HttpParams();
+    if (sucursalId != null) params = params.set('sucursalId', sucursalId);
+    return this.http.post<SolicitudCompra>(`${API}/solicitudes-compra`, body, { params });
+  }
+
+  avanzarEstado(id: number, body: AvanzarEstadoSolicitudCompraRequest): Observable<SolicitudCompra> {
+    return this.http.patch<SolicitudCompra>(`${API}/solicitudes-compra/${id}/estado`, body);
+  }
+
+  pendientes(sucursalId?: number | null): Observable<SolicitudCompra[]> {
+    let params = new HttpParams();
+    if (sucursalId != null) params = params.set('sucursalId', sucursalId);
+    return this.http.get<SolicitudCompra[]>(`${API}/solicitudes-compra/pendientes`, { params });
+  }
+
+  mias(): Observable<SolicitudCompra[]> {
+    return this.http.get<SolicitudCompra[]>(`${API}/solicitudes-compra/mias`);
+  }
+
+  obtenerPorId(id: number): Observable<SolicitudCompra> {
+    return this.http.get<SolicitudCompra>(`${API}/solicitudes-compra/${id}`);
   }
 }

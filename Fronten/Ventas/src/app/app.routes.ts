@@ -9,6 +9,14 @@ export const routes: Routes = [
       import('./features/auth/login.component').then(m => m.LoginComponent),
   },
   {
+    // Autoservicio QR del pensionado: pantalla pública, sin login, accesible por
+    // posesión del token en la URL — a propósito fuera del guard de auth, igual
+    // que /login. Consume PensionadoAutoServicioController (/pensionados-publico/**).
+    path: 'mi-cuenta/:qrToken',
+    loadComponent: () =>
+      import('./features/pensionado-publico/pensionado-publico.component').then(m => m.PensionadoPublicoComponent),
+  },
+  {
     path: '',
     canActivate: [authGuard],
     loadComponent: () =>
@@ -122,7 +130,7 @@ export const routes: Routes = [
       },
       {
         path: 'alertas',
-        data: { title: 'Centro de alertas' },
+        data: { modulo: 'MOD_ALERTAS_VENTAS', title: 'Centro de alertas' },
         canActivate: [authGuard],
         loadComponent: () =>
           import('./features/alertas/alertas.component').then(m => m.AlertasComponent),
@@ -133,6 +141,13 @@ export const routes: Routes = [
         canActivate: [authGuard],
         loadComponent: () =>
           import('./features/auditoria/auditoria.component').then(m => m.AuditoriaComponent),
+      },
+      {
+        path: 'modulos',
+        data: { modulo: 'MOD_MODULOS', title: 'Módulos y Menús' },
+        canActivate: [authGuard],
+        loadComponent: () =>
+          import('./features/modulos/modulos.component').then(m => m.ModulosComponent),
       },
       {
         path: 'pedidos',

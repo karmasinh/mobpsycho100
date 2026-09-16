@@ -61,7 +61,7 @@ Fases posteriores no documentadas en `DOCUMENTACION.md` (agregadas directamente 
 
 - ~~La documentación histórica contempla una aplicación móvil Android, pero no existe un frontend móvil~~ → **Resuelto**: app móvil Capacitor implementada y probada en emulador para ambos proyectos.
 - La tabla histórica de puertos en `DOCUMENTACION.md` sigue invertida respecto a los `package.json` actuales: Cocina usa 4200 y Ventas 4201 (no corregida en el documento histórico, se deja como nota permanente).
-- Gemini se sigue invocando desde el frontend con una clave de entorno; no se trasladó al backend en este período — sigue como pendiente (ver más abajo).
+- ~~Gemini se invocaba desde el frontend con una clave de entorno~~ → **Resuelto**: Cocina usa el proxy `/recetas/sugerencia-ia` y las claves se leen únicamente en los proveedores del backend (`GeminiProvider`, `ClaudeProvider`, `OpenAiProvider`).
 - ~~El cierre de caja no bloquea ventas sin turno abierto~~ → **Resuelto**: `VentaServiceImpl.cobrar` ahora exige un turno `ABIERTO` en la sucursal del pedido antes de crear la `Venta` (decisión de negocio documentada en `Alison Docs/documentacion/borrador/10_BACKLOG_Y_CAMBIOS.md`).
 
 ## Pendientes prioritarios (revisados 2026-09-11)
@@ -75,8 +75,8 @@ Fases posteriores no documentadas en `DOCUMENTACION.md` (agregadas directamente 
 | Normalización de campos opcionales únicos (`Cliente`/`Pensionado` `telefono`/`correo`) | — | **Resuelto** (AUD-A-030, AUD-A-031): `""` se normaliza a `null` antes de validar duplicados y persistir, en ambos controllers/servicios. |
 | Pruebas cubrían servicios, no todos los contratos HTTP | Alta | **Parcialmente resuelto**: se agregaron `CategoriaPlatoControllerSecurityTest` (primer `@WebMvcTest` del proyecto, ejercita `@PreAuthorize` real), `ClienteControllerTest`, `TipoAlmuerzoPensionadosControllerTest`, `PermisoMatrizTest` (274 casos rol×módulo). Sigue faltando cobertura `@WebMvcTest` para la mayoría de los ~24 controllers restantes. |
 | Alertas y auditoría no uniformemente limitadas por sucursal | Alta | **Resuelto** (AUD-A-028): `AuditoriaLog` tiene `sucursal_id` poblado en los puntos de escritura relevantes; `listar()`/`porEntidad()`/`porUsuario()` filtran vía `SucursalAccessService`. |
-| Rutas de `PedidoController` con autorización débil (`isAuthenticated()` desnudo) | Crítica | **Sin verificar en este período** — no se auditó puntualmente en las últimas rondas; revisar antes de cerrar. |
-| Gemini invocado desde frontend con clave de entorno expuesta | — | **Sigue abierto** — no se trasladó al backend. |
+| Rutas de `PedidoController` con autorización débil (`isAuthenticated()` desnudo) | Crítica | **Resuelto/verificado**: los endpoints sensibles usan roles o permisos de módulo y `SucursalAccessService`; la evidencia de aislamiento cruzado se registra en `SucursalAislamientoCruzadoIntegrationTest`. |
+| Gemini invocado desde frontend con clave de entorno expuesta | — | **Resuelto**: proxy backend y configuración externa; no se envía la clave al navegador. |
 
 ## Verificación
 

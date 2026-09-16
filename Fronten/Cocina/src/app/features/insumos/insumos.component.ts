@@ -5,11 +5,12 @@ import { InsumoService, CategoriaService } from '../../core/services/api.service
 import { Insumo } from '../../core/models';
 import { ToastService } from '../../core/services/toast.service';
 import { PaginationComponent } from '../../shared/components/pagination.component';
+import { ConvertirUnidadPopoverComponent } from '../../shared/components/convertir-unidad-popover.component';
 
 @Component({
   selector: 'app-insumos',
   standalone: true,
-  imports: [CommonModule, FormsModule, PaginationComponent],
+  imports: [CommonModule, FormsModule, PaginationComponent, ConvertirUnidadPopoverComponent],
   schemas: [CUSTOM_ELEMENTS_SCHEMA],
   template: `
     <div class="space-y-5 animate-fade-up">
@@ -73,7 +74,12 @@ import { PaginationComponent } from '../../shared/components/pagination.componen
                       {{ insumo.nombre }}
                     </p>
                   </td>
-                  <td class="text-xs">{{ insumo.unidadMedida }}</td>
+                  <td class="text-xs">
+                    <div class="flex items-center gap-1.5">
+                      <span>{{ insumo.unidadMedida }}</span>
+                      <app-convertir-unidad-popover [cantidad]="1" [unidadOrigen]="insumo.unidadMedida" />
+                    </div>
+                  </td>
                   <td class="text-xs">
                     <span class="badge-neutral">{{ insumo.categoria?.nombre || 'Sin categoría' }}</span>
                   </td>

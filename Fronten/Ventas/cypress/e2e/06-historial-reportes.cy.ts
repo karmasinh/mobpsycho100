@@ -37,4 +37,20 @@ describe('06 - Historial de ventas y Reportes', () => {
     cy.contains('button', 'Productos').click();
     cy.contains('button', 'Consultar').should('be.visible');
   });
+
+  it('exporta el reporte actual a PDF sin errores de aplicación', () => {
+    cy.visit('/reportes');
+    cy.contains('h1', 'Reportes', { timeout: 10000 }).should('exist');
+
+    cy.window().then((win) => cy.spy(win.console, 'error').as('consoleError'));
+    cy.contains('button', 'Descargar PDF').click();
+    cy.wait(1500);
+    // No aserta contra la descarga real (bloqueada por el sandbox del navegador de pruebas
+    // en algunos entornos) — sólo que jsPDF (import dinámico) armó el documento sin fallar.
+    cy.get('@consoleError').should((spy) => {
+      const errores = (spy as unknown as sinon.SinonSpy).getCalls().map(c => String(c.args[0]));
+      const errorDeApp = errores.some(e => e.includes('ChunkLoadError') || e.includes('is not a function'));
+      expect(errorDeApp, `errores de consola inesperados: ${errores.join(' | ')}`).to.be.false;
+    });
+  });
 });

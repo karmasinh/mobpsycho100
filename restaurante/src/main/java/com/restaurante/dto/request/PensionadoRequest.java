@@ -1,5 +1,6 @@
 package com.restaurante.dto.request;
 
+import com.restaurante.enums.ModoFacturacionPensionado;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import lombok.Data;
@@ -43,4 +44,11 @@ public class PensionadoRequest {
 
     @NotBlank(message = "La contraseña inicial es obligatoria")
     private String passwordInicial;
+
+    /**
+     * Modo de facturación del pensionado. Opcional — si no se envía se asume
+     * MENSUAL (comportamiento actual), por compatibilidad con clientes que
+     * todavía no conocen el ciclo prepago de 26 días.
+     */
+    private ModoFacturacionPensionado modoFacturacion;
 }

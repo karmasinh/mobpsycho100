@@ -16,4 +16,5 @@ public interface EmpleadoRepository extends JpaRepository<Empleado, Long> {
     List<Empleado> findByEstado(EstadoEmpleado estado);
     List<Empleado> findByTurnoAndEstado(TurnoEmpleado turno, EstadoEmpleado estado);
     List<Empleado> findBySucursalIdAndEstado(Long sucursalId, EstadoEmpleado estado);
+    List<Empleado> findByTurnoAndSucursalIdAndEstado(TurnoEmpleado turno, Long sucursalId, EstadoEmpleado estado);
 }

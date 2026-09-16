@@ -95,6 +95,8 @@ public class DataInitializer implements CommandLineRunner {
         guardarModulo("MOD_MERMAS",            "Mermas",               "tabler:trash",       "/cocina/mermas",            cocina, 11, "COCINA");
         guardarModulo("MOD_KARDEX",            "Kárdex",               "tabler:chart-bar",   "/cocina/kardex",            cocina, 12, "COCINA");
         guardarModulo("MOD_AUDITORIA_COCINA",  "Auditoría",            "tabler:file-text",     "/cocina/auditoria",         cocina, 13, "COCINA");
+        guardarModulo("MOD_SOLICITUDES_COMPRA","Solicitudes de compra","tabler:shopping-cart",  "/cocina/solicitudes-compra", cocina, 14, "COCINA");
+        guardarModulo("MOD_REPORTES_COCINA",   "Reportes",             "tabler:chart-bar",   "/cocina/reportes",          cocina, 15, "COCINA");
 
         // ── VENTAS ────────────────────────────────────────────────
         ModuloMenu ventas = guardarModulo("MOD_VENTAS", "Ventas", "tabler:currency-dollar", "/ventas", null, 10, "VENTAS");
@@ -171,7 +173,7 @@ public class DataInitializer implements CommandLineRunner {
                     "MOD_COCINA","MOD_PEDIDOS_COCINA","MOD_PRODUCCION","MOD_RECETAS",
                     "MOD_PLATOS","MOD_INVENTARIO","MOD_INSUMOS","MOD_PROVEEDORES",
                     "MOD_ALERTAS_INV","MOD_CATEGORIAS_INSUMO","MOD_MERMAS","MOD_KARDEX",
-                    "MOD_AUDITORIA_COCINA",
+                    "MOD_AUDITORIA_COCINA","MOD_SOLICITUDES_COMPRA","MOD_REPORTES_COCINA",
                     // Ventas
                     "MOD_VENTAS","MOD_CAJA","MOD_PEDIDOS_VENTAS","MOD_CLIENTES",
                     "MOD_PENSIONADOS","MOD_COBROS","MOD_ASISTENCIA",
@@ -194,12 +196,13 @@ public class DataInitializer implements CommandLineRunner {
                 List.of("MOD_COCINA","MOD_PEDIDOS_COCINA","MOD_PRODUCCION","MOD_RECETAS",
                         "MOD_PLATOS","MOD_INVENTARIO","MOD_INSUMOS","MOD_PROVEEDORES",
                         "MOD_ALERTAS_INV","MOD_CATEGORIAS_INSUMO","MOD_MERMAS","MOD_KARDEX",
-                        "MOD_AUDITORIA_COCINA"),
+                        "MOD_AUDITORIA_COCINA","MOD_SOLICITUDES_COMPRA","MOD_REPORTES_COCINA"),
                 "Jefe de cocina con gestión de insumos y proveedores");
 
         crearRolConModulos("ALMACENERO",
                 List.of("MOD_INSUMOS","MOD_CATEGORIAS_INSUMO","MOD_INVENTARIO",
-                        "MOD_MERMAS","MOD_KARDEX","MOD_PROVEEDORES","MOD_ALERTAS_INV"),
+                        "MOD_MERMAS","MOD_KARDEX","MOD_PROVEEDORES","MOD_ALERTAS_INV",
+                        "MOD_SOLICITUDES_COMPRA"),
                 "Almacén: insumos, lotes, inventario y proveedores");
 
         crearRolConModulos("CAJERO",
@@ -272,6 +275,26 @@ public class DataInitializer implements CommandLineRunner {
         guardarUnidad("l",      "Litro",       TipoMagnitud.VOLUMEN, 1000.0);
         guardarUnidad("unidad", "Unidad",      TipoMagnitud.UNIDAD,  1.0);
         guardarUnidad("docena", "Docena",      TipoMagnitud.UNIDAD,  12.0);
+
+        // ── DEC-L-005: unidades adicionales (disponibles, no son las que se muestran
+        //    primero — las "por defecto Bolivia" siguen siendo g/kg/ml/l/unidad) ──
+        guardarUnidad("lb",     "Libra",         TipoMagnitud.MASA,    453.592);
+        guardarUnidad("oz",     "Onza",          TipoMagnitud.MASA,    28.3495);
+        // Arroba: unidad tradicional de mercado boliviano, 25 lb.
+        guardarUnidad("arroba", "Arroba",        TipoMagnitud.MASA,    11502.9);
+        // Quintal "boliviano" de mercado = 100 lb (46000 g), NO el quintal métrico
+        // de 100 kg. Convención de uso local (mercados/ferias de Bolivia); si el
+        // negocio maneja quintales métricos en algún contexto, deben cargarse con
+        // otro código (ej. "qq_metrico") para no pisar este valor.
+        guardarUnidad("qq",     "Quintal",       TipoMagnitud.MASA,    46000.0);
+
+        guardarUnidad("ozfl",        "Onza líquida", TipoMagnitud.VOLUMEN, 29.5735);
+        guardarUnidad("taza",        "Taza",         TipoMagnitud.VOLUMEN, 240.0);
+        guardarUnidad("cucharada",   "Cucharada",    TipoMagnitud.VOLUMEN, 15.0);
+        guardarUnidad("cucharadita", "Cucharadita",  TipoMagnitud.VOLUMEN, 5.0);
+
+        guardarUnidad("par", "Par", TipoMagnitud.UNIDAD, 2.0);
+
         log.info("[Init] Unidades de medida cargadas.");
     }
 

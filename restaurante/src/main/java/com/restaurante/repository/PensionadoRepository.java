@@ -19,6 +19,7 @@ public interface PensionadoRepository extends JpaRepository<Pensionado, Long> {
     List<Pensionado> findByEstado(EstadoPensionado estado);
     List<Pensionado> findByEstadoIn(List<EstadoPensionado> estados);
     List<Pensionado> findByEstadoAndSucursal_Id(EstadoPensionado estado, Long sucursalId);
+    Optional<Pensionado> findByQrToken(String qrToken);
 
     /**
      * Busca pensionados activos sin asistencia registrada en los últimos 3 meses

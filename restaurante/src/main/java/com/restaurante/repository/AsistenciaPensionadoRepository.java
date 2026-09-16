@@ -25,4 +25,6 @@ public interface AsistenciaPensionadoRepository extends JpaRepository<Asistencia
     int countAsistenciasByMesAnio(Long pensionadoId, int mes, int anio);
 
     List<AsistenciaPensionado> findByPensionado_IdOrderByFechaDesc(Long pensionadoId);
+
+    long countByPensionado_IdAndFechaBetween(Long pensionadoId, LocalDate desde, LocalDate hasta);
 }

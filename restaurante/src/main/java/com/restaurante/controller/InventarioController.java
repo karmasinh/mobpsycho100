@@ -1,6 +1,8 @@
 package com.restaurante.controller;
 
+import com.restaurante.dto.response.InventarioComparativoSucursalDto;
 import com.restaurante.dto.response.StockInsumoDto;
+import com.restaurante.dto.response.SugerenciaMermaDto;
 import com.restaurante.entity.LoteInsumo;
 import com.restaurante.entity.MovimientoInventario;
 import com.restaurante.enums.TipoMovimientoInventario;
@@ -155,6 +157,39 @@ public class InventarioController {
         return ResponseEntity.status(HttpStatus.CREATED).body(mermaToMap(m));
     }
 
+    @PostMapping("/insumos/{insumoId}/devolucion")
+    @PreAuthorize("hasAnyRole('COCINERO','JEFE_COCINA','ALMACENERO','ADMIN') or @perm.tiene(authentication, 'MOD_INVENTARIO')")
+    @Operation(summary = "Registrar devolución a proveedor de un lote puntual de un insumo en una sucursal")
+    public ResponseEntity<Map<String, Object>> registrarDevolucion(
+            @PathVariable Long insumoId,
+            @RequestParam(required = false) Long sucursalId,
+            @RequestBody Map<String, Object> body,
+            @AuthenticationPrincipal UserDetailsImpl user) {
+
+        Long loteId              = ((Number) body.get("loteId")).longValue();
+        Double cantidad           = ((Number) body.get("cantidad")).doubleValue();
+        String motivo             = (String) body.getOrDefault("motivo", "Sin motivo especificado");
+        String numeroDevolucion   = (String) body.get("numeroDevolucion");
+
+        Long efectiva = sucursalAccessService.resolver(user, sucursalId);
+        MovimientoInventario m = inventarioService.registrarDevolucion(
+                insumoId, efectiva, loteId, cantidad, motivo, numeroDevolucion, user.getId());
+        return ResponseEntity.status(HttpStatus.CREATED).body(mermaToMap(m));
+    }
+
+    @DeleteMapping("/lotes/{loteId}")
+    @PreAuthorize("hasAnyRole('JEFE_COCINA','ALMACENERO','ADMIN') or @perm.tiene(authentication, 'MOD_INVENTARIO')")
+    @Operation(summary = "Eliminación lógica de un lote (p. ej. cargado por error)")
+    public ResponseEntity<Map<String, Object>> eliminarLote(
+            @PathVariable Long loteId,
+            @RequestBody Map<String, Object> body,
+            @AuthenticationPrincipal UserDetailsImpl user) {
+
+        String motivo = (String) body.get("motivo");
+        MovimientoInventario m = inventarioService.eliminarLote(loteId, motivo, user.getId());
+        return ResponseEntity.ok(mermaToMap(m));
+    }
+
     @GetMapping("/mermas")
     @PreAuthorize("hasAnyRole('JEFE_COCINA','ALMACENERO','ADMIN') or @perm.tiene(authentication, 'MOD_MERMAS')")
     @Operation(summary = "Listar mermas registradas en una sucursal")
@@ -178,6 +213,25 @@ public class InventarioController {
         );
     }
 
+    // ─── Sugerencia de merma (DEC-L-005) ───────────────────────────
+
+    @GetMapping("/lotes/{loteId}/sugerencia-merma")
+    @PreAuthorize("hasAnyRole('COCINERO','JEFE_COCINA','ALMACENERO','ADMIN') or @perm.tiene(authentication, 'MOD_INVENTARIO')")
+    @Operation(summary = "Sugerencia (no automática) de registrar merma sobre el remanente de un lote")
+    public ResponseEntity<SugerenciaMermaDto> sugerenciaMermaLote(@PathVariable Long loteId) {
+        return ResponseEntity.ok(inventarioService.sugerenciaMermaLote(loteId));
+    }
+
+    @GetMapping("/insumos/{insumoId}/lotes-en-riesgo")
+    @PreAuthorize("hasAnyRole('COCINERO','JEFE_COCINA','ALMACENERO','ADMIN') or @perm.tiene(authentication, 'MOD_INVENTARIO')")
+    @Operation(summary = "Lotes de un insumo cuyo remanente cayó bajo el umbral de merma sugerida (consultar tras consumir/ajustar)")
+    public ResponseEntity<List<SugerenciaMermaDto>> lotesEnRiesgo(@PathVariable Long insumoId,
+                                                                    @RequestParam(required = false) Long sucursalId,
+                                                                    @AuthenticationPrincipal UserDetailsImpl user) {
+        Long efectiva = sucursalAccessService.resolver(user, sucursalId);
+        return ResponseEntity.ok(inventarioService.lotesEnRiesgoPorInsumo(insumoId, efectiva));
+    }
+
     // ─── Kárdex ──────────────────────────────────────────────────
 
     @GetMapping("/insumos/{insumoId}/kardex")
@@ -192,6 +246,17 @@ public class InventarioController {
 
         Long efectiva = sucursalAccessService.resolver(user, sucursalId);
         return ResponseEntity.ok(inventarioService.obtenerKardex(insumoId, efectiva, desde, hasta));
+    }
+
+    // ─── Comparativo entre sucursales ──────────────────────────────
+
+    @GetMapping("/comparativo-sucursales")
+    @PreAuthorize("hasRole('ADMIN')")
+    @Operation(summary = "Comparativo de mermas y valor de stock por sucursal en un período (ADMIN)")
+    public ResponseEntity<List<InventarioComparativoSucursalDto>> comparativoSucursales(
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate desde,
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate hasta) {
+        return ResponseEntity.ok(inventarioService.comparativoSucursales(desde, hasta));
     }
 
     // ─── helpers ─────────────────────────────────────────────────

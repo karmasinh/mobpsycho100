@@ -7,10 +7,10 @@ import { TipoAlmuerzoPensionadosService } from '../../core/services/api.service'
 import { ToastService } from '../../core/services/toast.service';
 import { AuthService } from '../../core/services/auth.service';
 import { PaginationComponent } from '../../shared/components/pagination.component';
-import { Pensionado, CobroMensual, AsistenciaPensionado, TipoAlmuerzo, Sucursal } from '../../core/models';
+import { Pensionado, CobroMensual, AsistenciaPensionado, TipoAlmuerzo, Sucursal, CicloPensionado } from '../../core/models';
 import { environment } from '../../../environments/environment';
 
-type Vista = 'lista' | 'asistencia' | 'cobros';
+type Vista = 'lista' | 'asistencia' | 'cobros' | 'ciclo';
 
 @Component({
   selector: 'app-pensionados',
@@ -129,6 +129,22 @@ type Vista = 'lista' | 'asistencia' | 'cobros';
                       <iconify-icon icon="tabler:receipt" width="14" height="14" style="color:currentColor"></iconify-icon>
                       Cobros
                     </button>
+                    @if (p.modoFacturacion === 'CICLO_26D') {
+                      <button (click)="verCiclo(p)"
+                              class="text-xs py-1 px-2 rounded-lg inline-flex items-center gap-1"
+                              style="background:rgb(var(--color-warning)/0.1);color:rgb(var(--color-warning))"
+                              data-cy="btn-ver-ciclo">
+                        <iconify-icon icon="tabler:calendar-repeat" width="14" height="14" style="color:currentColor"></iconify-icon>
+                        Ciclo
+                      </button>
+                    }
+                    <button (click)="verQr(p)"
+                            class="text-xs py-1 px-2 rounded-lg inline-flex items-center gap-1"
+                            style="background:rgb(var(--color-info)/0.1);color:rgb(var(--color-info))"
+                            data-cy="btn-ver-qr">
+                      <iconify-icon icon="tabler:qrcode" width="14" height="14" style="color:currentColor"></iconify-icon>
+                      QR
+                    </button>
                     @if (p.estado === 'ACTIVO' || p.estado === 'REACTIVADO') {
                       <button (click)="baja(p)"
                               class="text-xs py-1 px-2 rounded-lg"
@@ -230,6 +246,16 @@ type Vista = 'lista' | 'asistencia' | 'cobros';
                 </select>
               </div>
             }
+            <div class="col-span-2">
+              <label class="input-label">
+                Modo de facturación
+                <span title="Mensual: tarifa fija + saldo anterior (por defecto). Ciclo 26 días: prepago que se consume día a día con cada asistencia." class="cursor-help ml-1 opacity-50">(?)</span>
+              </label>
+              <select [(ngModel)]="regForm.modoFacturacion" class="input text-sm" data-cy="select-pensionado-modo-facturacion">
+                <option value="MENSUAL">Mensual (por defecto)</option>
+                <option value="CICLO_26D">Ciclo prepago de 26 días</option>
+              </select>
+            </div>
             <div>
               <label class="input-label">Fecha de inscripción <span class="text-danger">*</span></label>
               <input [(ngModel)]="regForm.fechaInscripcion" class="input text-sm" type="date" required>
@@ -428,6 +454,97 @@ type Vista = 'lista' | 'asistencia' | 'cobros';
       </div>
     }
 
+    <!-- ── PANEL CICLO ─────────────────────────────────────── -->
+    @if (vista() === 'ciclo' && pensionadoActivo()) {
+      <div class="fixed inset-0 z-50 flex justify-end" (click)="cerrarPanel()">
+        <div class="w-full max-w-md bg-surface h-full flex flex-col shadow-2xl overflow-y-auto"
+             style="background:rgb(var(--color-surface))"
+             (click)="$event.stopPropagation()">
+
+          <div class="flex items-center justify-between p-5 border-b border-border">
+            <div>
+              <h3 class="font-bold inline-flex items-center gap-1.5" style="color:rgb(var(--color-on-surface))">
+                <iconify-icon icon="tabler:calendar-repeat" width="18" height="18" style="color:currentColor"></iconify-icon>
+                Ciclo — {{ pensionadoActivo()!.nombre }} {{ pensionadoActivo()!.apellido }}
+              </h3>
+              <p class="text-xs" style="color:rgb(var(--color-on-surface)/0.45)">Prepago de 26 días</p>
+            </div>
+            <button (click)="cerrarPanel()" class="btn-ghost p-1 text-lg">
+              <iconify-icon icon="line-md:close" width="18" height="18" style="color:currentColor"></iconify-icon>
+            </button>
+          </div>
+
+          <div class="p-5 space-y-4 flex-1">
+            @if (cargandoDetalle()) {
+              <div class="skeleton h-40 rounded-xl"></div>
+            } @else if (cicloActivo()) {
+              <div class="rounded-xl p-4 space-y-2"
+                   [style.background]="cicloActivo()!.estado === 'ACTIVO' ? 'rgb(var(--color-success)/0.06)' : 'rgb(var(--color-surface-2))'"
+                   [style.border]="cicloActivo()!.estado === 'ACTIVO' ? '1px solid rgb(var(--color-success)/0.25)' : '1px solid rgb(var(--color-border))'">
+                <div class="flex items-center justify-between">
+                  <span class="font-semibold text-sm" style="color:rgb(var(--color-on-surface))">
+                    Ciclo desde {{ cicloActivo()!.fechaInicio }}
+                  </span>
+                  <span [class]="cicloActivo()!.estado === 'ACTIVO' ? 'badge-success' : 'badge-warning'" class="text-[10px]">
+                    {{ cicloActivo()!.estado === 'ACTIVO' ? 'Activo' : 'Completado' }}
+                  </span>
+                </div>
+                <div class="grid grid-cols-2 gap-1 text-xs" style="color:rgb(var(--color-on-surface)/0.6)">
+                  <span>Días consumidos: <strong>{{ cicloActivo()!.diasConsumidos }}</strong></span>
+                  <span>Días disponibles: <strong>{{ cicloActivo()!.diasTotal - cicloActivo()!.diasConsumidos }}</strong></span>
+                  <span>Total del ciclo: <strong>{{ cicloActivo()!.diasTotal }} días</strong></span>
+                  <span>Monto pagado: <strong>Bs {{ cicloActivo()!.montoPagado | number:'1.2-2' }}</strong></span>
+                </div>
+              </div>
+            } @else {
+              <p class="text-center py-6 text-sm" style="color:rgb(var(--color-on-surface)/0.35)">
+                Sin ciclo activo. Puede registrar una nueva pensión.
+              </p>
+            }
+
+            <button (click)="abrirRenovarCiclo()"
+                    class="btn-primary w-full justify-center inline-flex items-center gap-1.5"
+                    [disabled]="guardando()" data-cy="btn-renovar-ciclo">
+              <iconify-icon icon="tabler:refresh" width="16" height="16" style="color:currentColor"></iconify-icon>
+              Renovar Pensión
+            </button>
+          </div>
+        </div>
+      </div>
+    }
+
+    <!-- ── MODAL RENOVAR CICLO ─────────────────────────────── -->
+    @if (modalRenovarCiclo() && pensionadoActivo()) {
+      <div class="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm"
+           (click)="modalRenovarCiclo.set(false)">
+        <div class="card max-w-sm w-full space-y-4 animate-pop" (click)="$event.stopPropagation()">
+          <h3 class="font-display font-bold inline-flex items-center gap-1.5" style="color:rgb(var(--color-on-surface))">
+            <iconify-icon icon="tabler:refresh" width="18" height="18" style="color:currentColor"></iconify-icon>
+            Renovar Pensión
+          </h3>
+          <div>
+            <label class="input-label">Monto pagado *</label>
+            <input [(ngModel)]="renovarMonto" type="number" class="input text-sm" placeholder="Bs" data-cy="input-renovar-monto">
+          </div>
+          @if (errorModal()) {
+            <p class="text-xs p-2.5 rounded-lg inline-flex items-center gap-1.5"
+               style="background:rgb(var(--color-danger)/0.1);color:rgb(var(--color-danger))">
+              <iconify-icon icon="tabler:alert-triangle" width="14" height="14" style="color:currentColor"></iconify-icon>
+              {{ errorModal() }}
+            </p>
+          }
+          <div class="flex gap-2">
+            <button (click)="modalRenovarCiclo.set(false)" class="btn-secondary flex-1 justify-center">Cancelar</button>
+            <button (click)="confirmarRenovarCiclo()" [disabled]="guardando()" class="btn-primary flex-1 justify-center" data-cy="btn-confirmar-renovar-ciclo">
+              @if (guardando()) {
+                <span class="w-4 h-4 rounded-full border-2 border-white/30 border-t-white animate-spin inline-block"></span>
+              } @else { Confirmar }
+            </button>
+          </div>
+        </div>
+      </div>
+    }
+
     <!-- ── MODAL PAGO ──────────────────────────────────────── -->
     @if (modalPago() && cobroActivo()) {
       <div class="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm"
@@ -478,6 +595,45 @@ type Vista = 'lista' | 'asistencia' | 'cobros';
       </div>
     }
 
+
+    <!-- ── MODAL QR AUTOSERVICIO ────────────────────────────── -->
+    @if (modalQr()) {
+      <div class="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm"
+           (click)="modalQr.set(false)">
+        <div class="card max-w-sm w-full space-y-4 animate-pop text-center" (click)="$event.stopPropagation()">
+          <div class="flex items-center justify-between">
+            <h3 class="font-display font-bold inline-flex items-center gap-1.5" style="color:rgb(var(--color-on-surface))">
+              <iconify-icon icon="tabler:qrcode" width="18" height="18" style="color:currentColor"></iconify-icon>
+              QR — {{ pensionadoQr()?.nombre }} {{ pensionadoQr()?.apellido }}
+            </h3>
+            <button (click)="modalQr.set(false)" class="btn-ghost p-1">
+              <iconify-icon icon="line-md:close" width="16" height="16" style="color:currentColor"></iconify-icon>
+            </button>
+          </div>
+
+          @if (cargandoQr()) {
+            <div class="skeleton h-48 rounded-xl mx-auto"></div>
+          } @else if (qrUrl()) {
+            <p class="text-xs" style="color:rgb(var(--color-on-surface)/0.5)">
+              Escaneá este código para marcar asistencia y ver la info del pensionado, sin necesidad de iniciar sesión.
+            </p>
+            <!-- Generado con una API pública de terceros (api.qrserver.com) para no
+                 agregar una librería QR nueva al proyecto. Si el dispositivo (app
+                 móvil/Capacitor) no tiene acceso a internet hacia ese servicio, la
+                 imagen no cargará — por eso la URL cruda queda siempre visible y
+                 copiable debajo como alternativa. -->
+            <img [src]="qrImagenSrc()" width="200" height="200" class="mx-auto rounded-lg border border-border"
+                 alt="Código QR de autoservicio" style="border:1px solid rgb(var(--color-border))">
+            <div>
+              <label class="input-label">Enlace (copiable)</label>
+              <input class="input text-xs font-mono" readonly [value]="qrUrl()" (click)="selectAll($event)">
+            </div>
+          } @else {
+            <p class="text-sm" style="color:rgb(var(--color-danger))">No se pudo obtener el QR.</p>
+          }
+        </div>
+      </div>
+    }
   `,
 })
 export class PensionadosComponent implements OnInit {
@@ -491,6 +647,10 @@ export class PensionadosComponent implements OnInit {
   guardando          = signal(false);
   modalRegistro      = signal(false);
   modalPago          = signal(false);
+  modalQr            = signal(false);
+  cargandoQr         = signal(false);
+  pensionadoQr       = signal<Pensionado | null>(null);
+  qrUrl              = signal<string | null>(null);
   vista              = signal<Vista>('lista');
   pensionadoActivo   = signal<Pensionado | null>(null);
   cobroActivo        = signal<CobroMensual | null>(null);
@@ -499,6 +659,9 @@ export class PensionadosComponent implements OnInit {
   busqueda           = signal('');
   pagoMonto: number | null = null;
   pagoForma          = 'EFECTIVO';
+  cicloActivo        = signal<CicloPensionado | null>(null);
+  modalRenovarCiclo  = signal(false);
+  renovarMonto: number | null = null;
 
   sortCol = signal<string>('');
   sortDir = signal<'asc' | 'desc'>('asc');
@@ -511,6 +674,7 @@ export class PensionadosComponent implements OnInit {
     sucursalId: null as number | null,
     fechaInscripcion: new Date().toISOString().split('T')[0],
     usernamePersonalizado: '', passwordInicial: '',
+    modoFacturacion: 'MENSUAL' as 'MENSUAL' | 'CICLO_26D',
   };
 
   totalActivos  = computed(() => this.lista().filter(p => p.estado === 'ACTIVO' || p.estado === 'REACTIVADO').length);
@@ -573,6 +737,7 @@ export class PensionadosComponent implements OnInit {
       sucursalId: this.authService.sucursalFija(),
       fechaInscripcion: new Date().toISOString().split('T')[0],
       usernamePersonalizado: '', passwordInicial: '',
+      modoFacturacion: 'MENSUAL',
     };
     this.errorModal.set('');
     this.modalRegistro.set(true);
@@ -626,6 +791,44 @@ export class PensionadosComponent implements OnInit {
     });
   }
 
+  verCiclo(p: Pensionado): void {
+    this.pensionadoActivo.set(p);
+    this.vista.set('ciclo');
+    this.cargandoDetalle.set(true);
+    this.cicloActivo.set(null);
+    this.service.consultarCiclo(p.id).subscribe({
+      next: c => { this.cicloActivo.set(c); this.cargandoDetalle.set(false); },
+      error: () => { this.cicloActivo.set(null); this.cargandoDetalle.set(false); },
+    });
+  }
+
+  abrirRenovarCiclo(): void {
+    this.renovarMonto = null;
+    this.errorModal.set('');
+    this.modalRenovarCiclo.set(true);
+  }
+
+  confirmarRenovarCiclo(): void {
+    const p = this.pensionadoActivo();
+    if (!p) return;
+    if (!this.renovarMonto || this.renovarMonto <= 0) {
+      this.errorModal.set('Ingresa el monto pagado.'); return;
+    }
+    this.guardando.set(true);
+    this.service.renovarCiclo(p.id, this.renovarMonto).subscribe({
+      next: c => {
+        this.guardando.set(false);
+        this.modalRenovarCiclo.set(false);
+        this.cicloActivo.set(c);
+        this.toastSvc.success('Pensión renovada correctamente. Nuevo ciclo iniciado con 26 días disponibles.');
+      },
+      error: err => {
+        this.guardando.set(false);
+        this.errorModal.set(err?.error?.mensaje ?? 'No se pudo renovar el ciclo');
+      },
+    });
+  }
+
   cerrarPanel(): void {
     this.vista.set('lista');
     this.pensionadoActivo.set(null);
@@ -664,6 +867,33 @@ export class PensionadosComponent implements OnInit {
         this.toastSvc.error(err?.error?.mensaje ?? 'Error al generar cobro');
       },
     });
+  }
+
+  verQr(p: Pensionado): void {
+    this.pensionadoQr.set(p);
+    this.qrUrl.set(null);
+    this.modalQr.set(true);
+    this.cargandoQr.set(true);
+    this.service.obtenerQr(p.id).subscribe({
+      next: ({ qrToken }) => {
+        this.cargandoQr.set(false);
+        this.qrUrl.set(`${window.location.origin}/mi-cuenta/${qrToken}`);
+      },
+      error: err => {
+        this.cargandoQr.set(false);
+        this.toastSvc.error(err?.error?.mensaje ?? 'Error al obtener el QR');
+      },
+    });
+  }
+
+  /** URL pública de qrserver.com para renderizar el QR sin agregar una librería nueva al proyecto. */
+  qrImagenSrc(): string {
+    const url = this.qrUrl() ?? '';
+    return `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(url)}`;
+  }
+
+  selectAll(ev: Event): void {
+    (ev.target as HTMLInputElement).select();
   }
 
   abrirPago(c: CobroMensual): void {

@@ -66,7 +66,13 @@ describe('02 - Producción del día', () => {
         cy.contains('button', 'Actualizar').first().click();
         cy.contains('h3', 'Actualizar producción').should('be.visible');
         cy.wait(600);
-        cy.get('input[type="number"]').clear().type('12');
+        // La cantidad producida no puede superar la planificada (validación real
+        // del backend) — se lee el "Planificado" real del modal en vez de asumir
+        // un valor fijo, porque puede variar según el plan del día ya existente.
+        cy.contains(/Planificado:?\s*\d+/).invoke('text').then((texto) => {
+          const planificado = parseInt(texto.replace(/\D/g, ''), 10);
+          cy.get('input[type="number"]').clear().type(String(planificado));
+        });
         cy.wait(500);
         cy.contains('button', 'Guardar').click();
         cy.wait(700);

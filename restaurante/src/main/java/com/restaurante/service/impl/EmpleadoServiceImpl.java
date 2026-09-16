@@ -7,6 +7,7 @@ import com.restaurante.entity.Rol;
 import com.restaurante.entity.Sucursal;
 import com.restaurante.entity.Usuario;
 import com.restaurante.enums.EstadoEmpleado;
+import com.restaurante.enums.TurnoEmpleado;
 import com.restaurante.exception.DuplicadoException;
 import com.restaurante.exception.NegocioException;
 import com.restaurante.exception.RecursoNoEncontradoException;
@@ -155,6 +156,23 @@ public class EmpleadoServiceImpl implements EmpleadoService {
                 .stream()
                 .map(this::toResponse)
                 .toList();
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<EmpleadoResponse> listarActivos(TurnoEmpleado turno, Long sucursalId) {
+        if (turno == null && sucursalId == null) {
+            return listarActivos();
+        }
+        List<Empleado> empleados;
+        if (turno != null && sucursalId != null) {
+            empleados = empleadoRepository.findByTurnoAndSucursalIdAndEstado(turno, sucursalId, EstadoEmpleado.ACTIVO);
+        } else if (turno != null) {
+            empleados = empleadoRepository.findByTurnoAndEstado(turno, EstadoEmpleado.ACTIVO);
+        } else {
+            empleados = empleadoRepository.findBySucursalIdAndEstado(sucursalId, EstadoEmpleado.ACTIVO);
+        }
+        return empleados.stream().map(this::toResponse).toList();
     }
 
     @Override

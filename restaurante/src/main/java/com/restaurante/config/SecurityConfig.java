@@ -42,7 +42,12 @@ public class SecurityConfig {
             "/v3/api-docs/**",
             // El handshake HTTP de WebSocket queda público a propósito: la autenticación
             // real ocurre a nivel de frame STOMP en WebSocketAuthInterceptor (CONNECT/SUBSCRIBE).
-            "/ws/**"
+            "/ws/**",
+            // Autoservicio QR del pensionado: sin login, acceso por posesión del token
+            // fijo (ver PensionadoAutoServicioController) — a propósito fuera de
+            // /pensionados/** para no quedar cubierto por el @PreAuthorize del resto
+            // del módulo. Solo expone lectura de su propia info y marcar su asistencia.
+            "/pensionados-publico/**"
     };
 
     @Bean

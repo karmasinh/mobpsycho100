@@ -168,6 +168,19 @@ export interface LoteInsumo {
   fechaVencimiento: string | null;
   fechaIngreso: string;
   activo: boolean;
+  eliminado: boolean;
+}
+
+/** Sugerencia (no automática) de registrar merma sobre el remanente de un lote — DEC-L-005. */
+export interface SugerenciaMerma {
+  loteId: number;
+  numeroLote: string;
+  insumoId: number;
+  insumoNombre: string;
+  sugerirMerma: boolean;
+  cantidadRestante: number;
+  porcentajeRestante: number;
+  unidad: string;
 }
 
 export interface AlertaSistema {
@@ -315,7 +328,7 @@ export type TipoMovimientoInventario =
   | 'DEVOLUCION_PROVEEDOR';
 
 export type TipoLineaProduccion = 'SOPA' | 'SEGUNDO' | 'ESPECIAL';
-export type EstadoProduccion = 'PLANIFICADO' | 'EN_CURSO' | 'CERRADO';
+export type EstadoProduccion = 'PLANIFICADO' | 'EN_CURSO' | 'CERRADO' | 'CANCELADO';
 
 export interface LineaProduccion {
   id: number;
@@ -334,6 +347,34 @@ export interface ProduccionDia {
   sucursal: { id: number; nombre: string };
   lineas: LineaProduccion[];
   creadoEn: string;
+}
+
+export type EstadoSolicitudCompra =
+  | 'CREADA'
+  | 'EN_REVISION'
+  | 'APROBADA'
+  | 'EN_PROCESO'
+  | 'RECIBIDA'
+  | 'RECHAZADA';
+
+export interface SolicitudCompraItem {
+  id: number;
+  insumo: Insumo;
+  cantidadSolicitada: number;
+  observaciones: string | null;
+}
+
+export interface SolicitudCompra {
+  id: number;
+  proveedor: Proveedor;
+  sucursal: { id: number; nombre: string };
+  solicitante: { id: number; username: string } | null;
+  estado: EstadoSolicitudCompra;
+  motivoRechazo: string | null;
+  fechaRecepcion: string | null;
+  items: SolicitudCompraItem[];
+  creadoEn: string;
+  actualizadoEn: string;
 }
 
 export interface AuditoriaLog {

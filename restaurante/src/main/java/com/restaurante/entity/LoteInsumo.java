@@ -1,9 +1,9 @@
 package com.restaurante.entity;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.*;
 import lombok.*;
+import org.hibernate.annotations.ColumnDefault;
 import org.hibernate.annotations.CreationTimestamp;
 
 import java.time.LocalDate;
@@ -29,7 +29,7 @@ public class LoteInsumo {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "insumo_id", nullable = false)
-    @JsonIgnore
+    @JsonIgnoreProperties({"hibernateLazyInitializer", "handler", "lotes", "movimientos"})
     private Insumo insumo;
 
     @ManyToOne(fetch = FetchType.LAZY)
@@ -39,6 +39,7 @@ public class LoteInsumo {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "proveedor_id")
+    @JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
     private Proveedor proveedor;
 
     @Column(nullable = false)
@@ -57,6 +58,18 @@ public class LoteInsumo {
     @Column(nullable = false)
     @Builder.Default
     private Boolean activo = true;
+
+    /**
+     * Eliminación lógica del lote (p. ej. cargado por error). Distinto de
+     * {@code activo}, que es derivado y significa "todavía tiene cantidad
+     * disponible" — este campo es una decisión explícita del usuario y se
+     * mantiene aunque el lote conserve cantidad, para no perder su historial
+     * de movimientos asociado.
+     */
+    @Column(nullable = false)
+    @ColumnDefault("false")
+    @Builder.Default
+    private Boolean eliminado = false;
 
     /** Días hasta vencimiento (calculado por el scheduler de alertas) */
     @Transient

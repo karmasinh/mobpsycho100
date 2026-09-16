@@ -57,6 +57,12 @@ public class ConfiguracionFacturacion {
     @Column(length = 500)
     private String leyendaFactura;
 
+    /** Logo propio de la sucursal para el encabezado de la factura (data URL base64). Si es
+     *  nulo, {@link com.restaurante.siat.FacturaPdfBuilder} dibuja el emblema vectorial por
+     *  defecto de "La Entrerriana" en su lugar. Mismo patrón que {@code ConfiguracionTicket}. */
+    @Column(columnDefinition = "TEXT")
+    private String logoBase64;
+
     // ── Parámetros del circuito ───────────────────────────────────
 
     /** PRUEBAS mientras no hay conexión real; pasar a PRODUCCION tiene que ser deliberado. */

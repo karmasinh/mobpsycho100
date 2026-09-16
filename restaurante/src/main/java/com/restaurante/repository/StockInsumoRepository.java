@@ -36,4 +36,13 @@ public interface StockInsumoRepository extends JpaRepository<StockInsumo, Long> 
     /** Suma del stock de un insumo entre todas las sucursales — lo usa el costeo promedio ponderado (global) */
     @Query("SELECT COALESCE(SUM(s.stockActual), 0) FROM StockInsumo s WHERE s.insumo.id = :insumoId")
     Double sumStockGlobal(@Param("insumoId") Long insumoId);
+
+    /** Valor de stock actual (cantidad × precio unitario del insumo) agrupado por sucursal — comparativo entre sucursales (ADMIN) */
+    @Query("""
+        SELECT s.sucursal.id, s.sucursal.nombre, COALESCE(SUM(s.stockActual * s.insumo.precioUnitario), 0)
+        FROM StockInsumo s
+        WHERE s.insumo.activo = true
+        GROUP BY s.sucursal.id, s.sucursal.nombre
+        """)
+    List<Object[]> sumValorStockPorSucursal();
 }

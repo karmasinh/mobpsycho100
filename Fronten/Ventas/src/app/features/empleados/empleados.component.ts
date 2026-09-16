@@ -51,7 +51,7 @@ interface EmpleadoForm {
         <input [ngModel]="busqueda()" (ngModelChange)="busqueda.set($event); pagina.set(1)"
                class="input w-48 text-sm" maxlength="100"
                placeholder="Buscar nombre o CI...">
-        <select [(ngModel)]="filtroTurno" (ngModelChange)="pagina.set(1)"
+        <select [ngModel]="filtroTurno()" (ngModelChange)="filtroTurno.set($event); pagina.set(1)"
                 class="input w-40 text-sm">
           <option value="">Todos los turnos</option>
           <option value="MANANA">Mañana</option>
@@ -396,7 +396,7 @@ export class EmpleadosComponent implements OnInit {
   guardando        = signal(false);
   errorModal       = signal('');
   busqueda         = signal('');
-  filtroTurno      = '';
+  filtroTurno      = signal('');
   empleadoSeleccionado = signal<any>(null);
 
   pagina           = signal(1);
@@ -412,7 +412,7 @@ export class EmpleadosComponent implements OnInit {
     if (q) lista = lista.filter((e: any) =>
       `${e.nombre} ${e.apellido} ${e.ci}`.toLowerCase().includes(q)
     );
-    if (this.filtroTurno) lista = lista.filter((e: any) => e.turno === this.filtroTurno);
+    if (this.filtroTurno()) lista = lista.filter((e: any) => e.turno === this.filtroTurno());
     const col = this.sortCol();
     if (col) {
       const dir = this.sortDir() === 'asc' ? 1 : -1;

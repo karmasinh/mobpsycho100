@@ -64,6 +64,7 @@ public class FacturacionServiceImpl implements FacturacionService {
         config.setRazonSocial(datos.getRazonSocial());
         config.setMunicipio(datos.getMunicipio());
         config.setLeyendaFactura(datos.getLeyendaFactura());
+        config.setLogoBase64(datos.getLogoBase64());
         if (datos.getAmbiente() != null) config.setAmbiente(datos.getAmbiente());
 
         if (esTexto(datos.getCufdDireccion())) config.setCufdDireccion(datos.getCufdDireccion());

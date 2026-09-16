@@ -1,6 +1,8 @@
 package com.restaurante.service;
 
+import com.restaurante.dto.response.InventarioComparativoSucursalDto;
 import com.restaurante.dto.response.StockInsumoDto;
+import com.restaurante.dto.response.SugerenciaMermaDto;
 import com.restaurante.entity.LoteInsumo;
 import com.restaurante.entity.MovimientoInventario;
 import com.restaurante.enums.TipoMovimientoInventario;
@@ -41,6 +43,14 @@ public interface InventarioService {
     /** Lista las mermas de una sucursal */
     List<MovimientoInventario> listarMermas(Long sucursalId);
 
+    /**
+     * Registra una devolución a proveedor sobre un lote puntual: descuenta el
+     * remanente del lote y el stock de la sucursal, y persiste un
+     * MovimientoInventario tipo DEVOLUCION_PROVEEDOR (numeroDevolucion va en `observaciones`).
+     */
+    MovimientoInventario registrarDevolucion(Long insumoId, Long sucursalId, Long loteId, Double cantidad,
+                                             String motivo, String numeroDevolucion, Long usuarioId);
+
     /** Lista mermas de un insumo específico en una sucursal */
     List<MovimientoInventario> listarMermasPorInsumo(Long insumoId, Long sucursalId);
 
@@ -50,4 +60,30 @@ public interface InventarioService {
      * valor total y el detalle línea a línea.
      */
     Map<String, Object> obtenerKardex(Long insumoId, Long sucursalId, LocalDate desde, LocalDate hasta);
+
+    /**
+     * Sugerencia de merma para un lote puntual (DEC-L-005): indica si su
+     * remanente cayó bajo el umbral configurado. Es solo informativo — no
+     * descuenta ni registra nada.
+     */
+    SugerenciaMermaDto sugerenciaMermaLote(Long loteId);
+
+    /**
+     * Lotes activos de un insumo en una sucursal cuyo remanente está bajo el
+     * umbral de merma sugerida. Útil para consultar justo después de un
+     * consumo/ajuste sin conocer de antemano qué lote(s) tocó el FEFO.
+     */
+    List<SugerenciaMermaDto> lotesEnRiesgoPorInsumo(Long insumoId, Long sucursalId);
+
+    /** Comparativo entre sucursales (ADMIN): mermas del período y valor de stock actual, por sucursal */
+    List<InventarioComparativoSucursalDto> comparativoSucursales(LocalDate desde, LocalDate hasta);
+
+    /**
+     * Elimina lógicamente un lote (p. ej. cargado por error): lo marca
+     * {@code eliminado = true} (queda fuera de FEFO/vencimientos/riesgo de
+     * merma, pero conserva su historial de movimientos), descuenta su
+     * remanente del stock de la sucursal si tenía cantidad disponible, y
+     * registra el ajuste como movimiento + auditoría.
+     */
+    MovimientoInventario eliminarLote(Long loteId, String motivo, Long usuarioId);
 }

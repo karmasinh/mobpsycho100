@@ -146,6 +146,20 @@ export const routes: Routes = [
           import('./features/auditoria/auditoria.component').then(m => m.AuditoriaComponent),
       },
       {
+        path: 'reportes',
+        data: { modulo: 'MOD_REPORTES_COCINA', title: 'Reportes' },
+        canActivate: [authGuard],
+        loadComponent: () =>
+          import('./features/reportes/reportes.component').then(m => m.ReportesComponent),
+      },
+      {
+        path: 'solicitudes-compra',
+        data: { modulo: 'MOD_SOLICITUDES_COMPRA', title: 'Solicitudes de compra' },
+        canActivate: [authGuard],
+        loadComponent: () =>
+          import('./features/solicitudes-compra/solicitudes-compra.component').then(m => m.SolicitudesCompraComponent),
+      },
+      {
         path: 'sin-acceso',
         loadComponent: () =>
           import('./shared/components/sin-acceso.component').then(m => m.SinAccesoComponent),
